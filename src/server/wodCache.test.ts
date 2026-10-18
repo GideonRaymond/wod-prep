@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CACHE_VERSION, cacheWod, getCachedWod, normalizeWodText } from "./wodCache";
-import { fran } from "@/test/fixtures";
+import { fran, franPart, strengthAndMetcon } from "@/test/fixtures";
 
 const EXAMPLE = `"Fran"
 21-15-9 for time:
@@ -68,9 +68,19 @@ describe("WOD cache", () => {
     await expect(getCachedWod('"fran"')).resolves.toEqual(fran);
   });
 
+  it("doesn't store multi-part WODs under a part's name", async () => {
+    await cacheWod("A) Back squat 5x5 B) Fran C) Cool-down row", strengthAndMetcon);
+    await expect(getCachedWod("A) Back squat 5x5 B) Fran C) Cool-down row")).resolves.toEqual(
+      strengthAndMetcon,
+    );
+    await expect(getCachedWod("Fran")).resolves.toBeNull();
+  });
+
   it("keeps the first WOD stored under a name", async () => {
     await cacheWod(EXAMPLE, fran);
-    const heavy = { ...fran, movements: [{ ...fran.movements[0], load: "135/95 lb" }] };
+    const heavy = {
+      parts: [{ ...franPart, movements: [{ ...franPart.movements[0], load: "135/95 lb" }] }],
+    };
     await cacheWod('"Fran" heavy: 21-15-9 thrusters 135/95, pull-ups', heavy);
 
     await expect(getCachedWod("Fran")).resolves.toEqual(fran);
@@ -106,7 +116,7 @@ describe("WOD cache", () => {
   it("does nothing when turned off", async () => {
     await cacheWod("Fran", fran);
     vi.stubEnv("WOD_CACHE", "off");
-    await cacheWod("Grace", { ...fran, title: "Grace" });
+    await cacheWod("Grace", { parts: [{ ...franPart, title: "Grace" }] });
 
     await expect(getCachedWod("Fran")).resolves.toBeNull();
     vi.stubEnv("WOD_CACHE", "on");

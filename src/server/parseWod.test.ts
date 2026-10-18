@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fran } from "@/test/fixtures";
+import { fran, franPart } from "@/test/fixtures";
 
 const { mockParse } = vi.hoisted(() => ({ mockParse: vi.fn() }));
 
@@ -40,17 +40,32 @@ describe("parseWod", () => {
       load: null,
       category: "monostructural" as const,
     };
-    const pullUps = { ...fran.movements[1], reps: "100", originalText: "100 Pull-ups" };
+    const pullUps = { ...franPart.movements[1], reps: "100", originalText: "100 Pull-ups" };
     mockParse.mockResolvedValue({
       stop_reason: "end_turn",
-      parsed_output: { ...fran, title: "Murph", movements: [run, pullUps, run] },
+      parsed_output: {
+        parts: [
+          { ...franPart, label: "A", title: null, movements: [pullUps, pullUps] },
+          { ...franPart, label: "B", title: "Murph", movements: [run, pullUps, run] },
+        ],
+      },
     });
 
     const wod = await parseWod("Murph");
-    expect(wod.movements.map((m) => [m.name, m.reps])).toEqual([
+    expect(wod.parts[0].movements.map((m) => [m.name, m.reps])).toEqual([["Pull-up", "200"]]);
+    expect(wod.parts[1].movements.map((m) => [m.name, m.reps])).toEqual([
       ["Run", "2 miles"],
       ["Pull-up", "100"],
     ]);
+  });
+
+  it("asks the model to split multi-part WODs and rate intensity", async () => {
+    mockParse.mockResolvedValue({ stop_reason: "end_turn", parsed_output: fran });
+    await parseWod("A) Back squat 5x5 B) Fran");
+    const { system } = mockParse.mock.calls[0][0];
+    expect(system).toMatch(/Return each part separately/);
+    expect(system).toMatch(/single part with label null/);
+    expect(system).toMatch(/Rate the intended intensity from 1 to 10/);
   });
 
   it("asks the model to combine repeated movements", async () => {

@@ -2,9 +2,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MovementDetails } from "./MovementDetails";
-import { fran } from "@/test/fixtures";
+import { franPart } from "@/test/fixtures";
 
-const [thruster, pullUp] = fran.movements;
+const [thruster, pullUp] = franPart.movements;
 
 describe("MovementDetails", () => {
   afterEach(() => {

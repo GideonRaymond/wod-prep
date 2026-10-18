@@ -1,40 +1,60 @@
 import { describe, expect, it } from "vitest";
-import { WodSchema, type Movement, type Wod } from "./wod";
-import { fran } from "@/test/fixtures";
+import { WodSchema, WorkoutPartSchema, type Movement, type WorkoutPart } from "./wod";
+import { fran, franPart, strengthAndMetcon } from "@/test/fixtures";
 
 describe("WodSchema", () => {
-  it("accepts a valid workout", () => {
+  it("accepts a single-part and a multi-part workout", () => {
     expect(WodSchema.parse(fran)).toEqual(fran);
+    expect(WodSchema.parse(strengthAndMetcon)).toEqual(strengthAndMetcon);
   });
 
+  it("needs at least one part", () => {
+    expect(WodSchema.safeParse({ parts: [] }).success).toBe(false);
+  });
+});
+
+describe("WorkoutPartSchema", () => {
   it("accepts null for optional fields", () => {
-    const wod = {
-      ...fran,
+    const part = {
+      ...franPart,
+      label: null,
       title: null,
-      movements: [{ ...fran.movements[0], reps: null, load: null }],
+      movements: [{ ...franPart.movements[0], reps: null, load: null }],
     };
-    expect(WodSchema.safeParse(wod).success).toBe(true);
+    expect(WorkoutPartSchema.safeParse(part).success).toBe(true);
   });
 
-  it("requires a stimulus", () => {
-    const wod: Partial<Wod> = { ...fran };
-    delete wod.stimulus;
-    expect(WodSchema.safeParse(wod).success).toBe(false);
-    expect(WodSchema.safeParse({ ...fran, stimulus: null }).success).toBe(false);
+  it("requires a stimulus with a description and intensity", () => {
+    const part: Partial<WorkoutPart> = { ...franPart };
+    delete part.stimulus;
+    expect(WorkoutPartSchema.safeParse(part).success).toBe(false);
+    expect(
+      WorkoutPartSchema.safeParse({ ...franPart, stimulus: { description: "Fast" } }).success,
+    ).toBe(false);
+  });
+
+  it.each([0, 11, 6.5])("rejects intensity %s", (intensity) => {
+    const part = { ...franPart, stimulus: { ...franPart.stimulus, intensity } };
+    expect(WorkoutPartSchema.safeParse(part).success).toBe(false);
+  });
+
+  it.each([1, 10])("accepts intensity %s", (intensity) => {
+    const part = { ...franPart, stimulus: { ...franPart.stimulus, intensity } };
+    expect(WorkoutPartSchema.safeParse(part).success).toBe(true);
   });
 
   it("rejects an unknown format", () => {
-    expect(WodSchema.safeParse({ ...fran, format: "tabata" }).success).toBe(false);
+    expect(WorkoutPartSchema.safeParse({ ...franPart, format: "tabata" }).success).toBe(false);
   });
 
   it("rejects an unknown movement category", () => {
-    const wod = { ...fran, movements: [{ ...fran.movements[0], category: "cardio" }] };
-    expect(WodSchema.safeParse(wod).success).toBe(false);
+    const part = { ...franPart, movements: [{ ...franPart.movements[0], category: "cardio" }] };
+    expect(WorkoutPartSchema.safeParse(part).success).toBe(false);
   });
 
   it("rejects a movement without a name", () => {
-    const movement: Partial<Movement> = { ...fran.movements[0] };
+    const movement: Partial<Movement> = { ...franPart.movements[0] };
     delete movement.name;
-    expect(WodSchema.safeParse({ ...fran, movements: [movement] }).success).toBe(false);
+    expect(WorkoutPartSchema.safeParse({ ...franPart, movements: [movement] }).success).toBe(false);
   });
 });

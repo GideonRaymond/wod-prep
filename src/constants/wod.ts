@@ -1,4 +1,4 @@
-import { MovementSchema, type Movement, type Wod } from "@/schemas/wod";
+import { MovementSchema, type Movement, type WorkoutPart } from "@/schemas/wod";
 
 export const MAX_WOD_LENGTH = 2000;
 
@@ -9,7 +9,7 @@ export const EXAMPLE_WOD = `"Fran"
 Thrusters (95/65 lb)
 Pull-ups`;
 
-export const FORMAT_LABELS: Record<Wod["format"], string> = {
+export const FORMAT_LABELS: Record<WorkoutPart["format"], string> = {
   for_time: "For Time",
   amrap: "AMRAP",
   emom: "EMOM",
