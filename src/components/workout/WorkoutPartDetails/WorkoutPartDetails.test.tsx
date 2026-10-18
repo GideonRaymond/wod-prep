@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { WorkoutPartDetails } from "./WorkoutPartDetails";
@@ -69,7 +69,8 @@ describe("WorkoutPartDetails", () => {
       ],
     };
     render(<WorkoutPartDetails part={part} />);
-    expect(screen.getByText("1 video · 1 article")).toBeInTheDocument();
+    const summary = screen.getByTitle("weightlifting").parentElement!;
+    expect(within(summary).getByText("1 video · 1 article")).toBeVisible();
 
     await user.click(toggle(/Fran/));
     expect(screen.getByRole("button", { name: /Before class/ })).toBeVisible();
