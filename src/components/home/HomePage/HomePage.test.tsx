@@ -4,6 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HomePage } from "./HomePage";
 import { WodProvider } from "@/providers/WodProvider";
+import { WOD_STORAGE_KEY } from "@/stores/wodStore";
+import type { WodState } from "@/types/wod";
 import { fran, franPart, strengthAndMetcon } from "@/test/fixtures";
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
@@ -120,6 +122,40 @@ describe("HomePage", () => {
     await submit("Fran");
     await screen.findByRole("heading", { name: "Fran" });
     expect(screen.queryByRole("button", { name: "Points of performance" })).not.toBeInTheDocument();
+  });
+
+  it("saves the parsed workout and its edits, so a refresh restores them", async () => {
+    respond(200, { wod: fran });
+    const user = await submit("Fran");
+    await user.click(await screen.findByRole("button", { name: "Remove Thruster" }));
+    await user.click(screen.getByRole("button", { name: "Edit stimulus" }));
+    await user.type(screen.getByRole("textbox", { name: "Stimulus" }), " Go!");
+
+    const saved: WodState = JSON.parse(sessionStorage.getItem(WOD_STORAGE_KEY)!);
+    expect(saved.parts[0].movements.map((m) => m.name)).toEqual(["Pull-up"]);
+    expect(saved.parts[0].stimulus.description).toBe(`${franPart.stimulus.description} Go!`);
+
+    cleanup();
+    render(
+      <WodProvider>
+        <HomePage />
+      </WodProvider>,
+    );
+    expect(screen.getByRole("heading", { name: "Fran" })).toBeInTheDocument();
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    expect(screen.getByText(`${franPart.stimulus.description} Go!`)).toBeInTheDocument();
+  });
+
+  it("clears the saved workout when a new parse fails", async () => {
+    respond(200, { wod: fran });
+    const user = await submit("Fran");
+    await screen.findByRole("heading", { name: "Fran" });
+    respond(422, { error: "Couldn't read that as a workout." });
+    await user.type(screen.getByRole("textbox", { name: "Workout" }), "!");
+    await user.click(screen.getByRole("button", { name: "Break it down" }));
+
+    await screen.findByRole("alert");
+    expect(sessionStorage.getItem(WOD_STORAGE_KEY)).toBeNull();
   });
 
   it("only shows Confirm once a workout is parsed", async () => {

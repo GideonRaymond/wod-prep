@@ -55,6 +55,7 @@ src/
 │   └── workout/          # Workout page: details after confirming (WorkoutPage, PointsOfPerformance, …)
 ├── hooks/                # React hooks (useParseWod, useUndoableText, useAutoResize, …)
 ├── providers/            # App-wide state (WodProvider: the current workout, shared by both pages)
+├── stores/               # External stores (wodStore: keeps the workout in sessionStorage across refreshes)
 ├── services/             # Client-side API calls (wodApi)
 ├── server/               # Server-only code (the Claude call); never imported by components
 ├── schemas/              # Zod schemas and the types inferred from them
