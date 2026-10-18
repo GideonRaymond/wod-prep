@@ -12,6 +12,7 @@ describe("Card", () => {
     render(<Card data-testid="card">Hello</Card>);
     expect(screen.getByTestId("card").tagName).toBe("DIV");
     expect(screen.getByTestId("card")).toHaveTextContent("Hello");
+    expect(screen.getByTestId("card")).toHaveClass("bg-background");
   });
 
   it("can render as another element", () => {
