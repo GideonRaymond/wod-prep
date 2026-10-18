@@ -8,7 +8,7 @@ import { UnusableResultError } from "./apiErrors";
 import { createFileCache } from "./fileCache";
 
 /** Bump when the prompt or schema changes, so old AI results get generated again. */
-export const POINTS_CACHE_VERSION = 1;
+export const POINTS_CACHE_VERSION = 2;
 
 const cache = createFileCache("points-of-performance", PointsOfPerformanceSchema);
 const cacheKey = (name: string) => `v${POINTS_CACHE_VERSION}:${normalizeMovementName(name)}`;
@@ -34,7 +34,7 @@ export function cachePoints(name: string, points: PointsOfPerformance) {
 
 const SYSTEM = `You are an experienced CrossFit coach. Give the points of performance for the movement the user names, the way they're taught in CrossFit coaching:
 - cues: short, plain coaching cues in order from setup to finish.
-- faults: the most common faults, each with the cue that fixes it.
+- faults: the most common faults, each with how to fix it and a short verbal cue (1-4 words) a coach would call out mid-workout, like "Knees out!".
 If the text isn't a real exercise, return empty lists.`;
 
 /** Asks Claude for the points of performance of a movement that isn't curated. */

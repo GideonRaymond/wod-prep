@@ -11,6 +11,9 @@ describe("CURATED_POINTS_OF_PERFORMANCE", () => {
       expect(PointsOfPerformanceSchema.parse(points)).toEqual(points);
       expect(points.cues.length).toBeGreaterThanOrEqual(3);
       expect(points.faults.length).toBeGreaterThanOrEqual(1);
+      for (const { cue } of points.faults) {
+        expect(cue.split(" ").length, `"${cue}" should be short`).toBeLessThanOrEqual(4);
+      }
     },
   );
 

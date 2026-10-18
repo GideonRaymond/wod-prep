@@ -15,7 +15,7 @@ import { POST } from "./route";
 import { UnusableResultError } from "@/server/apiErrors";
 import { MAX_MOVEMENT_NAME_LENGTH } from "@/constants/wod";
 
-const points = { cues: ["a", "b", "c"], faults: [{ fault: "x", fix: "y" }] };
+const points = { cues: ["a", "b", "c"], faults: [{ fault: "x", fix: "y", cue: "z!" }] };
 
 function post(body: unknown) {
   return POST(

@@ -22,10 +22,26 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Stand to full hip and knee extension",
     ],
     faults: [
-      { fault: "Heels come off the floor", fix: "Sit back, weight in the heels" },
-      { fault: "Knees cave in", fix: "Push the knees out over the toes" },
-      { fault: "Lower back rounds at the bottom", fix: "Chest up, keep the back arched" },
-      { fault: "Not reaching depth", fix: "Hip crease below the knee every rep" },
+      {
+        fault: "Heels come off the floor",
+        fix: "Sit the hips back and keep the weight in the heels",
+        cue: "Heels down!",
+      },
+      {
+        fault: "Knees cave in",
+        fix: "Push the knees out in line with the toes",
+        cue: "Knees out!",
+      },
+      {
+        fault: "Lower back rounds at the bottom",
+        fix: "Keep the chest up and the lower back arched",
+        cue: "Chest up!",
+      },
+      {
+        fault: "Not reaching depth",
+        fix: "Sit until the hip crease is below the knee, every rep",
+        cue: "Below parallel!",
+      },
     ],
   },
   {
@@ -39,9 +55,21 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Drive through the heels to full extension",
     ],
     faults: [
-      { fault: "Elbows drop and the bar rolls forward", fix: "Elbows up, chest proud" },
-      { fault: "Weight shifts onto the toes", fix: "Drive through the heels" },
-      { fault: "Knees cave in", fix: "Knees out over the toes" },
+      {
+        fault: "Elbows drop and the bar rolls forward",
+        fix: "Drive the elbows up so the bar stays on the shoulders",
+        cue: "Elbows up!",
+      },
+      {
+        fault: "Weight shifts onto the toes",
+        fix: "Keep the weight over the heels and drive through them",
+        cue: "Drive the heels!",
+      },
+      {
+        fault: "Knees cave in",
+        fix: "Push the knees out in line with the toes",
+        cue: "Knees out!",
+      },
     ],
   },
   {
@@ -55,9 +83,21 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Chest and hips rise together to full extension",
     ],
     faults: [
-      { fault: "Hips shoot up first (good-morning squat)", fix: "Chest and hips rise together" },
-      { fault: "Heels come up", fix: "Weight in the heels" },
-      { fault: "Knees cave in", fix: "Push the knees out" },
+      {
+        fault: "Hips shoot up first (good-morning squat)",
+        fix: "Lead with the chest so hips and shoulders rise together",
+        cue: "Chest up!",
+      },
+      {
+        fault: "Heels come up",
+        fix: "Keep the weight in the heels throughout",
+        cue: "Heels down!",
+      },
+      {
+        fault: "Knees cave in",
+        fix: "Push the knees out in line with the toes",
+        cue: "Knees out!",
+      },
     ],
   },
   {
@@ -71,9 +111,21 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Stand to full extension with the bar still locked out",
     ],
     faults: [
-      { fault: "Bar drifts forward", fix: "Push up and back into the bar" },
-      { fault: "Elbows bend", fix: "Lock the arms" },
-      { fault: "Chest drops at the bottom", fix: "Chest up, active shoulders" },
+      {
+        fault: "Bar drifts forward",
+        fix: "Press up and slightly back into the bar, armpits forward",
+        cue: "Push up!",
+      },
+      {
+        fault: "Elbows bend",
+        fix: "Lock the elbows and keep pressing into the bar",
+        cue: "Lock it out!",
+      },
+      {
+        fault: "Chest drops at the bottom",
+        fix: "Keep the chest up and the shoulders active",
+        cue: "Chest up!",
+      },
     ],
   },
   {
@@ -87,9 +139,21 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Bring the bar back to the rack as you descend",
     ],
     faults: [
-      { fault: "Pressing before the hips open", fix: "Hips open, then press" },
-      { fault: "Elbows drop in the bottom", fix: "Elbows up" },
-      { fault: "Bar finishes in front of the body", fix: "Head through the window" },
+      {
+        fault: "Pressing before the hips open",
+        fix: "Finish the hip drive before the arms start the press",
+        cue: "Hips, then press!",
+      },
+      {
+        fault: "Elbows drop in the bottom",
+        fix: "Keep the elbows high in the front rack all the way down",
+        cue: "Elbows up!",
+      },
+      {
+        fault: "Bar finishes in front of the body",
+        fix: "Push the head through so the bar ends over the mid-foot",
+        cue: "Head through!",
+      },
     ],
   },
   {
@@ -102,9 +166,21 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Catch high and ride it straight into the next squat",
     ],
     faults: [
-      { fault: "Shallow squat", fix: "Hip crease below the knee" },
-      { fault: "Throwing with the arms only", fix: "Hips first, then arms" },
-      { fault: "Ball goes out instead of up", fix: "Stand closer, throw up, not out" },
+      {
+        fault: "Shallow squat",
+        fix: "Squat until the hip crease is below the knee",
+        cue: "Get low!",
+      },
+      {
+        fault: "Throwing with the arms only",
+        fix: "Let the leg drive launch the ball, then finish with the arms",
+        cue: "Use your legs!",
+      },
+      {
+        fault: "Ball goes out instead of up",
+        fix: "Stand closer to the wall and throw straight up",
+        cue: "Up, not out!",
+      },
     ],
   },
   {
@@ -118,9 +194,21 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Finish at full hip and knee extension, lower on the same path",
     ],
     faults: [
-      { fault: "Back rounds", fix: "Chest up, brace before you pull" },
-      { fault: "Hips rise first", fix: "Push the floor away, shoulders and hips together" },
-      { fault: "Bar drifts away from the legs", fix: "Keep the bar close" },
+      {
+        fault: "Back rounds",
+        fix: "Brace the midline and set the back flat before pulling",
+        cue: "Flat back!",
+      },
+      {
+        fault: "Hips rise first",
+        fix: "Push the floor away so hips and shoulders rise together",
+        cue: "Push the floor!",
+      },
+      {
+        fault: "Bar drifts away from the legs",
+        fix: "Keep the bar in contact with the legs the whole way",
+        cue: "Bar close!",
+      },
     ],
   },
   {
@@ -134,8 +222,16 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Arms down first, then the hips",
     ],
     faults: [
-      { fault: "Pulling with the arms early", fix: "Hips first, then arms" },
-      { fault: "Elbows stay low", fix: "Elbows high and outside" },
+      {
+        fault: "Pulling with the arms early",
+        fix: "Keep the arms long until the hips have fully opened",
+        cue: "Hips first!",
+      },
+      {
+        fault: "Elbows stay low",
+        fix: "Lead the pull with the elbows, high and outside",
+        cue: "Elbows high!",
+      },
     ],
   },
   {
@@ -148,9 +244,17 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Lock out the arms at the top",
     ],
     faults: [
-      { fault: "Hips sag", fix: "Squeeze the glutes, ribs down" },
-      { fault: "Partial range of motion", fix: "Chest to the floor, arms locked out" },
-      { fault: "Elbows flare out", fix: "Elbows back at about 45°" },
+      {
+        fault: "Hips sag",
+        fix: "Squeeze the glutes and pull the ribs down to stay in one line",
+        cue: "Tight body!",
+      },
+      {
+        fault: "Partial range of motion",
+        fix: "Lower until the chest touches and lock out at the top",
+        cue: "Chest to floor!",
+      },
+      { fault: "Elbows flare out", fix: "Keep the elbows back at about 45°", cue: "Elbows in!" },
     ],
   },
   {
@@ -163,9 +267,21 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Return to straight arms every rep",
     ],
     faults: [
-      { fault: "Chin doesn't clear the bar", fix: "Pull until the chin is over" },
-      { fault: "Arms stay bent at the bottom", fix: "Full extension every rep" },
-      { fault: "Kipping from the legs", fix: "Hollow and arch from the shoulders" },
+      {
+        fault: "Chin doesn't clear the bar",
+        fix: "Keep pulling until the chin is over the bar",
+        cue: "Chin over!",
+      },
+      {
+        fault: "Arms stay bent at the bottom",
+        fix: "Return to fully straight arms every rep",
+        cue: "Full hang!",
+      },
+      {
+        fault: "Kipping from the legs",
+        fix: "Drive the kip from the shoulders with a hollow and arch",
+        cue: "Hollow, arch!",
+      },
     ],
   },
   {
@@ -178,8 +294,16 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Control the swing back into the next rep",
     ],
     faults: [
-      { fault: "Feet don't touch or touch one at a time", fix: "Both feet together" },
-      { fault: "Swing gets out of control", fix: "Push down on the bar, stay tight" },
+      {
+        fault: "Feet don't touch or touch one at a time",
+        fix: "Bring both feet up together to touch the bar",
+        cue: "Feet together!",
+      },
+      {
+        fault: "Swing gets out of control",
+        fix: "Push down on the bar and stay tight through the midline",
+        cue: "Push the bar away!",
+      },
     ],
   },
   {
@@ -192,8 +316,16 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Small jump with a clap overhead",
     ],
     faults: [
-      { fault: "Not opening the hips at the top", fix: "Stand tall before you jump" },
-      { fault: "Lower back strains on the way up", fix: "Brace the midline" },
+      {
+        fault: "Not opening the hips at the top",
+        fix: "Stand all the way up before the jump",
+        cue: "Stand tall!",
+      },
+      {
+        fault: "Lower back strains on the way up",
+        fix: "Brace the midline as you push up from the floor",
+        cue: "Brace!",
+      },
     ],
   },
   {
@@ -206,8 +338,16 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Step down when tired to protect the Achilles",
     ],
     faults: [
-      { fault: "Not standing tall on the box", fix: "Open the hips on top" },
-      { fault: "Landing on the toes at the edge", fix: "Whole foot on the box" },
+      {
+        fault: "Not standing tall on the box",
+        fix: "Open the hips fully on top of the box",
+        cue: "Stand tall!",
+      },
+      {
+        fault: "Landing on the toes at the edge",
+        fix: "Jump far enough to land with the whole foot on the box",
+        cue: "Whole foot!",
+      },
     ],
   },
   {
@@ -220,9 +360,21 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Finish overhead, arms locked, bell bottom up",
     ],
     faults: [
-      { fault: "Squatting instead of hinging", fix: "Hips back" },
-      { fault: "Lifting with the arms", fix: "Snap the hips" },
-      { fault: "Leaning back at the top", fix: "Ribs down, glutes tight" },
+      {
+        fault: "Squatting instead of hinging",
+        fix: "Push the hips back and keep the shins nearly vertical",
+        cue: "Hips back!",
+      },
+      {
+        fault: "Lifting with the arms",
+        fix: "Snap the hips so the bell floats up",
+        cue: "Snap the hips!",
+      },
+      {
+        fault: "Leaning back at the top",
+        fix: "Keep the ribs down and the glutes squeezed",
+        cue: "Ribs down!",
+      },
     ],
   },
   {
@@ -235,8 +387,16 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "One jump, two rope passes",
     ],
     faults: [
-      { fault: "Piking or kicking the feet back", fix: "Jump straight up, feet under you" },
-      { fault: "Arms swing wide", fix: "Elbows in, turn the wrists" },
+      {
+        fault: "Piking or kicking the feet back",
+        fix: "Jump straight up and keep the feet under you",
+        cue: "Straight up!",
+      },
+      {
+        fault: "Arms swing wide",
+        fix: "Keep the elbows in and turn the rope with the wrists",
+        cue: "Wrists!",
+      },
     ],
   },
   {
@@ -248,9 +408,17 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Recovery in reverse: arms, hips, then legs",
     ],
     faults: [
-      { fault: "Pulling with the arms early", fix: "Legs, body, arms" },
-      { fault: "Knees rise before the hands pass them", fix: "Arms, body, legs on the way back" },
-      { fault: "Hunched back", fix: "Sit tall" },
+      {
+        fault: "Pulling with the arms early",
+        fix: "Keep the arms long until the hips have fully opened",
+        cue: "Hips first!",
+      },
+      {
+        fault: "Knees rise before the hands pass them",
+        fix: "On the way back: arms, then body, then legs",
+        cue: "Hands first!",
+      },
+      { fault: "Hunched back", fix: "Sit tall with the chest up", cue: "Sit tall!" },
     ],
   },
   {
@@ -262,8 +430,16 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Relaxed shoulders, arms swing front to back",
     ],
     faults: [
-      { fault: "Overstriding onto the heel", fix: "Shorter, quicker steps" },
-      { fault: "Bending at the waist", fix: "Run tall" },
+      {
+        fault: "Overstriding onto the heel",
+        fix: "Take shorter, quicker steps landing under the hips",
+        cue: "Quick feet!",
+      },
+      {
+        fault: "Bending at the waist",
+        fix: "Stay tall and lean from the ankles",
+        cue: "Run tall!",
+      },
     ],
   },
   {
@@ -276,8 +452,16 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Finish with the arms locked and the head through",
     ],
     faults: [
-      { fault: "Leaning back", fix: "Ribs down, squeeze the glutes" },
-      { fault: "Bar finishes in front", fix: "Head through the window" },
+      {
+        fault: "Leaning back",
+        fix: "Pull the ribs down and squeeze the glutes",
+        cue: "Ribs down!",
+      },
+      {
+        fault: "Bar finishes in front",
+        fix: "Push the head through so the bar ends over the mid-foot",
+        cue: "Head through!",
+      },
     ],
   },
   {
@@ -290,8 +474,16 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Finish with the arms locked overhead",
     ],
     faults: [
-      { fault: "Dipping forward onto the toes", fix: "Straight down, heels down" },
-      { fault: "Pressing before the drive", fix: "Drive, then press" },
+      {
+        fault: "Dipping forward onto the toes",
+        fix: "Dip straight down with the heels on the floor",
+        cue: "Straight down!",
+      },
+      {
+        fault: "Pressing before the drive",
+        fix: "Let the leg drive finish before the press",
+        cue: "Drive, then press!",
+      },
     ],
   },
   {
@@ -303,8 +495,16 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Stand to full extension with the bar overhead",
     ],
     faults: [
-      { fault: "Pressing the bar out instead of getting under", fix: "Punch under" },
-      { fault: "Elbows soft in the catch", fix: "Lock the arms" },
+      {
+        fault: "Pressing the bar out instead of getting under",
+        fix: "Push yourself down under the bar instead",
+        cue: "Punch under!",
+      },
+      {
+        fault: "Elbows soft in the catch",
+        fix: "Lock the arms the moment you catch",
+        cue: "Lock out!",
+      },
     ],
   },
   {
@@ -318,9 +518,21 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Receive above parallel, then stand",
     ],
     faults: [
-      { fault: "Pulling with the arms early", fix: "Long arms until the hips open" },
-      { fault: "Bar swings away from the body", fix: "Keep the bar close" },
-      { fault: "Slow elbows", fix: "Fast elbows" },
+      {
+        fault: "Pulling with the arms early",
+        fix: "Keep the arms long until the hips have fully opened",
+        cue: "Hips first!",
+      },
+      {
+        fault: "Bar swings away from the body",
+        fix: "Keep the bar close to the body throughout the pull",
+        cue: "Bar close!",
+      },
+      {
+        fault: "Slow elbows",
+        fix: "Whip the elbows around fast into the front rack",
+        cue: "Fast elbows!",
+      },
     ],
   },
   {
@@ -334,9 +546,21 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Bar finishes over the middle of the foot",
     ],
     faults: [
-      { fault: "Pulling with the arms early", fix: "Long arms until the hips open" },
-      { fault: "Bar loops away from the body", fix: "Keep the bar close" },
-      { fault: "Soft elbows overhead", fix: "Punch and lock out" },
+      {
+        fault: "Pulling with the arms early",
+        fix: "Keep the arms long until the hips have fully opened",
+        cue: "Hips first!",
+      },
+      {
+        fault: "Bar loops away from the body",
+        fix: "Keep the bar close to the body throughout the pull",
+        cue: "Bar close!",
+      },
+      {
+        fault: "Soft elbows overhead",
+        fix: "Punch up and lock the arms as you receive",
+        cue: "Punch!",
+      },
     ],
   },
   {
@@ -349,8 +573,16 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Press to full lockout",
     ],
     faults: [
-      { fault: "Arching the back", fix: "Ribs down, squeeze the glutes" },
-      { fault: "Not locking out", fix: "Arms straight at the top" },
+      {
+        fault: "Arching the back",
+        fix: "Pull the ribs down and squeeze the glutes",
+        cue: "Ribs down!",
+      },
+      {
+        fault: "Not locking out",
+        fix: "Press until the arms are fully straight",
+        cue: "Lock out!",
+      },
     ],
   },
   {
@@ -360,6 +592,12 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       "Shoulders touch the floor behind you",
       "Sit all the way up and touch your feet",
     ],
-    faults: [{ fault: "Not touching the feet", fix: "Reach all the way to the feet" }],
+    faults: [
+      {
+        fault: "Not touching the feet",
+        fix: "Sit all the way up and reach to the feet",
+        cue: "Touch your toes!",
+      },
+    ],
   },
 ];

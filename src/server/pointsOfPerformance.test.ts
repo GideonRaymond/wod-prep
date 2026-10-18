@@ -20,7 +20,7 @@ import { UnusableResultError } from "./apiErrors";
 
 const points = {
   cues: ["Grip the rings", "Pull to the chest", "Lock out"],
-  faults: [{ fault: "Chicken wing", fix: "Both arms together" }],
+  faults: [{ fault: "Chicken wing", fix: "Turn both arms over together", cue: "Elbows together!" }],
 };
 
 describe("findCuratedPoints", () => {
@@ -54,6 +54,7 @@ describe("generatePoints", () => {
     const params = mockParse.mock.calls[0][0];
     expect(params.messages).toEqual([{ role: "user", content: "Ring Muscle-up" }]);
     expect(params.output_config.format).toBeDefined();
+    expect(params.system).toMatch(/short verbal cue/);
   });
 
   it("throws a user-facing error when the model refuses", async () => {

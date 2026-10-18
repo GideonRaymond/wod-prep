@@ -1,7 +1,8 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ChevronDown, RotateCw } from "lucide-react";
+import { ChevronDown, Megaphone, RotateCw } from "lucide-react";
+import { Badge } from "@/components/shared/Badge";
 import { Button } from "@/components/shared/Button";
 import { FieldError } from "@/components/shared/FieldError";
 import { usePointsOfPerformance } from "@/hooks/usePointsOfPerformance";
@@ -63,10 +64,19 @@ export function PointsOfPerformance({ name }: { name: string }) {
             {points.points.faults.length > 0 && (
               <>
                 <h4 className="mt-3 font-medium">Common faults</h4>
-                <ul className="mt-1 space-y-1 text-zinc-600 dark:text-zinc-400">
-                  {points.points.faults.map(({ fault, fix }) => (
+                <ul className="mt-1 space-y-2">
+                  {points.points.faults.map(({ fault, fix, cue }) => (
                     <li key={fault}>
-                      {fault} → <span className="text-zinc-800 dark:text-zinc-200">{fix}</span>
+                      <p className="text-zinc-800 dark:text-zinc-200">{fault}</p>
+                      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-zinc-600 dark:text-zinc-400">
+                        <span>{fix}</span>
+                        <Badge
+                          title="Coaching cue"
+                          className="inline-flex items-center gap-1 font-medium text-zinc-800 dark:text-zinc-200"
+                        >
+                          <Megaphone size={12} aria-hidden />“{cue}”
+                        </Badge>
+                      </p>
                     </li>
                   ))}
                 </ul>

@@ -8,7 +8,12 @@ export const PointsOfPerformanceSchema = z.object({
     .array(
       z.object({
         fault: z.string().describe('A common fault, e.g. "Heels come off the floor"'),
-        fix: z.string().describe('The cue that fixes it, e.g. "Weight in the heels"'),
+        fix: z
+          .string()
+          .describe('How to correct it, e.g. "Sit the hips back and keep the weight in the heels"'),
+        cue: z
+          .string()
+          .describe('A short verbal cue a coach calls out mid-workout, e.g. "Heels down!"'),
       }),
     )
     .describe("2-4 of the most common faults and how to fix them"),
