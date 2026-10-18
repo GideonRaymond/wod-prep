@@ -1,6 +1,5 @@
 import { SavedWodSchema } from "@/schemas/wodState";
 import type { SavedWod } from "@/types/wod";
-import { fillMissingLabels } from "@/utils/fillMissingLabels";
 
 /** Bump when SavedWod changes shape, so older saved workouts are ignored. */
 export const WOD_STORAGE_KEY = "wod-prep:wod:v2";
@@ -46,11 +45,7 @@ function load(): SavedWod | null {
     const raw = sessionStorage.getItem(WOD_STORAGE_KEY);
     if (!raw) return null;
     const result = SavedWodSchema.safeParse(JSON.parse(raw));
-    if (result.success) {
-      // Fixes labels in workouts saved before missing labels were filled in.
-      const { text, wod } = result.data;
-      return { text, wod: { parts: fillMissingLabels(wod.parts) } };
-    }
+    if (result.success) return result.data;
     sessionStorage.removeItem(WOD_STORAGE_KEY);
   } catch {
     // Unreadable or invalid JSON: start without a saved workout.

@@ -23,17 +23,6 @@ describe("createWodStore", () => {
     expect(createWodStore().get()).toEqual(value);
   });
 
-  it("fills in missing part labels in a workout saved before they were fixed", () => {
-    const wod = toWodState(strengthAndMetcon);
-    wod.parts[0] = { ...wod.parts[0], label: null };
-    sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(withText(wod)));
-    expect(
-      createWodStore()
-        .get()
-        ?.wod.parts.map((p) => p.label),
-    ).toEqual(["A", "B", "Cool-down"]);
-  });
-
   it("returns the same object on every read, as useSyncExternalStore needs", () => {
     sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(withText(toWodState(fran))));
     const store = createWodStore();
