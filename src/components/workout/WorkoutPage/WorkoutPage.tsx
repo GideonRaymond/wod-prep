@@ -4,11 +4,13 @@ import { ArrowLeft } from "lucide-react";
 import { WorkoutPartDetails } from "@/components/workout/WorkoutPartDetails";
 import { ButtonLink } from "@/components/shared/ButtonLink";
 import { Card } from "@/components/shared/Card";
+import { useMovementVideos } from "@/hooks/useMovementVideos";
 import { useWod } from "@/providers/WodProvider";
 
 /** The confirmed workout with the details for each part and movement. */
 export function WorkoutPage() {
   const { wod, restored } = useWod();
+  const videos = useMovementVideos();
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-12">
@@ -16,6 +18,12 @@ export function WorkoutPage() {
         Back to edit
       </ButtonLink>
       <h1 className="mt-2 text-3xl font-bold tracking-tight">Your workout</h1>
+      {wod && videos.loading && (
+        <p role="status" className="text-subtle mt-1 text-sm">
+          Finding videos…
+        </p>
+      )}
+      {videos.error && <p className="text-subtle mt-1 text-sm">{videos.error}</p>}
 
       {wod ? (
         <div className="mt-8">
