@@ -35,7 +35,17 @@ export const WorkoutPartSchema = z.object({
     .describe(
       'The part\'s label as programmed, e.g. "A", "B", "C", "Cool-down"; null for a single-part WOD',
     ),
-  title: z.string().nullable().describe('Named WOD if given, e.g. "Fran"'),
+  title: z
+    .string()
+    .describe(
+      'The workout\'s name if it has one (e.g. "Fran", "Murph"); otherwise a short, descriptive 2-4 word title based on its type and feel, e.g. "Heavy Back Squats", "Intense Couplet", "Easy Flush"',
+    ),
+  named: z
+    .boolean()
+    .describe("True when the title is the workout's real name, false when you made it up"),
+  sourceText: z
+    .string()
+    .describe("The lines of the original text that belong to this part, copied exactly"),
   format: z.enum(["for_time", "amrap", "emom", "rounds", "intervals", "strength", "other"]),
   duration: z
     .string()

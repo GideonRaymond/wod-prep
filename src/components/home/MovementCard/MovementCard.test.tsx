@@ -40,11 +40,8 @@ describe("MovementCard", () => {
     expect(onRemove).toHaveBeenCalledOnce();
   });
 
-  it("has a collapsed points of performance section", () => {
+  it("doesn't show points of performance while reviewing", () => {
     renderCard(thruster);
-    expect(screen.getByRole("button", { name: "Points of performance" })).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
+    expect(screen.queryByRole("button", { name: "Points of performance" })).not.toBeInTheDocument();
   });
 });

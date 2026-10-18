@@ -7,14 +7,10 @@ import { WodSummary } from "./WodSummary";
 import type { Wod } from "@/schemas/wod";
 import type { WodState } from "@/types/wod";
 import { fran, strengthAndMetcon } from "@/test/fixtures";
-import { withId } from "@/utils/withId";
-
-const toState = (wod: Wod): WodState => ({
-  parts: wod.parts.map((p) => withId({ ...p, movements: p.movements.map(withId) })),
-});
+import { toWodState } from "@/utils/toWodState";
 
 function Harness({ wod }: { wod: Wod }) {
-  const [state, setState] = useState(() => toState(wod));
+  const [state, setState] = useState<WodState>(() => toWodState(wod));
   return <WodSummary wod={state} onChange={setState} />;
 }
 
@@ -33,9 +29,9 @@ describe("WodSummary", () => {
     render(<Harness wod={strengthAndMetcon} />);
     const [a, b, coolDown] = screen.getAllByRole("region");
 
-    expect(a).toHaveAccessibleName("Part A");
-    expect(b).toHaveAccessibleName("Part B: Fran");
-    expect(coolDown).toHaveAccessibleName("Cool-down");
+    expect(a).toHaveAccessibleName("Heavy Back Squats");
+    expect(b).toHaveAccessibleName("Fran");
+    expect(coolDown).toHaveAccessibleName("Easy Flush");
 
     expect(within(a).getByRole("meter")).toHaveAttribute("aria-valuenow", "7");
     expect(within(b).getByRole("meter")).toHaveAttribute("aria-valuenow", "9");

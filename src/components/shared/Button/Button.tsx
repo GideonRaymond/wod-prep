@@ -26,6 +26,24 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   icon?: LucideIcon;
 };
 
+export type ButtonStyleProps = {
+  variant?: keyof typeof VARIANTS;
+  size?: keyof typeof SIZES;
+  className?: string;
+};
+
+/** The classes for a button look, also used by ButtonLink. */
+export function buttonClass({ variant = "primary", size = "md", className }: ButtonStyleProps) {
+  return cn(
+    "inline-flex items-center gap-1.5 transition-colors disabled:opacity-40",
+    VARIANTS[variant],
+    SIZES[size],
+    className,
+  );
+}
+
+export const BUTTON_ICON_SIZES = ICON_SIZES;
+
 export function Button({
   variant = "primary",
   size = "md",
@@ -36,16 +54,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   return (
-    <button
-      type={type}
-      className={cn(
-        "inline-flex items-center gap-1.5 transition-colors disabled:opacity-40",
-        VARIANTS[variant],
-        SIZES[size],
-        className,
-      )}
-      {...props}
-    >
+    <button type={type} className={buttonClass({ variant, size, className })} {...props}>
       {Icon && <Icon size={ICON_SIZES[size]} aria-hidden />}
       {children}
     </button>

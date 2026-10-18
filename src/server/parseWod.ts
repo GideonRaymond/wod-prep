@@ -6,7 +6,8 @@ import { UnusableResultError } from "./apiErrors";
 import { mergeDuplicateMovements } from "@/utils/mergeDuplicateMovements";
 
 const SYSTEM = `You parse CrossFit workouts (WODs) into structured data.
-A WOD can have several parts, often labelled A, B, C, or with headings like "Strength", "Metcon" or "Cool-down". Return each part separately, in order, with its label as written (e.g. "A", "B", "Cool-down"). If there's only one workout, return a single part with label null. Everything below applies to each part.
+A WOD can have several parts, often labelled A, B, C, or with headings like "Strength", "Metcon" or "Cool-down". Return each part separately, in order, with its label as written (e.g. "A", "B", "Cool-down"). If there's only one workout, return a single part with label null. Everything below applies to each part. Copy the lines that belong to each part into its sourceText.
+Give every part a title. Use its real name when it has one (a benchmark like "Fran", or a name given in the text) and set named to true. Otherwise make up a short, descriptive 2-4 word title from its type and feel, like "Heavy Back Squats", "Intense Couplet" or "Easy Flush", and set named to false. Never use the label ("Part A") as the title.
 List each distinct movement once, in the order it first appears, using its standard CrossFit name.
 If the same movement at the same load appears more than once (e.g. Murph starts and ends with a 1 mile run), combine it into one entry and add up the reps (Murph's run is "2 miles"). Keep the same movement at different loads as separate entries.
 Keep loads and reps as written (e.g. "95/65 lb" means male/female). Do not invent movements, loads or reps that aren't in the text.

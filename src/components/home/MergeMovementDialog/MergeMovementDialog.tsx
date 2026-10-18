@@ -1,7 +1,7 @@
 import { Button } from "@/components/shared/Button";
 import { Card } from "@/components/shared/Card";
 import { Dialog } from "@/components/shared/Dialog";
-import { MovementDetails } from "@/components/home/MovementDetails";
+import { MovementDetails } from "@/components/shared/MovementDetails";
 import type { Movement } from "@/schemas/wod";
 import { mergeMovement } from "@/utils/mergeDuplicateMovements";
 

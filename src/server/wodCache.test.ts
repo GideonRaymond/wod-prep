@@ -68,12 +68,43 @@ describe("WOD cache", () => {
     await expect(getCachedWod('"fran"')).resolves.toEqual(fran);
   });
 
-  it("doesn't store multi-part WODs under a part's name", async () => {
-    await cacheWod("A) Back squat 5x5 B) Fran C) Cool-down row", strengthAndMetcon);
-    await expect(getCachedWod("A) Back squat 5x5 B) Fran C) Cool-down row")).resolves.toEqual(
-      strengthAndMetcon,
-    );
-    await expect(getCachedWod("Fran")).resolves.toBeNull();
+  it("doesn't store a made-up title as a name", async () => {
+    const couplet = { parts: [{ ...franPart, title: "Intense Couplet", named: false }] };
+    await cacheWod("21-15-9 thrusters and pull-ups", couplet);
+    await expect(getCachedWod("Intense Couplet")).resolves.toBeNull();
+  });
+
+  describe("multi-part WODs", () => {
+    const DAY =
+      "A) Back Squat 5x5 B) 21-15-9 Thrusters (95/65 lb), Pull-ups Cool-down: 5 min easy row";
+    const [squats, franB, coolDown] = strengthAndMetcon.parts;
+
+    it("are found again as a whole", async () => {
+      await cacheWod(DAY, strengthAndMetcon);
+      await expect(getCachedWod(DAY)).resolves.toEqual(strengthAndMetcon);
+    });
+
+    it("store each part on its own under that part's text", async () => {
+      await cacheWod(DAY, strengthAndMetcon);
+      for (const part of [squats, franB, coolDown]) {
+        await expect(getCachedWod(part.sourceText)).resolves.toEqual({
+          parts: [{ ...part, label: null }],
+        });
+      }
+    });
+
+    it("store a part with a real name under that name, as a single workout", async () => {
+      await cacheWod(DAY, strengthAndMetcon);
+      await expect(getCachedWod("Fran")).resolves.toEqual({ parts: [{ ...franB, label: null }] });
+      await expect(getCachedWod("Heavy Back Squats")).resolves.toBeNull();
+      await expect(getCachedWod("Easy Flush")).resolves.toBeNull();
+    });
+
+    it("don't replace a name that's already cached", async () => {
+      await cacheWod("Fran", fran);
+      await cacheWod(DAY, strengthAndMetcon);
+      await expect(getCachedWod("Fran")).resolves.toEqual(fran);
+    });
   });
 
   it("keeps the first WOD stored under a name", async () => {

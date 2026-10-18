@@ -3,7 +3,11 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HomePage } from "./HomePage";
+import { WodProvider } from "@/providers/WodProvider";
 import { fran, franPart, strengthAndMetcon } from "@/test/fixtures";
+
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
 const fetchMock = vi.fn();
 
@@ -13,7 +17,11 @@ function respond(status: number, body: unknown) {
 
 async function submit(text: string) {
   const user = userEvent.setup();
-  render(<HomePage />);
+  render(
+    <WodProvider>
+      <HomePage />
+    </WodProvider>,
+  );
   await user.type(screen.getByRole("textbox", { name: "Workout" }), text);
   await user.click(screen.getByRole("button", { name: "Break it down" }));
   return user;
@@ -22,6 +30,7 @@ async function submit(text: string) {
 describe("HomePage", () => {
   beforeEach(() => {
     fetchMock.mockReset();
+    push.mockReset();
     vi.stubGlobal("fetch", fetchMock);
   });
   afterEach(() => {
@@ -42,13 +51,31 @@ describe("HomePage", () => {
     expect(within(cards[0]).getByRole("heading", { name: "Thruster" })).toBeInTheDocument();
   });
 
+  it("disables Break it down until the workout is edited", async () => {
+    respond(200, { wod: fran });
+    const user = await submit("Fran");
+    await screen.findByRole("heading", { name: "Fran" });
+    const button = screen.getByRole("button", { name: "Break it down" });
+    expect(button).toBeDisabled();
+
+    await user.type(screen.getByRole("textbox", { name: "Workout" }), " and Grace");
+    expect(button).toBeEnabled();
+  });
+
+  it("keeps Break it down enabled after a failed parse, so it can be retried", async () => {
+    respond(500, { error: "Something broke." });
+    await submit("Fran");
+    await screen.findByText("Something broke.");
+    expect(screen.getByRole("button", { name: "Break it down" })).toBeEnabled();
+  });
+
   it("splits a multi-part WOD into sections", async () => {
     respond(200, { wod: strengthAndMetcon });
     await submit("A) Back squat 5x5 B) Fran C) 5 min easy row");
 
-    expect(await screen.findByRole("region", { name: "Part A" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Part B: Fran" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Cool-down" })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Heavy Back Squats" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Fran" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Easy Flush" })).toBeInTheDocument();
   });
 
   it("shows a loading state while parsing", async () => {
@@ -86,5 +113,47 @@ describe("HomePage", () => {
     const textareas = screen.getAllByRole("textbox").filter((el) => el.tagName === "TEXTAREA");
     expect(textareas).toHaveLength(2);
     for (const textarea of textareas) expect(textarea).toHaveClass("resize-none");
+  });
+
+  it("doesn't show points of performance while reviewing", async () => {
+    respond(200, { wod: fran });
+    await submit("Fran");
+    await screen.findByRole("heading", { name: "Fran" });
+    expect(screen.queryByRole("button", { name: "Points of performance" })).not.toBeInTheDocument();
+  });
+
+  it("only shows Confirm once a workout is parsed", async () => {
+    respond(200, { wod: fran });
+    render(
+      <WodProvider>
+        <HomePage />
+      </WodProvider>,
+    );
+    expect(screen.queryByRole("button", { name: "Confirm workout" })).not.toBeInTheDocument();
+  });
+
+  it("goes to the workout page on Confirm", async () => {
+    respond(200, { wod: fran });
+    const user = await submit("Fran");
+    await user.click(await screen.findByRole("button", { name: "Confirm workout" }));
+    expect(push).toHaveBeenCalledWith("/workout");
+  });
+
+  it("can't confirm while a stimulus is empty", async () => {
+    respond(200, { wod: strengthAndMetcon });
+    const user = await submit("A) squats B) Fran");
+    const partB = await screen.findByRole("region", { name: "Fran" });
+
+    await user.click(within(partB).getByRole("button", { name: "Edit stimulus" }));
+    await user.clear(within(partB).getByRole("textbox", { name: "Stimulus" }));
+
+    const confirm = screen.getByRole("button", { name: "Confirm workout" });
+    expect(confirm).toBeDisabled();
+    expect(confirm).toHaveAccessibleDescription(
+      "Every part needs a stimulus before you can confirm.",
+    );
+
+    await user.type(within(partB).getByRole("textbox", { name: "Stimulus" }), "Sprint.");
+    expect(confirm).toBeEnabled();
   });
 });

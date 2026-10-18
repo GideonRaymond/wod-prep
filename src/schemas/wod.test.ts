@@ -18,10 +18,16 @@ describe("WorkoutPartSchema", () => {
     const part = {
       ...franPart,
       label: null,
-      title: null,
       movements: [{ ...franPart.movements[0], reps: null, load: null }],
     };
     expect(WorkoutPartSchema.safeParse(part).success).toBe(true);
+  });
+
+  it("requires a title and whether it's the workout's real name", () => {
+    expect(WorkoutPartSchema.safeParse({ ...franPart, title: null }).success).toBe(false);
+    const part: Partial<WorkoutPart> = { ...franPart };
+    delete part.named;
+    expect(WorkoutPartSchema.safeParse(part).success).toBe(false);
   });
 
   it("requires a stimulus with a description and intensity", () => {

@@ -2,20 +2,31 @@
 import { useState } from "react";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { WorkoutPart } from "./WorkoutPart";
 import type { WorkoutPartState } from "@/types/wod";
 import { franPart } from "@/test/fixtures";
-import { withId } from "@/utils/withId";
+import { toWodState } from "@/utils/toWodState";
 
-const initial: WorkoutPartState = withId({
-  ...franPart,
-  movements: franPart.movements.map(withId),
-});
+const initial: WorkoutPartState = toWodState({ parts: [franPart] }).parts[0];
 
-function Harness({ part = initial }: { part?: WorkoutPartState }) {
+function Harness({
+  part = initial,
+  onChange,
+}: {
+  part?: WorkoutPartState;
+  onChange?: (part: WorkoutPartState) => void;
+}) {
   const [state, setState] = useState(part);
-  return <WorkoutPart part={state} onChange={setState} />;
+  return (
+    <WorkoutPart
+      part={state}
+      onChange={(next) => {
+        onChange?.(next);
+        setState(next);
+      }}
+    />
+  );
 }
 
 describe("WorkoutPart", () => {
@@ -30,21 +41,17 @@ describe("WorkoutPart", () => {
     expect(screen.getByText("Partner WOD")).toBeInTheDocument();
   });
 
-  it.each([
-    [{ label: "A", title: null }, "Part A"],
-    [{ label: "b", title: "Fran" }, "Part B: Fran"],
-    [{ label: "Cool-down", title: null }, "Cool-down"],
-    [{ label: null, title: "Fran" }, "Fran"],
-  ])("names the part %o as %s", (names, heading) => {
-    render(<Harness part={{ ...initial, ...names }} />);
-    expect(screen.getByRole("region", { name: heading })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument();
+  it("uses the title as the heading", () => {
+    render(<Harness />);
+    expect(screen.getByRole("region", { name: "Fran" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Fran" })).toBeInTheDocument();
   });
 
-  it("shows no heading for an untitled single-part WOD", () => {
-    render(<Harness part={{ ...initial, label: null, title: null }} />);
-    expect(screen.queryByRole("heading", { level: 2 })).not.toBeInTheDocument();
-    expect(screen.getByText("For Time · 21-15-9")).toBeInTheDocument();
+  it.each(["A", "Cool-down"])("shows the %s label beside the title, not in it", (label) => {
+    render(<Harness part={{ ...initial, label, title: "Easy Flush" }} />);
+    expect(screen.getByRole("heading", { name: "Easy Flush" })).toBeInTheDocument();
+    expect(screen.getByText(label)).toBeInTheDocument();
+    expect(screen.queryByText(/Part /)).not.toBeInTheDocument();
   });
 
   it("shows the stimulus with its intensity and a card per movement", () => {
@@ -83,5 +90,31 @@ describe("WorkoutPart", () => {
     const cards = screen.getAllByRole("listitem");
     expect(cards).toHaveLength(2);
     expect(within(cards[1]).getByTitle("Reps")).toHaveTextContent("21-15-9 + 10");
+  });
+
+  it("passes stimulus edits up so confirming uses the edited text", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Harness onChange={onChange} />);
+    await user.click(screen.getByRole("button", { name: "Edit stimulus" }));
+    await user.clear(screen.getByRole("textbox", { name: "Stimulus" }));
+    await user.type(screen.getByRole("textbox", { name: "Stimulus" }), "Go easy.");
+
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        stimulus: { ...franPart.stimulus, description: "Go easy." },
+        originalStimulus: franPart.stimulus.description,
+      }),
+    );
+  });
+
+  it("reverts to the parsed stimulus even after coming back to the page", async () => {
+    const user = userEvent.setup();
+    const edited = { ...initial, stimulus: { ...initial.stimulus, description: "Go easy." } };
+    render(<Harness part={edited} />);
+    expect(screen.getByText("Go easy.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Revert stimulus to original" }));
+    expect(screen.getByText(franPart.stimulus.description)).toBeInTheDocument();
   });
 });

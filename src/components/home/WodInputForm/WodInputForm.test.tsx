@@ -8,9 +8,9 @@ import { MAX_WOD_LENGTH } from "@/constants/wod";
 const textbox = () => screen.getByRole("textbox", { name: "Workout" });
 const submitButton = () => screen.getByRole("button", { name: "Break it down" });
 
-function setup(loading = false) {
+function setup(loading = false, parsedText: string | null = null) {
   const onSubmit = vi.fn();
-  render(<WodInputForm loading={loading} onSubmit={onSubmit} />);
+  render(<WodInputForm loading={loading} parsedText={parsedText} onSubmit={onSubmit} />);
   return { onSubmit, user: userEvent.setup() };
 }
 
@@ -69,5 +69,34 @@ describe("WodInputForm", () => {
     setup();
     fireEvent.change(textbox(), { target: { value: "x".repeat(MAX_WOD_LENGTH + 1) } });
     expect(submitButton()).toBeDisabled();
+  });
+
+  describe("after a parse", () => {
+    it("disables submit until the text changes, with a hint", async () => {
+      const { user } = setup(false, "Fran");
+      await user.type(textbox(), "Fran");
+      expect(submitButton()).toBeDisabled();
+      expect(submitButton()).toHaveAccessibleDescription(
+        "Edit the workout to break it down again.",
+      );
+
+      await user.type(textbox(), "!");
+      expect(submitButton()).toBeEnabled();
+      expect(screen.queryByText(/break it down again/)).not.toBeInTheDocument();
+    });
+
+    it("ignores leading and trailing whitespace", async () => {
+      const { user } = setup(false, "Fran");
+      await user.type(textbox(), "  Fran\n");
+      expect(submitButton()).toBeDisabled();
+    });
+
+    it("enables submit again when the text is changed back after an edit", async () => {
+      const { user } = setup(false, "Fran");
+      await user.type(textbox(), "Frank");
+      expect(submitButton()).toBeEnabled();
+      await user.type(textbox(), "{Backspace}");
+      expect(submitButton()).toBeDisabled();
+    });
   });
 });
