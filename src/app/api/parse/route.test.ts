@@ -3,11 +3,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fran } from "@/test/fixtures";
 import { MAX_WOD_LENGTH } from "@/constants/wod";
 
-const { mockParseWod } = vi.hoisted(() => ({ mockParseWod: vi.fn() }));
+const { mockParseWod, mockGetCachedWod, mockCacheWod } = vi.hoisted(() => ({
+  mockParseWod: vi.fn(),
+  mockGetCachedWod: vi.fn(),
+  mockCacheWod: vi.fn(),
+}));
 
 vi.mock("@/server/parseWod", () => ({
   parseWod: mockParseWod,
   WodParseError: class WodParseError extends Error {},
+}));
+
+vi.mock("@/server/wodCache", () => ({
+  getCachedWod: mockGetCachedWod,
+  cacheWod: mockCacheWod,
 }));
 
 import { POST } from "./route";
@@ -26,6 +35,8 @@ describe("POST /api/parse", () => {
   beforeEach(() => {
     vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
     mockParseWod.mockReset();
+    mockGetCachedWod.mockReset().mockResolvedValue(null);
+    mockCacheWod.mockReset().mockResolvedValue(undefined);
   });
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -38,6 +49,39 @@ describe("POST /api/parse", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ wod: fran });
     expect(mockParseWod).toHaveBeenCalledWith("Fran");
+  });
+
+  it("parses and caches the workout on a cache miss", async () => {
+    mockParseWod.mockResolvedValue(fran);
+    const res = await post({ text: "Fran" });
+
+    expect(res.headers.get("X-Cache")).toBe("MISS");
+    expect(mockGetCachedWod).toHaveBeenCalledWith("Fran");
+    expect(mockCacheWod).toHaveBeenCalledWith("Fran", fran);
+  });
+
+  it("returns a cached workout without calling Claude", async () => {
+    mockGetCachedWod.mockResolvedValue(fran);
+    const res = await post({ text: "Fran" });
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("X-Cache")).toBe("HIT");
+    expect(await res.json()).toEqual({ wod: fran });
+    expect(mockParseWod).not.toHaveBeenCalled();
+    expect(mockCacheWod).not.toHaveBeenCalled();
+  });
+
+  it("serves cached workouts even without an API key", async () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    mockGetCachedWod.mockResolvedValue(fran);
+    const res = await post({ text: "Fran" });
+    expect(res.status).toBe(200);
+  });
+
+  it("doesn't cache failed parses", async () => {
+    mockParseWod.mockRejectedValue(new WodParseError("Couldn't read that."));
+    await post({ text: "hello" });
+    expect(mockCacheWod).not.toHaveBeenCalled();
   });
 
   it("errors when the API key is missing", async () => {

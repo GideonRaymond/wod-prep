@@ -12,6 +12,17 @@ npm run dev
 
 Open http://localhost:3000.
 
+## Parse cache
+
+In development, every parsed WOD is saved to `.cache/parsed-wods.json` (gitignored), so testing with the same workouts costs nothing after the first parse. Cached workouts even work without an API key.
+
+- **Formatting is ignored:** `"Fran" 21-15-9 for time: Thrusters (95/65 lb), Pull-ups` and `fran 21-15-9 for time thrusters 95/65lb pullups` hit the same entry.
+- **Named workouts** are also stored under their name, so after parsing Fran once, typing just `Fran` is a cache hit.
+- **Different wording** (e.g. `21-15-9 pullups and thrusters`) is parsed once more, then cached too.
+- Responses carry an `X-Cache: HIT` or `MISS` header (visible in the browser's network tab).
+- **Clear the cache:** delete `.cache/`. **Turn it on or off:** set `WOD_CACHE=on|off`. It's off in production by default.
+- Bump `CACHE_VERSION` in `src/server/wodCache.ts` when the parser prompt or schema changes.
+
 ## Checks
 
 ```bash

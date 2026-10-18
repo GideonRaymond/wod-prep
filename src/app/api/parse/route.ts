@@ -1,12 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { MAX_WOD_LENGTH } from "@/constants/wod";
 import { parseWod, WodParseError } from "@/server/parseWod";
+import { cacheWod, getCachedWod } from "@/server/wodCache";
 
 export async function POST(request: Request) {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return Response.json({ error: "Set ANTHROPIC_API_KEY in .env.local." }, { status: 500 });
-  }
-
   const body = await request.json().catch(() => null);
   const text = typeof body?.text === "string" ? body.text.trim() : "";
 
@@ -17,9 +14,19 @@ export async function POST(request: Request) {
     return Response.json({ error: "That's too long for one workout." }, { status: 400 });
   }
 
+  const cached = await getCachedWod(text);
+  if (cached) {
+    return Response.json({ wod: cached }, { headers: { "X-Cache": "HIT" } });
+  }
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return Response.json({ error: "Set ANTHROPIC_API_KEY in .env.local." }, { status: 500 });
+  }
+
   try {
     const wod = await parseWod(text);
-    return Response.json({ wod });
+    await cacheWod(text, wod);
+    return Response.json({ wod }, { headers: { "X-Cache": "MISS" } });
   } catch (err) {
     if (err instanceof WodParseError) {
       return Response.json({ error: err.message }, { status: 422 });
