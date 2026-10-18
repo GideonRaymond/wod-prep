@@ -45,7 +45,13 @@ describe("parseWod", () => {
       stop_reason: "end_turn",
       parsed_output: {
         parts: [
-          { ...franPart, label: "A", title: null, movements: [pullUps, pullUps] },
+          {
+            ...franPart,
+            label: "A",
+            title: "Pull-up Volume",
+            named: false,
+            movements: [pullUps, pullUps],
+          },
           { ...franPart, label: "B", title: "Murph", movements: [run, pullUps, run] },
         ],
       },
@@ -66,6 +72,8 @@ describe("parseWod", () => {
     expect(system).toMatch(/Return each part separately/);
     expect(system).toMatch(/single part with label null/);
     expect(system).toMatch(/Rate the intended intensity from 1 to 10/);
+    expect(system).toMatch(/Give every part a title/);
+    expect(system).toMatch(/Never use the label \("Part A"\) as the title/);
   });
 
   it("asks the model to combine repeated movements", async () => {

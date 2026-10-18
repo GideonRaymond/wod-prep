@@ -7,6 +7,7 @@ const { mockRequest } = vi.hoisted(() => ({ mockRequest: vi.fn() }));
 vi.mock("@/services/wodApi", () => ({ requestParseWod: mockRequest }));
 
 import { useParseWod } from "./useParseWod";
+import { WodProvider } from "@/providers/WodProvider";
 
 describe("useParseWod", () => {
   beforeEach(() => {
@@ -15,7 +16,7 @@ describe("useParseWod", () => {
 
   it("stores the parsed WOD with an id on every part and movement", async () => {
     mockRequest.mockResolvedValue(strengthAndMetcon);
-    const { result } = renderHook(() => useParseWod());
+    const { result } = renderHook(() => useParseWod(), { wrapper: WodProvider });
 
     await act(() => result.current.parse("A) squats B) Fran"));
 
@@ -32,7 +33,7 @@ describe("useParseWod", () => {
   it("is loading while the request is in flight", async () => {
     let resolve: (wod: typeof fran) => void = () => {};
     mockRequest.mockReturnValue(new Promise((r) => (resolve = r)));
-    const { result } = renderHook(() => useParseWod());
+    const { result } = renderHook(() => useParseWod(), { wrapper: WodProvider });
 
     act(() => {
       void result.current.parse("Fran");
@@ -45,7 +46,7 @@ describe("useParseWod", () => {
 
   it("stores the error message and clears the previous WOD", async () => {
     mockRequest.mockResolvedValueOnce(fran).mockRejectedValueOnce(new Error("Too long."));
-    const { result } = renderHook(() => useParseWod());
+    const { result } = renderHook(() => useParseWod(), { wrapper: WodProvider });
 
     await act(() => result.current.parse("Fran"));
     await act(() => result.current.parse("x"));

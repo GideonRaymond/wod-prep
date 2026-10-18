@@ -3,6 +3,7 @@ import type { Wod, WorkoutPart } from "@/schemas/wod";
 export const franPart: WorkoutPart = {
   label: null,
   title: "Fran",
+  named: true,
   format: "for_time",
   duration: null,
   rounds: "21-15-9",
@@ -37,7 +38,8 @@ export const strengthAndMetcon: Wod = {
   parts: [
     {
       label: "A",
-      title: null,
+      title: "Heavy Back Squats",
+      named: false,
       format: "strength",
       duration: "15 min",
       rounds: "5x5",
@@ -56,7 +58,8 @@ export const strengthAndMetcon: Wod = {
     { ...franPart, label: "B" },
     {
       label: "Cool-down",
-      title: null,
+      title: "Easy Flush",
+      named: false,
       format: "other",
       duration: "5 min",
       rounds: null,

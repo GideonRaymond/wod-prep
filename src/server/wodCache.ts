@@ -3,7 +3,7 @@ import { WodSchema, type Wod } from "@/schemas/wod";
 import { createFileCache } from "./fileCache";
 
 /** Bump when the parser prompt or schema changes, so old results get parsed again. */
-export const CACHE_VERSION = 2;
+export const CACHE_VERSION = 3;
 
 const cache = createFileCache("parsed-wods", WodSchema);
 
@@ -28,11 +28,12 @@ export function getCachedWod(text: string): Promise<Wod | null> {
 }
 
 /**
- * Stores a parsed WOD under the text it came from. A single-part named WOD (e.g. "Fran") is also
- * stored under its name so typing just the name finds it later; the first version wins.
+ * Stores a parsed WOD under the text it came from. A single-part WOD with a real name (e.g. "Fran")
+ * is also stored under that name so typing just the name finds it later; the first version wins.
+ * Made-up titles like "Intense Couplet" aren't, since they don't identify a workout.
  */
 export async function cacheWod(text: string, wod: Wod) {
   await cache.set(keyFor(text), wod);
   const [only, ...rest] = wod.parts;
-  if (only.title && rest.length === 0) await cache.setIfMissing(keyFor(only.title), wod);
+  if (only.named && rest.length === 0) await cache.setIfMissing(keyFor(only.title), wod);
 }

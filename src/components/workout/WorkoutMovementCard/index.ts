@@ -1,0 +1,1 @@
+export { WorkoutMovementCard } from "./WorkoutMovementCard";

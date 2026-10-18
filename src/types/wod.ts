@@ -6,6 +6,8 @@ export type MovementItem = Movement & { id: string };
 /** One part of a parsed WOD as held in UI state. */
 export type WorkoutPartState = Omit<WorkoutPart, "movements"> & {
   id: string;
+  /** The stimulus description as parsed, to revert edits to. */
+  originalStimulus: string;
   movements: MovementItem[];
 };
 

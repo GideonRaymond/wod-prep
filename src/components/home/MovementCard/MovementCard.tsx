@@ -1,23 +1,16 @@
 import { X } from "lucide-react";
-import { MovementDetails } from "@/components/home/MovementDetails";
-import { PointsOfPerformance } from "@/components/home/PointsOfPerformance";
-import { Badge, type BadgeTone } from "@/components/shared/Badge";
 import { Button } from "@/components/shared/Button";
 import { Card } from "@/components/shared/Card";
+import { CategoryBadge } from "@/components/shared/CategoryBadge";
+import { MovementDetails } from "@/components/shared/MovementDetails";
 import type { Movement } from "@/schemas/wod";
-
-const CATEGORY_TONES: Record<Movement["category"], BadgeTone> = {
-  weightlifting: "amber",
-  gymnastics: "sky",
-  monostructural: "emerald",
-  other: "neutral",
-};
 
 export type MovementCardProps = {
   movement: Movement;
   onRemove: () => void;
 };
 
+/** A movement in the review list, with a button to remove it. */
 export function MovementCard({ movement, onRemove }: MovementCardProps) {
   const { name, category } = movement;
 
@@ -26,7 +19,7 @@ export function MovementCard({ movement, onRemove }: MovementCardProps) {
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-lg font-medium">{name}</h3>
         <div className="flex items-center gap-2">
-          <Badge tone={CATEGORY_TONES[category]}>{category}</Badge>
+          <CategoryBadge category={category} />
           <Button
             variant="icon"
             size="icon"
@@ -37,7 +30,6 @@ export function MovementCard({ movement, onRemove }: MovementCardProps) {
         </div>
       </div>
       <MovementDetails movement={movement} />
-      <PointsOfPerformance name={name} />
     </Card>
   );
 }

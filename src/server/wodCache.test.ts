@@ -68,6 +68,12 @@ describe("WOD cache", () => {
     await expect(getCachedWod('"fran"')).resolves.toEqual(fran);
   });
 
+  it("doesn't store a made-up title as a name", async () => {
+    const couplet = { parts: [{ ...franPart, title: "Intense Couplet", named: false }] };
+    await cacheWod("21-15-9 thrusters and pull-ups", couplet);
+    await expect(getCachedWod("Intense Couplet")).resolves.toBeNull();
+  });
+
   it("doesn't store multi-part WODs under a part's name", async () => {
     await cacheWod("A) Back squat 5x5 B) Fran C) Cool-down row", strengthAndMetcon);
     await expect(getCachedWod("A) Back squat 5x5 B) Fran C) Cool-down row")).resolves.toEqual(

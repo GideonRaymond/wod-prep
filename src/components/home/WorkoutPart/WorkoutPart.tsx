@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useEffect, useEffectEvent, useId } from "react";
 import { AddMovementForm } from "@/components/home/AddMovementForm";
 import { MovementCard } from "@/components/home/MovementCard";
 import { StimulusCard } from "@/components/home/StimulusCard";
@@ -11,12 +11,6 @@ import type { Movement } from "@/schemas/wod";
 import type { MovementItem, WorkoutPartState } from "@/types/wod";
 import { withId } from "@/utils/withId";
 
-/** "A" → "Part A"; longer labels like "Cool-down" are used as they are. */
-function partName(label: string | null) {
-  if (!label) return null;
-  return /^[a-z]$/i.test(label) ? `Part ${label.toUpperCase()}` : label;
-}
-
 export type WorkoutPartProps = {
   part: WorkoutPartState;
   onChange: (part: WorkoutPartState) => void;
@@ -24,9 +18,15 @@ export type WorkoutPartProps = {
 
 export function WorkoutPart({ part, onChange }: WorkoutPartProps) {
   const headingId = useId();
-  const heading = [partName(part.label), part.title].filter(Boolean).join(": ");
   const meta = [FORMAT_LABELS[part.format], part.rounds, part.duration].filter(Boolean);
   const stimulus = useUndoableText(part.stimulus.description);
+
+  // Keep the shared WOD in step with stimulus edits, so confirming uses the edited text.
+  const syncStimulus = useEffectEvent((description: string) => {
+    if (description === part.stimulus.description) return;
+    onChange({ ...part, stimulus: { ...part.stimulus, description } });
+  });
+  useEffect(() => syncStimulus(stimulus.value), [stimulus.value]);
 
   const remove = (id: string) =>
     onChange({ ...part, movements: part.movements.filter((m) => m.id !== id) });
@@ -36,24 +36,22 @@ export function WorkoutPart({ part, onChange }: WorkoutPartProps) {
     onChange({ ...part, movements: part.movements.map((m) => (m.id === id ? movement : m)) });
 
   return (
-    <section aria-labelledby={heading ? headingId : undefined}>
-      {heading && (
-        <div className="flex items-center gap-2">
-          {part.label && (
-            <Badge className="bg-zinc-900 text-sm font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">
-              {part.label}
-            </Badge>
-          )}
-          <h2 id={headingId} className="text-2xl font-semibold">
-            {heading}
-          </h2>
-        </div>
-      )}
+    <section aria-labelledby={headingId}>
+      <div className="flex items-center gap-2">
+        {part.label && (
+          <Badge className="bg-zinc-900 text-sm font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">
+            {part.label}
+          </Badge>
+        )}
+        <h2 id={headingId} className="text-2xl font-semibold">
+          {part.title}
+        </h2>
+      </div>
       <p className="text-zinc-600 dark:text-zinc-400">{meta.join(" · ")}</p>
       {part.notes && <p className="mt-1 text-sm text-zinc-500">{part.notes}</p>}
 
       <StimulusCard
-        original={part.stimulus.description}
+        original={part.originalStimulus}
         intensity={part.stimulus.intensity}
         stimulus={stimulus}
       />
