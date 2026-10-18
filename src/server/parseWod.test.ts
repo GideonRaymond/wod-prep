@@ -32,6 +32,33 @@ describe("parseWod", () => {
     expect(params.fallbacks).toBe("default");
   });
 
+  it("combines movements the model listed more than once", async () => {
+    const run = {
+      name: "Run",
+      originalText: "1 mile Run",
+      reps: "1 mile",
+      load: null,
+      category: "monostructural" as const,
+    };
+    const pullUps = { ...fran.movements[1], reps: "100", originalText: "100 Pull-ups" };
+    mockParse.mockResolvedValue({
+      stop_reason: "end_turn",
+      parsed_output: { ...fran, title: "Murph", movements: [run, pullUps, run] },
+    });
+
+    const wod = await parseWod("Murph");
+    expect(wod.movements.map((m) => [m.name, m.reps])).toEqual([
+      ["Run", "2 miles"],
+      ["Pull-up", "100"],
+    ]);
+  });
+
+  it("asks the model to combine repeated movements", async () => {
+    mockParse.mockResolvedValue({ stop_reason: "end_turn", parsed_output: fran });
+    await parseWod("Murph");
+    expect(mockParse.mock.calls[0][0].system).toMatch(/combine it into one entry/);
+  });
+
   it("throws WodParseError when the model refuses", async () => {
     mockParse.mockResolvedValue({ stop_reason: "refusal", parsed_output: null });
     await expect(parseWod("Fran")).rejects.toThrow(WodParseError);
