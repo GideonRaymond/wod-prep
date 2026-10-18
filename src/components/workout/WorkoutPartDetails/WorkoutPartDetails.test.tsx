@@ -22,6 +22,17 @@ describe("WorkoutPartDetails", () => {
     expect(toggle(/Heavy Back Squats/)).toHaveTextContent("7/10Hard");
   });
 
+  it("doesn't show the parser's notes, since the workout is already confirmed", () => {
+    render(
+      <WorkoutPartDetails
+        part={{ ...fran, notes: "Combined the two pull-up lines." }}
+        defaultOpen
+      />,
+    );
+    expect(screen.getByRole("meter", { name: "Intensity" })).toBeInTheDocument();
+    expect(screen.queryByText("Combined the two pull-up lines.")).not.toBeInTheDocument();
+  });
+
   it("starts collapsed with a chip per movement, and opens from the header", async () => {
     const user = userEvent.setup();
     render(<WorkoutPartDetails part={fran} />);
