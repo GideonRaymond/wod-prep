@@ -9,6 +9,8 @@ export const franPart: WorkoutPart = {
   duration: null,
   rounds: "21-15-9",
   notes: null,
+  minutes: 12,
+  equipment: ["Barbell", "Plates", "Pull-up bar"],
   stimulus: {
     description:
       "Short and intense: a sprint that should finish in under 7 minutes. Light enough to keep thrusters unbroken early and pull-ups in big sets.",
@@ -46,6 +48,8 @@ export const strengthAndMetcon: Wod = {
       duration: "15 min",
       rounds: "5x5",
       notes: null,
+      minutes: 15,
+      equipment: ["Barbell", "Squat rack", "Plates"],
       stimulus: { description: "Build to a heavy set of 5 with perfect positions.", intensity: 7 },
       movements: [
         {
@@ -67,6 +71,8 @@ export const strengthAndMetcon: Wod = {
       duration: "5 min",
       rounds: null,
       notes: null,
+      minutes: 5,
+      equipment: ["Rower"],
       stimulus: { description: "Easy flush to bring the heart rate down.", intensity: 2 },
       movements: [
         {

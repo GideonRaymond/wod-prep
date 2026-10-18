@@ -1,90 +1,57 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
-import { BeforeClass } from "./BeforeClass";
-import { franPart } from "@/test/fixtures";
+import { BeforeClass, beforeClassCounts } from "./BeforeClass";
+import { strengthAndMetcon } from "@/test/fixtures";
 import { toWodState } from "@/utils/toWodState";
 
-const fran = toWodState({ parts: [franPart] }).parts[0];
-const withReferences = {
-  ...fran,
-  articles: [
-    {
-      title: "How to pace Fran",
-      url: "https://example.com/pace",
-      source: "example.com",
-      minutes: 6,
-    },
-  ],
-  movements: [
-    {
-      ...fran.movements[0],
-      videos: [{ title: "Thruster technique", url: "https://example.com/t", duration: "4:12" }],
-    },
-    fran.movements[1],
-  ],
-};
+const [squats, fran, cooldown] = toWodState(strengthAndMetcon).parts;
+const video = (n: number) => ({
+  title: `Fran video ${n}`,
+  url: `https://example.com/v${n}`,
+  duration: "3:40",
+});
+const withReferences = [
+  {
+    ...squats,
+    articles: [
+      { title: "Squat depth", url: "https://example.com/a", source: "example.com", minutes: 4 },
+    ],
+  },
+  // Named workouts bring their general videos; the third is left out to keep the list short.
+  { ...fran, videos: [video(1), video(2), video(3)] },
+  // Movement videos are Watch links on the movements, not Before class material.
+  { ...cooldown, movements: [{ ...cooldown.movements[0], videos: [video(9)] }] },
+];
 
 describe("BeforeClass", () => {
   afterEach(() => {
     cleanup();
   });
 
-  it("renders nothing while a part has no articles or videos", () => {
-    const { container } = render(<BeforeClass part={fran} />);
-    expect(container).toBeEmptyDOMElement();
+  it("says where the material will show up while there's none yet", () => {
+    render(<BeforeClass parts={[squats, fran]} />);
+    expect(screen.getByText(/show up here once they're found/)).toBeInTheDocument();
+    expect(beforeClassCounts([squats, fran])).toBe("");
   });
 
-  it("lists articles under Read and videos under Watch, opening in a new tab", () => {
-    render(<BeforeClass part={withReferences} />);
-    expect(screen.getByRole("button", { name: /Before class/ })).toHaveAttribute(
-      "aria-expanded",
-      "true",
-    );
-    expect(screen.getByText("1 video · 1 article")).toBeInTheDocument();
+  it("lists articles under Read and named workouts' videos under Watch", () => {
+    render(<BeforeClass parts={withReferences} />);
     expect(screen.getByRole("heading", { name: "Read" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Watch" })).toBeInTheDocument();
 
-    const article = screen.getByRole("link", { name: "How to pace Fran" });
-    expect(article).toHaveAttribute("href", "https://example.com/pace");
+    const article = screen.getByRole("link", { name: "Squat depth" });
     expect(article).toHaveAttribute("target", "_blank");
-    expect(screen.getByText("Article · example.com · 6 min read")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Thruster technique" })).toBeInTheDocument();
-    expect(screen.getByText("Video · 4:12 · Thruster")).toBeInTheDocument();
+    expect(screen.getByText("Article · example.com · 4 min read")).toBeInTheDocument();
+    expect(screen.getAllByText("Video · 3:40 · Fran")).toHaveLength(2);
+    expect(screen.queryByRole("link", { name: "Fran video 3" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Fran video 9" })).not.toBeInTheDocument();
+    expect(beforeClassCounts(withReferences)).toBe("1 article · 2 videos");
   });
 
-  it("shows the workout's own video and one per movement", () => {
-    const video = (id: string) => ({ title: id, url: `https://example.com/${id}` });
-    render(
-      <BeforeClass
-        part={{
-          ...fran,
-          videos: [video("Fran strategy"), video("Fran again")],
-          movements: [
-            { ...fran.movements[0], videos: [video("Thruster 1"), video("Thruster 2")] },
-            { ...fran.movements[1], videos: [video("Pull-up 1")] },
-          ],
-        }}
-      />,
-    );
-    expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual([
-      "Fran strategy",
-      "Thruster 1",
-      "Pull-up 1",
-    ]);
-    expect(screen.getByText("Video · Fran")).toBeInTheDocument();
-    expect(screen.getByText("3 videos")).toBeInTheDocument();
-  });
-
-  it("folds away and back", async () => {
-    const user = userEvent.setup();
-    render(<BeforeClass part={withReferences} />);
-    const toggle = screen.getByRole("button", { name: /Before class/ });
-    await user.click(toggle);
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("link", { name: "How to pace Fran" })).not.toBeInTheDocument();
-    await user.click(toggle);
-    expect(screen.getByRole("link", { name: "How to pace Fran" })).toBeVisible();
+  it("only goes side by side from the sm breakpoint, when it has both lists", () => {
+    const { container } = render(<BeforeClass parts={withReferences} />);
+    expect(container.firstChild).toHaveClass("sm:grid-cols-2");
+    expect(container.firstChild).not.toHaveClass("grid-cols-2");
   });
 });

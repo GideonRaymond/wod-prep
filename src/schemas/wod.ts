@@ -55,6 +55,19 @@ export const WorkoutPartSchema = z.object({
   movements: z.array(MovementSchema),
   stimulus: StimulusSchema,
   notes: z.string().nullable().describe("Anything else worth knowing (rest, partner, buy-in)"),
+  minutes: z
+    .number()
+    .int()
+    .positive()
+    .nullable()
+    .describe(
+      "Roughly how many minutes of class this part takes, including setup and rest: its time cap or duration when given, otherwise your estimate; null if you can't tell",
+    ),
+  equipment: z
+    .array(z.string())
+    .describe(
+      'Equipment members need for this part, by common name, e.g. "Barbell", "Pull-up bar", "Rower", "Resistance band"; empty if none',
+    ),
 });
 
 /** A day's programming: one part, or several (A, B, C, cool-down, ...). */

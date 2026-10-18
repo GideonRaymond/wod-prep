@@ -1,1 +1,0 @@
-export { WorkoutPartDetails } from "./WorkoutPartDetails";

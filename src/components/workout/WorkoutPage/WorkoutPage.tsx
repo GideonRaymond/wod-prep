@@ -1,16 +1,68 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
-import { WorkoutPartDetails } from "@/components/workout/WorkoutPartDetails";
+import { useState, type ReactNode } from "react";
+import {
+  ArrowLeft,
+  BookOpen,
+  ClipboardList,
+  Flame,
+  Snowflake,
+  type LucideIcon,
+} from "lucide-react";
+import { BeforeClass, beforeClassCounts } from "@/components/workout/BeforeClass";
+import { ClassStage, StageMarker } from "@/components/workout/ClassStage";
+import { EquipmentLine, EquipmentList } from "@/components/workout/EquipmentList";
+import { ExerciseList } from "@/components/workout/ExerciseList";
+import { JumpTo } from "@/components/workout/JumpTo";
+import { Whiteboard } from "@/components/workout/Whiteboard";
 import { ButtonLink } from "@/components/shared/ButtonLink";
 import { Card } from "@/components/shared/Card";
+import { CategoryBadge } from "@/components/shared/CategoryBadge";
+import { FORMAT_LABELS } from "@/constants/wod";
+import { useCurrentStage } from "@/hooks/useCurrentStage";
 import { useMovementVideos } from "@/hooks/useMovementVideos";
 import { useWod } from "@/providers/WodProvider";
+import type { WodState, WorkoutPartState } from "@/types/wod";
+import { allEquipment, planClass, type PlannedPart } from "@/utils/classPlan";
+import { describeIntensity } from "@/utils/describeIntensity";
 
-/** The confirmed workout with the details for each part and movement. */
+type Stage = {
+  key: string;
+  title: string;
+  /** Shorter name for the Jump to menu. */
+  label: string;
+  icon?: LucideIcon;
+  markerLabel?: string | null;
+  when: string | null;
+  subtitle?: string;
+  aside?: ReactNode;
+  summary?: ReactNode;
+  body: ReactNode;
+};
+
+const minute = (at: number | null) => (at === null ? null : `${at}′`);
+/** Before class and the whiteboard start open; the warm-up, parts and cool-down start folded. */
+const INITIALLY_OPEN = { pre: true, board: true };
+
+/** The class page: Before class, Whiteboard, Warm-up, each part and Cool-down on one rail. */
 export function WorkoutPage() {
   const { wod, restored } = useWod();
   const videos = useMovementVideos();
+  const stages = wod ? classStages(wod) : [];
+  const [open, setOpen] = useState<Record<string, boolean>>(INITIALLY_OPEN);
+  const current = useCurrentStage(stages.map((s) => s.key));
+
+  const isOpen = (key: string) => open[key] ?? false;
+  const setAll = (value: boolean) => setOpen(Object.fromEntries(stages.map((s) => [s.key, value])));
+  function jump(key: string) {
+    setOpen((prev) => ({ ...prev, [key]: true }));
+    // Wait for the stage to open before scrolling to it and moving focus to its header.
+    requestAnimationFrame(() => {
+      const section = document.getElementById(`stage-${key}`);
+      section?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+      section?.querySelector("button")?.focus({ preventScroll: true });
+    });
+  }
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-12">
@@ -26,17 +78,38 @@ export function WorkoutPage() {
       {videos.error && <p className="text-subtle mt-1 text-sm">{videos.error}</p>}
 
       {wod ? (
-        <div className="mt-8">
-          {wod.parts.map((part, i) => (
-            <WorkoutPartDetails
-              key={part.id}
-              part={part}
-              defaultOpen={i === 0}
-              only={wod.parts.length === 1}
-              last={i === wod.parts.length - 1}
-            />
-          ))}
-        </div>
+        <>
+          <div className="mt-8">
+            {stages.map((stage, i) => (
+              <ClassStage
+                key={stage.key}
+                id={stage.key}
+                marker={<StageMarker icon={stage.icon} label={stage.markerLabel} />}
+                when={stage.when}
+                title={stage.title}
+                subtitle={stage.subtitle}
+                aside={stage.aside}
+                summary={stage.summary}
+                open={isOpen(stage.key)}
+                onToggle={() => setOpen((prev) => ({ ...prev, [stage.key]: !prev[stage.key] }))}
+                last={i === stages.length - 1}
+              >
+                {stage.body}
+              </ClassStage>
+            ))}
+          </div>
+          <JumpTo
+            stages={stages.map((s) => ({
+              key: s.key,
+              label: s.label,
+              marker: <StageMarker icon={s.icon} label={s.markerLabel} size="sm" />,
+            }))}
+            current={current}
+            onJump={jump}
+            onExpandAll={() => setAll(true)}
+            onCollapseAll={() => setAll(false)}
+          />
+        </>
       ) : (
         restored && (
           <Card className="mt-8">
@@ -49,4 +122,121 @@ export function WorkoutPage() {
       )}
     </main>
   );
+}
+
+/** Every stage of the class, in order, with what to show folded and open. */
+function classStages(wod: WodState): Stage[] {
+  const plan = planClass(wod);
+  const workoutParts = plan.filter((p) => p.kind === "part").map((p) => p.part);
+  // A single-part workout is marked "WOD"; otherwise each part keeps its label.
+  const markerFor = (part: WorkoutPartState) => (wod.parts.length === 1 ? "WOD" : part.label);
+  const preCounts = beforeClassCounts(wod.parts);
+
+  return [
+    {
+      key: "pre",
+      title: "Before class",
+      label: "Before class",
+      icon: BookOpen,
+      when: "Before",
+      subtitle: "Read and watch at home",
+      summary: <span className="text-subtle text-xs">{preCounts || "Nothing to read yet"}</span>,
+      body: <BeforeClass parts={wod.parts} />,
+    },
+    {
+      key: "board",
+      title: "Whiteboard",
+      label: "Whiteboard",
+      icon: ClipboardList,
+      when: minute(0),
+      subtitle: "The stimulus and what to know",
+      body: (
+        <Whiteboard
+          parts={workoutParts}
+          notes={wod.parts.flatMap((part) =>
+            part.notes ? [{ part: part.title, text: part.notes }] : [],
+          )}
+          equipment={allEquipment(wod.parts)}
+          markerFor={markerFor}
+        />
+      ),
+    },
+    ...plan.map((planned) => partStage(planned, markerFor)),
+  ];
+}
+
+function partStage(
+  { part, kind, startsAt }: PlannedPart,
+  markerFor: (part: WorkoutPartState) => string | null,
+): Stage {
+  const meta = [
+    !part.duration && part.minutes ? `${part.minutes} min` : null,
+    FORMAT_LABELS[part.format],
+    part.rounds,
+    part.duration,
+  ].filter(Boolean);
+  const subtitle = [startsAt !== null ? `Starts at ${startsAt}′` : null, ...meta]
+    .filter(Boolean)
+    .join(" · ");
+  const equipment = part.equipment ?? [];
+
+  if (kind !== "part") {
+    const name = kind === "warmup" ? "Warm-up" : "Cool-down";
+    return {
+      key: part.id,
+      title: name,
+      label: name,
+      icon: kind === "warmup" ? Flame : Snowflake,
+      when: minute(startsAt),
+      subtitle: [part.title, subtitle].filter(Boolean).join(" · "),
+      summary: (
+        <>
+          <span className="text-subtle text-xs">
+            {part.movements.map((m) => m.name).join(" · ")}
+          </span>
+          <EquipmentLine items={equipment} />
+        </>
+      ),
+      body: (
+        <>
+          <EquipmentList items={equipment} />
+          <Card>
+            <ExerciseList movements={part.movements} />
+          </Card>
+        </>
+      ),
+    };
+  }
+
+  const marker = markerFor(part);
+  return {
+    key: part.id,
+    title: part.title,
+    label: marker && marker !== "WOD" ? `${marker} · ${part.title}` : part.title,
+    markerLabel: marker,
+    when: minute(startsAt),
+    subtitle,
+    aside: (
+      <span className="mt-1 inline-flex items-baseline gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-xs whitespace-nowrap text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+        <span className="text-foreground font-semibold">{part.stimulus.intensity}/10</span>
+        {describeIntensity(part.stimulus.intensity)}
+      </span>
+    ),
+    summary: (
+      <>
+        {part.movements.map((m) => (
+          <CategoryBadge key={m.id} category={m.category} label={m.name} />
+        ))}
+        <EquipmentLine items={equipment} />
+      </>
+    ),
+    body: (
+      <>
+        <EquipmentList items={equipment} />
+        <Card>
+          <ExerciseList movements={part.movements} detailed />
+        </Card>
+      </>
+    ),
+  };
 }
