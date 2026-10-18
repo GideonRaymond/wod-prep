@@ -9,10 +9,10 @@ const { mockParseWod, mockGetCachedWod, mockCacheWod } = vi.hoisted(() => ({
   mockCacheWod: vi.fn(),
 }));
 
-vi.mock("@/server/parseWod", () => ({
-  parseWod: mockParseWod,
-  WodParseError: class WodParseError extends Error {},
-}));
+vi.mock("@/server/parseWod", async () => {
+  const { UnusableResultError } = await import("@/server/apiErrors");
+  return { parseWod: mockParseWod, WodParseError: class extends UnusableResultError {} };
+});
 
 vi.mock("@/server/wodCache", () => ({
   getCachedWod: mockGetCachedWod,

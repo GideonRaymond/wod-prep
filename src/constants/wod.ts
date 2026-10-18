@@ -2,6 +2,8 @@ import { MovementSchema, type Movement, type Wod } from "@/schemas/wod";
 
 export const MAX_WOD_LENGTH = 2000;
 
+export const MAX_MOVEMENT_NAME_LENGTH = 100;
+
 export const EXAMPLE_WOD = `"Fran"
 21-15-9 for time:
 Thrusters (95/65 lb)

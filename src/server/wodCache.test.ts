@@ -2,13 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  CACHE_VERSION,
-  cacheWod,
-  getCachedWod,
-  isCacheEnabled,
-  normalizeWodText,
-} from "./wodCache";
+import { CACHE_VERSION, cacheWod, getCachedWod, normalizeWodText } from "./wodCache";
 import { fran } from "@/test/fixtures";
 
 const EXAMPLE = `"Fran"
@@ -46,9 +40,9 @@ describe("WOD cache", () => {
 
   beforeEach(async () => {
     dir = await mkdtemp(path.join(tmpdir(), "wod-cache-"));
-    file = path.join(dir, "nested", "cache.json");
+    file = path.join(dir, "nested", "parsed-wods.json");
     vi.stubEnv("WOD_CACHE", "on");
-    vi.stubEnv("WOD_CACHE_FILE", file);
+    vi.stubEnv("WOD_CACHE_DIR", path.join(dir, "nested"));
   });
   afterEach(async () => {
     vi.unstubAllEnvs();
@@ -109,15 +103,6 @@ describe("WOD cache", () => {
     await expect(getCachedWod("Fran")).resolves.toBeNull();
   });
 
-  it("doesn't throw when the cache can't be written", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    await writeFile(path.join(dir, "blocker"), "");
-    vi.stubEnv("WOD_CACHE_FILE", path.join(dir, "blocker", "cache.json"));
-
-    await expect(cacheWod("Fran", fran)).resolves.toBeUndefined();
-    expect(warn).toHaveBeenCalled();
-  });
-
   it("does nothing when turned off", async () => {
     await cacheWod("Fran", fran);
     vi.stubEnv("WOD_CACHE", "off");
@@ -126,28 +111,5 @@ describe("WOD cache", () => {
     await expect(getCachedWod("Fran")).resolves.toBeNull();
     vi.stubEnv("WOD_CACHE", "on");
     await expect(getCachedWod("Grace")).resolves.toBeNull();
-  });
-});
-
-describe("isCacheEnabled", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it("is on in development and off in production by default", () => {
-    vi.stubEnv("WOD_CACHE", "");
-    vi.stubEnv("NODE_ENV", "development");
-    expect(isCacheEnabled()).toBe(true);
-    vi.stubEnv("NODE_ENV", "production");
-    expect(isCacheEnabled()).toBe(false);
-  });
-
-  it("can be forced on or off", () => {
-    vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("WOD_CACHE", "on");
-    expect(isCacheEnabled()).toBe(true);
-    vi.stubEnv("NODE_ENV", "development");
-    vi.stubEnv("WOD_CACHE", "off");
-    expect(isCacheEnabled()).toBe(false);
   });
 });

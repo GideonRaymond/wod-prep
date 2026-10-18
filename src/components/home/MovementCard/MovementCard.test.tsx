@@ -39,4 +39,12 @@ describe("MovementCard", () => {
     await userEvent.click(screen.getByRole("button", { name: "Remove Thruster" }));
     expect(onRemove).toHaveBeenCalledOnce();
   });
+
+  it("has a collapsed points of performance section", () => {
+    renderCard(thruster);
+    expect(screen.getByRole("button", { name: "Points of performance" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+  });
 });

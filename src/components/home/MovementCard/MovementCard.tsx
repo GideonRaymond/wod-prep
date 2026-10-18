@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { MovementDetails } from "@/components/home/MovementDetails";
+import { PointsOfPerformance } from "@/components/home/PointsOfPerformance";
 import { Badge, type BadgeTone } from "@/components/shared/Badge";
 import { Button } from "@/components/shared/Button";
 import { Card } from "@/components/shared/Card";
@@ -36,6 +37,7 @@ export function MovementCard({ movement, onRemove }: MovementCardProps) {
         </div>
       </div>
       <MovementDetails movement={movement} />
+      <PointsOfPerformance name={name} />
     </Card>
   );
 }

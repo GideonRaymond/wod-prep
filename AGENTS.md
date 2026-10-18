@@ -13,6 +13,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `src/app/` holds routes only. Page UI lives in `src/components/<page>/` and the page file just renders it.
 - Generic, reusable UI goes in `src/components/shared/`. Build new UI from these (Button, TextArea, TextInput, Select, Card, Badge, Alert, Dialog, FieldError, CharacterCount) instead of styling raw elements.
 - One folder per component: `Name/Name.tsx`, `Name/Name.test.tsx`, `Name/index.ts`. Import through the folder (`@/components/shared/Button`).
-- Hooks in `src/hooks/`, client API calls in `src/services/`, server-only code in `src/server/`, Zod schemas in `src/schemas/`, constants in `src/constants/`, pure helpers in `src/utils/`.
+- Hooks in `src/hooks/`, client API calls in `src/services/`, server-only code in `src/server/`, Zod schemas in `src/schemas/`, constants in `src/constants/`, hand-written content in `src/data/`, pure helpers in `src/utils/`.
+- Claude calls use the shared client in `src/server/anthropic.ts`. Routes map errors with `claudeErrorResponse` (`src/server/apiErrors.ts`). Dev caching goes through `createFileCache` (`src/server/fileCache.ts`).
 - Middleware is `src/proxy.ts` (Next.js 16 name), one file only.
 - Every change comes with tests next to the code it covers.
