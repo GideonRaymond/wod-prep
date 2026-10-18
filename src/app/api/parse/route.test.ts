@@ -1,17 +1,17 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fran } from "@/test/fixtures";
-import { MAX_WOD_LENGTH } from "@/lib/wod";
+import { MAX_WOD_LENGTH } from "@/constants/wod";
 
 const { mockParseWod } = vi.hoisted(() => ({ mockParseWod: vi.fn() }));
 
-vi.mock("@/lib/parse-wod", () => ({
+vi.mock("@/server/parseWod", () => ({
   parseWod: mockParseWod,
   WodParseError: class WodParseError extends Error {},
 }));
 
 import { POST } from "./route";
-import { WodParseError } from "@/lib/parse-wod";
+import { WodParseError } from "@/server/parseWod";
 
 function post(body: unknown) {
   return POST(

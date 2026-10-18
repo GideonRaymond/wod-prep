@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
+import { useRef } from "react";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useAutoResize } from "./use-auto-resize";
+import { useAutoResize } from "./useAutoResize";
 
 const LINE_HEIGHT = 20;
 const BORDER = 2;
 
-function AutoTextarea({ value }: { value: string }) {
-  const ref = useAutoResize(value);
+function AutoTextarea({ value, enabled }: { value: string; enabled?: boolean }) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useAutoResize(ref, value, enabled);
   return <textarea ref={ref} value={value} readOnly />;
 }
 
@@ -54,6 +56,11 @@ describe("useAutoResize", () => {
       window.dispatchEvent(new Event("resize"));
     });
     expect(screen.getByRole("textbox").style.height).toBe(`${4 * LINE_HEIGHT + BORDER}px`);
+  });
+
+  it("does nothing when disabled", () => {
+    render(<AutoTextarea value="a" enabled={false} />);
+    expect(screen.getByRole("textbox").style.height).toBe("");
   });
 
   it("stops listening for resizes after unmount", () => {

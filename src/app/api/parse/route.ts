@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { parseWod, WodParseError } from "@/lib/parse-wod";
-import { MAX_WOD_LENGTH } from "@/lib/wod";
+import { MAX_WOD_LENGTH } from "@/constants/wod";
+import { parseWod, WodParseError } from "@/server/parseWod";
 
 export async function POST(request: Request) {
   if (!process.env.ANTHROPIC_API_KEY) {

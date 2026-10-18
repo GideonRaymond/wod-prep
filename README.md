@@ -25,10 +25,35 @@ CI runs all of these plus `npm run build` on every pull request. `main` is prote
 
 ## Structure
 
-- `src/app/page.tsx` — the UI (paste WOD → movement cards)
-- `src/app/api/parse/route.ts` — API route that parses the WOD
-- `src/lib/parse-wod.ts` — Claude call that turns WOD text into structured data
-- `src/lib/wod.ts` — the shared WOD/movement schema
+```
+src/
+├── app/                  # Next.js routes only (pages, layouts, API route handlers)
+│   ├── page.tsx          #   renders <HomePage />
+│   └── api/parse/        #   POST /api/parse
+├── components/
+│   ├── shared/           # Generic, reusable UI (Button, TextArea, TextInput, Select, Card, Badge, …)
+│   └── home/             # Components used only by the home page (HomePage, StimulusCard, …)
+├── hooks/                # React hooks (useParseWod, useUndoableText, useAutoResize, …)
+├── services/             # Client-side API calls (wodApi)
+├── server/               # Server-only code (the Claude call); never imported by components
+├── schemas/              # Zod schemas and the types inferred from them
+├── types/                # Hand-written shared types (UI state)
+├── constants/            # App-wide constants (limits, labels, example WOD)
+├── styles/               # Shared Tailwind class helpers
+├── utils/                # Small pure helpers (cn, withId)
+└── test/                 # Test setup and fixtures
+```
+
+Each component has its own folder with the component, its tests and an `index.ts`:
+
+```
+components/shared/Button/
+├── Button.tsx
+├── Button.test.tsx
+└── index.ts              # import { Button } from "@/components/shared/Button"
+```
+
+Middleware is called **proxy** in Next.js 16 and must live in a single `src/proxy.ts`. There isn't one yet.
 
 ## Roadmap
 

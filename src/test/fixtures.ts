@@ -1,4 +1,4 @@
-import type { Wod } from "@/lib/wod";
+import type { Wod } from "@/schemas/wod";
 
 export const fran: Wod = {
   title: "Fran",

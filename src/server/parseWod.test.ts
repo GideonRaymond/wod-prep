@@ -9,7 +9,7 @@ vi.mock("@anthropic-ai/sdk", () => ({
   },
 }));
 
-import { parseWod, WodParseError } from "./parse-wod";
+import { parseWod, WodParseError } from "./parseWod";
 
 describe("parseWod", () => {
   beforeEach(() => {

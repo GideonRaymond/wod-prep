@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { historyReducer, TYPING_GROUP_MS, useUndoableText } from "./use-undoable-text";
+import { historyReducer, TYPING_GROUP_MS, useUndoableText } from "./useUndoableText";
 
 const start = { entries: ["a"], index: 0, lastEditAt: null };
 

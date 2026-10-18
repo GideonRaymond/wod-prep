@@ -1,0 +1,81 @@
+// @vitest-environment jsdom
+import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { HomePage } from "./HomePage";
+import { fran } from "@/test/fixtures";
+
+const fetchMock = vi.fn();
+
+function respond(status: number, body: unknown) {
+  fetchMock.mockResolvedValue({ ok: status < 400, json: async () => body });
+}
+
+async function submit(text: string) {
+  const user = userEvent.setup();
+  render(<HomePage />);
+  await user.type(screen.getByRole("textbox", { name: "Workout" }), text);
+  await user.click(screen.getByRole("button", { name: "Break it down" }));
+  return user;
+}
+
+describe("HomePage", () => {
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("parses the workout and shows the summary, stimulus and movements", async () => {
+    respond(200, { wod: fran });
+    await submit("Fran");
+
+    expect(await screen.findByRole("heading", { name: "Fran" })).toBeInTheDocument();
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ text: "Fran" });
+    expect(screen.getByText("For Time · 21-15-9")).toBeInTheDocument();
+    expect(screen.getByText(fran.stimulus)).toBeInTheDocument();
+    const cards = screen.getAllByRole("listitem");
+    expect(cards).toHaveLength(2);
+    expect(within(cards[0]).getByRole("heading", { name: "Thruster" })).toBeInTheDocument();
+  });
+
+  it("shows a loading state while parsing", async () => {
+    fetchMock.mockReturnValue(new Promise(() => {}));
+    await submit("Fran");
+    expect(screen.getByRole("button", { name: "Parsing…" })).toBeDisabled();
+  });
+
+  it("shows the API error message", async () => {
+    respond(422, { error: "Couldn't read that as a workout." });
+    await submit("hello");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't read that as a workout.");
+  });
+
+  it("shows an error when the request fails", async () => {
+    fetchMock.mockRejectedValue(new Error("Failed to fetch"));
+    await submit("Fran");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Failed to fetch");
+  });
+
+  it("removes a movement", async () => {
+    respond(200, { wod: fran });
+    const user = await submit("Fran");
+    await user.click(await screen.findByRole("button", { name: "Remove Thruster" }));
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    expect(screen.queryByRole("heading", { name: "Thruster" })).not.toBeInTheDocument();
+  });
+
+  it("doesn't let the user resize any text box", async () => {
+    respond(200, { wod: fran });
+    const user = await submit("Fran");
+    await user.click(await screen.findByRole("button", { name: "Edit stimulus" }));
+
+    const textareas = screen.getAllByRole("textbox").filter((el) => el.tagName === "TEXTAREA");
+    expect(textareas).toHaveLength(2);
+    for (const textarea of textareas) expect(textarea).toHaveClass("resize-none");
+  });
+});
