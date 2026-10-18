@@ -6,7 +6,7 @@ import { WorkoutPage } from "./WorkoutPage";
 import { WodProvider } from "@/providers/WodProvider";
 import { WOD_STORAGE_KEY } from "@/stores/wodStore";
 import type { WodState } from "@/types/wod";
-import { strengthAndMetcon } from "@/test/fixtures";
+import { fran, strengthAndMetcon } from "@/test/fixtures";
 import { toWodState } from "@/utils/toWodState";
 
 function renderPage(wod: WodState | null) {
@@ -67,6 +67,16 @@ describe("WorkoutPage", () => {
     expect(
       within(screen.getByRole("region", { name: "Fran" })).getByText("Go!"),
     ).toBeInTheDocument();
+  });
+
+  it("marks a single-part workout as WOD and keeps part labels otherwise", () => {
+    renderPage(toWodState(fran));
+    expect(screen.getByText("WOD")).toBeInTheDocument();
+    cleanup();
+
+    renderPage(toWodState(strengthAndMetcon));
+    expect(screen.queryByText("WOD")).not.toBeInTheDocument();
+    expect(screen.getByText("Cool-down")).toBeInTheDocument();
   });
 
   it("links back to the review page", () => {

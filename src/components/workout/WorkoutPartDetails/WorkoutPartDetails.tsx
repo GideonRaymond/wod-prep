@@ -18,6 +18,8 @@ export type WorkoutPartDetailsProps = {
   defaultOpen?: boolean;
   /** The last part of the day: its rail stops at the label instead of running on. */
   last?: boolean;
+  /** The workout's only part: its marker reads "WOD" instead of a part label. */
+  only?: boolean;
 };
 
 /**
@@ -29,6 +31,7 @@ export function WorkoutPartDetails({
   part,
   defaultOpen = false,
   last = true,
+  only = false,
 }: WorkoutPartDetailsProps) {
   const [open, setOpen] = useState(defaultOpen);
   const titleId = useId();
@@ -36,13 +39,21 @@ export function WorkoutPartDetails({
   const meta = [FORMAT_LABELS[part.format], part.rounds, part.duration].filter(Boolean);
   const intensity = part.stimulus.intensity;
   const counts = referenceCounts(part);
+  const marker = only ? "WOD" : part.label;
 
   return (
-    <section aria-labelledby={titleId} className="grid grid-cols-[28px_minmax(0,1fr)] gap-x-3">
+    <section
+      aria-labelledby={titleId}
+      className={cn(
+        "grid gap-x-3",
+        // "WOD" is wider than a part letter; with one part there are no labels to line up with.
+        only ? "grid-cols-[auto_minmax(0,1fr)]" : "grid-cols-[28px_minmax(0,1fr)]",
+      )}
+    >
       <div className="flex flex-col items-center" aria-hidden>
-        {part.label ? (
+        {marker ? (
           <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-purple-600 px-2 text-sm font-semibold text-white dark:bg-purple-400 dark:text-purple-950">
-            {part.label}
+            {marker}
           </span>
         ) : (
           <span className="mt-2 size-3 rounded-full bg-purple-600 dark:bg-purple-400" />
