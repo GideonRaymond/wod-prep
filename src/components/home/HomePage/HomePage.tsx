@@ -9,7 +9,7 @@ import { useParseWod } from "@/hooks/useParseWod";
 
 export function HomePage() {
   const router = useRouter();
-  const { wod, setWod, error, loading, parse } = useParseWod();
+  const { wod, setWod, error, loading, parsedText, parse } = useParseWod();
   const missingStimulus = wod?.parts.some((part) => !part.stimulus.description.trim());
 
   return (
@@ -19,7 +19,7 @@ export function HomePage() {
         Paste today&apos;s workout, check that everything looks right, then confirm it.
       </p>
 
-      <WodInputForm loading={loading} onSubmit={parse} />
+      <WodInputForm loading={loading} parsedText={parsedText} onSubmit={parse} />
 
       {error && <Alert className="mt-6">{error}</Alert>}
 

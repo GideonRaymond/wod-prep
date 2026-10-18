@@ -51,6 +51,24 @@ describe("HomePage", () => {
     expect(within(cards[0]).getByRole("heading", { name: "Thruster" })).toBeInTheDocument();
   });
 
+  it("disables Break it down until the workout is edited", async () => {
+    respond(200, { wod: fran });
+    const user = await submit("Fran");
+    await screen.findByRole("heading", { name: "Fran" });
+    const button = screen.getByRole("button", { name: "Break it down" });
+    expect(button).toBeDisabled();
+
+    await user.type(screen.getByRole("textbox", { name: "Workout" }), " and Grace");
+    expect(button).toBeEnabled();
+  });
+
+  it("keeps Break it down enabled after a failed parse, so it can be retried", async () => {
+    respond(500, { error: "Something broke." });
+    await submit("Fran");
+    await screen.findByText("Something broke.");
+    expect(screen.getByRole("button", { name: "Break it down" })).toBeEnabled();
+  });
+
   it("splits a multi-part WOD into sections", async () => {
     respond(200, { wod: strengthAndMetcon });
     await submit("A) Back squat 5x5 B) Fran C) 5 min easy row");
