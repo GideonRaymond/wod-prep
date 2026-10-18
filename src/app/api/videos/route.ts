@@ -1,8 +1,9 @@
 import { MAX_MOVEMENT_NAME_LENGTH } from "@/constants/wod";
 import {
   cacheVideos,
+  findCuratedVideo,
+  findVideos,
   getCachedVideos,
-  searchMovementVideos,
   YouTubeError,
 } from "@/server/movementVideos";
 import { VIDEO_KINDS, type VideoKind } from "@/schemas/videos";
@@ -22,6 +23,9 @@ export async function POST(request: Request) {
     return Response.json({ error: "Unknown kind of video." }, { status: 400 });
   }
 
+  const curated = kind === "movement" && findCuratedVideo(name);
+  if (curated) return Response.json({ videos: [curated] });
+
   const cached = await getCachedVideos(name, kind);
   if (cached) return Response.json({ videos: cached }, { headers: { "X-Cache": "HIT" } });
 
@@ -33,7 +37,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const videos = await searchMovementVideos(name, kind);
+    const videos = await findVideos(name, kind);
     await cacheVideos(name, videos, kind);
     return Response.json({ videos }, { headers: { "X-Cache": "MISS" } });
   } catch (err) {

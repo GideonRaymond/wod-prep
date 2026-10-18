@@ -33,7 +33,7 @@ On the workout page (after **Confirm workout**), each movement card has a collap
 
 ## Videos
 
-When the workout page opens, it searches YouTube for each movement (and for each named workout, like Fran or Murph) and lists a short pick under **Watch** in each part's **Before class** panel:
+When the workout page opens, it finds videos for each movement (and for each named workout, like Fran or Murph) and lists a short pick under **Watch** in each part's **Before class** panel:
 
 - **One video per movement** — two when the part is a single movement, like a run.
 - **One extra video about the workout itself** when it's a named workout.
@@ -41,9 +41,14 @@ When the workout page opens, it searches YouTube for each movement (and for each
 
 The videos are stored with the workout, so a refresh doesn't search again.
 
+Where they come from:
+
+1. **Hand-picked:** the ~30 standard movements (the ones with curated points of performance) have one video each in `src/data/movementVideos.ts`, mostly the official CrossFit channel's short demos. Free, instant, no key needed. Swap a video by editing its entry; a test checks every curated movement has one.
+2. **Searched and picked by Claude:** everything else (and named workouts) is searched on YouTube (15 results), then Claude picks up to three, best first, with a one-line reason shown under the link. It prefers technique demos from credible coaches for movements, and strategy, pacing and scaling for named workouts, and skips vlogs, challenges and competition footage. Claude can only pick from YouTube's results, so every link is real.
+
 - Search uses the [YouTube Data API](https://developers.google.com/youtube/v3/getting-started): create a key in Google Cloud (enable "YouTube Data API v3", then Credentials → Create API key) and set `YOUTUBE_API_KEY`. The free quota is about 100 searches a day.
-- **Ranking:** videos from the official CrossFit channel first, then titles that name the movement, then YouTube's order. Livestreams and videos over 20 minutes are skipped. The top three per search are kept, as spares for avoiding repeats.
-- Results are cached per movement in `.cache/movement-videos.json` for **30 days**, then searched again. Any spelling of a movement shares one entry ("Pull-ups" = "pull up"). Bump `VIDEOS_CACHE_VERSION` in `src/server/movementVideos.ts` when the search or ranking changes.
+- **Fallback ranking** (no `ANTHROPIC_API_KEY`, or Claude fails): the official CrossFit channel first, then titles that name the movement, then YouTube's order. Livestreams and videos over 20 minutes are always skipped. Three per search are kept, as spares for avoiding repeats.
+- Results are cached per movement in `.cache/movement-videos.json` for **30 days**, then searched again. Any spelling of a movement shares one entry ("Pull-ups" = "pull up"). Bump `VIDEOS_CACHE_VERSION` in `src/server/movementVideos.ts` when the search or ranking prompt changes.
 
 ## Checks
 
