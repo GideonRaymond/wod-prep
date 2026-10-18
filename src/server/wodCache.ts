@@ -1,5 +1,6 @@
 import "server-only";
 import { WodSchema, type Wod } from "@/schemas/wod";
+import { fillMissingLabels } from "@/utils/fillMissingLabels";
 import { createFileCache } from "./fileCache";
 
 /** Bump when the parser prompt or schema changes, so old results get parsed again. */
@@ -23,8 +24,10 @@ export function normalizeWodText(text: string) {
 const keyFor = (text: string) => `v${CACHE_VERSION}:${normalizeWodText(text)}`;
 
 /** Returns a previously parsed WOD for this text (or this workout's name), if any. */
-export function getCachedWod(text: string): Promise<Wod | null> {
-  return cache.get(keyFor(text));
+export async function getCachedWod(text: string): Promise<Wod | null> {
+  const wod = await cache.get(keyFor(text));
+  // Fixes labels in results cached before missing labels were filled in.
+  return wod && { parts: fillMissingLabels(wod.parts) };
 }
 
 /**

@@ -84,6 +84,13 @@ describe("WOD cache", () => {
       await expect(getCachedWod(DAY)).resolves.toEqual(strengthAndMetcon);
     });
 
+    it("fill in missing labels on results cached before they were fixed", async () => {
+      const unlabelled = { parts: [{ ...squats, label: null }, franB] };
+      await cacheWod("Squats then part B Fran", unlabelled);
+      const wod = await getCachedWod("Squats then part B Fran");
+      expect(wod?.parts.map((p) => p.label)).toEqual(["A", "B"]);
+    });
+
     it("store each part on its own under that part's text", async () => {
       await cacheWod(DAY, strengthAndMetcon);
       for (const part of [squats, franB, coolDown]) {

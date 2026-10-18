@@ -65,6 +65,24 @@ describe("parseWod", () => {
     ]);
   });
 
+  it("labels a part the model left unlabelled when another part has a label", async () => {
+    mockParse.mockResolvedValue({
+      stop_reason: "end_turn",
+      parsed_output: {
+        parts: [
+          { ...franPart, label: null, title: "Nancy" },
+          { ...franPart, label: "B", title: "Murph" },
+        ],
+      },
+    });
+
+    const wod = await parseWod("Nancy\n\nthen part b\n\nmurph");
+    expect(wod.parts.map((p) => [p.label, p.title])).toEqual([
+      ["A", "Nancy"],
+      ["B", "Murph"],
+    ]);
+  });
+
   it("asks the model to split multi-part WODs and rate intensity", async () => {
     mockParse.mockResolvedValue({ stop_reason: "end_turn", parsed_output: fran });
     await parseWod("A) Back squat 5x5 B) Fran");
