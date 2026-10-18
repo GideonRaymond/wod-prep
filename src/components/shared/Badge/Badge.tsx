@@ -3,9 +3,10 @@ import { cn } from "@/utils/cn";
 
 const TONES = {
   neutral: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
-  amber: "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200",
-  sky: "bg-sky-100 text-sky-900 dark:bg-sky-900/40 dark:text-sky-200",
-  emerald: "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200",
+  // One purple at three strengths, so the tones differ by lightness, not hue alone.
+  deep: "bg-purple-800 text-white dark:bg-purple-200 dark:text-purple-950",
+  mid: "bg-purple-300 text-purple-950 dark:bg-purple-700 dark:text-white",
+  pale: "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200",
 };
 
 export type BadgeTone = keyof typeof TONES;

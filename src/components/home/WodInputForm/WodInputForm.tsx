@@ -53,7 +53,7 @@ export function WodInputForm({ loading, parsedText, onSubmit }: WodInputFormProp
           </Button>
         )}
         {unchanged && !loading && (
-          <p id="wod-unchanged" className="text-sm text-zinc-500">
+          <p id="wod-unchanged" className="text-subtle text-sm">
             Edit the workout to break it down again.
           </p>
         )}

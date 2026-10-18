@@ -14,7 +14,7 @@ export function CharacterCount({ id, length, max, className }: CharacterCountPro
       id={id}
       className={cn(
         "text-right text-xs",
-        atLimit ? "text-red-600 dark:text-red-400" : "text-zinc-500",
+        atLimit ? "text-rose-600 dark:text-rose-400" : "text-subtle",
         className,
       )}
     >

@@ -3,11 +3,17 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Hints and counts: zinc-500 in light, lifted in dark to keep 4.5:1 on the background. */
+  --subtle: oklch(55.2% 0.016 285.938);
+  /* Faintest purple ground, used like an alert with no border ("Before class"). */
+  --accent-faint: oklch(98.9% 0.007 308.299);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-subtle: var(--subtle);
+  --color-accent-faint: var(--accent-faint);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -16,6 +22,8 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --subtle: oklch(59% 0.016 285.938);
+    --accent-faint: oklch(29.1% 0.149 302.717 / 0.3);
   }
 }
 

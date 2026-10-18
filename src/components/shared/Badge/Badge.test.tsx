@@ -13,8 +13,12 @@ describe("Badge", () => {
     expect(screen.getByText("edited")).toHaveClass("bg-zinc-100");
   });
 
-  it("supports tones", () => {
-    render(<Badge tone="amber">weightlifting</Badge>);
-    expect(screen.getByText("weightlifting")).toHaveClass("bg-amber-100");
+  it.each([
+    ["deep", "bg-purple-800"],
+    ["mid", "bg-purple-300"],
+    ["pale", "bg-purple-100"],
+  ] as const)("supports the %s tone", (tone, color) => {
+    render(<Badge tone={tone}>weightlifting</Badge>);
+    expect(screen.getByText("weightlifting")).toHaveClass(color);
   });
 });

@@ -18,14 +18,14 @@ export function WorkoutPage() {
       <h1 className="mt-2 text-3xl font-bold tracking-tight">Your workout</h1>
 
       {wod ? (
-        <div className="mt-8 space-y-10">
+        <div className="mt-8">
           {wod.parts.map((part, i) => (
-            <div
+            <WorkoutPartDetails
               key={part.id}
-              className={i > 0 ? "border-t border-zinc-200 pt-10 dark:border-zinc-800" : undefined}
-            >
-              <WorkoutPartDetails part={part} />
-            </div>
+              part={part}
+              defaultOpen={i === 0}
+              last={i === wod.parts.length - 1}
+            />
           ))}
         </div>
       ) : (

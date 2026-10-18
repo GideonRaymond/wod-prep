@@ -9,12 +9,19 @@ describe("CategoryBadge", () => {
   });
 
   it.each([
-    ["weightlifting", "bg-amber-100"],
-    ["gymnastics", "bg-sky-100"],
-    ["monostructural", "bg-emerald-100"],
+    ["weightlifting", "bg-purple-800"],
+    ["gymnastics", "bg-purple-300"],
+    ["monostructural", "bg-purple-100"],
     ["other", "bg-zinc-100"],
   ] as const)("shows %s in its color", (category, color) => {
     render(<CategoryBadge category={category} />);
     expect(screen.getByText(category)).toHaveClass(color);
+  });
+
+  it("can show a movement name in its category's shade, naming the category on hover", () => {
+    render(<CategoryBadge category="gymnastics" label="Pull-up" />);
+    const badge = screen.getByText("Pull-up");
+    expect(badge).toHaveClass("bg-purple-300");
+    expect(badge).toHaveAttribute("title", "gymnastics");
   });
 });

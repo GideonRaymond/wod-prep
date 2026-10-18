@@ -6,7 +6,7 @@ export function Alert({ className, ...props }: HTMLAttributes<HTMLParagraphEleme
     <p
       role="alert"
       className={cn(
-        "rounded-lg bg-red-50 p-3 text-red-800 dark:bg-red-950 dark:text-red-200",
+        "rounded-lg bg-rose-50 p-3 text-rose-800 dark:bg-rose-950 dark:text-rose-200",
         className,
       )}
       {...props}
