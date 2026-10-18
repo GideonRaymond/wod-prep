@@ -290,6 +290,23 @@ describe("Home", () => {
       expect(screen.queryByRole("button", { name: /Revert/ })).not.toBeInTheDocument();
     });
 
+    it("keeps Revert with the other action buttons", async () => {
+      const user = await parseFran();
+      await editTo(user, "Heavy and slow.");
+
+      const editingActions = screen.getByRole("group", { name: "Stimulus actions" });
+      expect(within(editingActions).getByRole("button", { name: "Done" })).toBeInTheDocument();
+      expect(within(editingActions).getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+      expect(within(editingActions).getByRole("button", { name: /Revert/ })).toBeInTheDocument();
+
+      await user.click(button("Done"));
+      const viewActions = screen.getByRole("group", { name: "Stimulus actions" });
+      expect(
+        within(viewActions).getByRole("button", { name: "Edit stimulus" }),
+      ).toBeInTheDocument();
+      expect(within(viewActions).getByRole("button", { name: /Revert/ })).toBeInTheDocument();
+    });
+
     it("undoes and redoes edits with Ctrl+Z / Ctrl+Shift+Z", async () => {
       const user = await parseFran();
       await editTo(user, "Heavy and slow.");

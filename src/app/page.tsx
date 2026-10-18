@@ -197,6 +197,17 @@ function StimulusEditor({
     setEditing(false);
   }
 
+  const revertButton = edited && (
+    <button
+      type="button"
+      onClick={() => stimulus.replace(original)}
+      aria-label="Revert stimulus to original"
+      className={iconButtonClass}
+    >
+      <RotateCcw size={14} aria-hidden /> Revert
+    </button>
+  );
+
   return (
     <div className="mt-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
       <div className="flex items-center justify-between gap-3">
@@ -210,18 +221,9 @@ function StimulusEditor({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          {edited && (
-            <button
-              type="button"
-              onClick={() => stimulus.replace(original)}
-              aria-label="Revert stimulus to original"
-              className={iconButtonClass}
-            >
-              <RotateCcw size={14} aria-hidden /> Revert
-            </button>
-          )}
-          {!editing && (
+        {!editing && (
+          <div role="group" aria-label="Stimulus actions" className="flex items-center gap-1">
+            {revertButton}
             <button
               type="button"
               onClick={startEditing}
@@ -230,8 +232,8 @@ function StimulusEditor({
             >
               <Pencil size={14} aria-hidden /> Edit
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {editing ? (
@@ -242,7 +244,7 @@ function StimulusEditor({
               Stimulus is required.
             </p>
           )}
-          <div className="mt-2 flex gap-2">
+          <div role="group" aria-label="Stimulus actions" className="mt-2 flex items-center gap-2">
             <button
               type="button"
               onClick={() => setEditing(false)}
@@ -258,6 +260,7 @@ function StimulusEditor({
             >
               Cancel
             </button>
+            <div className="ml-auto">{revertButton}</div>
           </div>
         </>
       ) : (
