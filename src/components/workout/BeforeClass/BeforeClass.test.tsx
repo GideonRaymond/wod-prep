@@ -54,6 +54,29 @@ describe("BeforeClass", () => {
     expect(screen.getByText("Video · 4:12 · Thruster")).toBeInTheDocument();
   });
 
+  it("shows the workout's own video and one per movement", () => {
+    const video = (id: string) => ({ title: id, url: `https://example.com/${id}` });
+    render(
+      <BeforeClass
+        part={{
+          ...fran,
+          videos: [video("Fran strategy"), video("Fran again")],
+          movements: [
+            { ...fran.movements[0], videos: [video("Thruster 1"), video("Thruster 2")] },
+            { ...fran.movements[1], videos: [video("Pull-up 1")] },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual([
+      "Fran strategy",
+      "Thruster 1",
+      "Pull-up 1",
+    ]);
+    expect(screen.getByText("Video · Fran")).toBeInTheDocument();
+    expect(screen.getByText("3 videos")).toBeInTheDocument();
+  });
+
   it("folds away and back", async () => {
     const user = userEvent.setup();
     render(<BeforeClass part={withReferences} />);

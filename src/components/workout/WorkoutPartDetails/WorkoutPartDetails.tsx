@@ -106,7 +106,6 @@ export function WorkoutPartDetails({
 
         <div id={bodyId} hidden={!open} className="mt-4 space-y-3">
           <BeforeClass part={part} />
-          {part.notes && <p className="text-subtle text-sm">{part.notes}</p>}
 
           <Card>
             <h3 className="text-lg font-medium">Stimulus</h3>
