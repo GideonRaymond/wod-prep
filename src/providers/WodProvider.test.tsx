@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { useWod, WodProvider } from "./WodProvider";
 import { WOD_STORAGE_KEY } from "@/stores/wodStore";
 import { fran } from "@/test/fixtures";
+import type { WodState } from "@/types/wod";
 import { toWodState } from "@/utils/toWodState";
 
 describe("WodProvider", () => {
@@ -60,6 +61,24 @@ describe("WodProvider", () => {
     act(() => result.current.setWod(null));
     expect(result.current.wod).toBeNull();
     expect(result.current.sourceText).toBeNull();
+  });
+
+  it("updates the latest WOD when given a function", () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <WodProvider initialWod={toWodState(fran)} initialText="Fran">
+        {children}
+      </WodProvider>
+    );
+    const { result } = renderHook(() => useWod(), { wrapper });
+    const dropFirst = (wod: WodState | null) =>
+      wod && { parts: [{ ...wod.parts[0], movements: wod.parts[0].movements.slice(1) }] };
+
+    act(() => {
+      result.current.setWod(dropFirst);
+      result.current.setWod(dropFirst);
+    });
+    expect(result.current.wod!.parts[0].movements).toHaveLength(0);
+    expect(result.current.sourceText).toBe("Fran");
   });
 
   it("explains a missing provider", () => {
