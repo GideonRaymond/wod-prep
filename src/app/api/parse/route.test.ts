@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fran } from "@/test/fixtures";
+import { MAX_WOD_LENGTH } from "@/lib/wod";
 
 const { mockParseWod } = vi.hoisted(() => ({ mockParseWod: vi.fn() }));
 
@@ -59,8 +60,14 @@ describe("POST /api/parse", () => {
     expect((await res.json()).error).toBe("Paste a workout first.");
   });
 
+  it("accepts text at the max length", async () => {
+    mockParseWod.mockResolvedValue(fran);
+    const res = await post({ text: "x".repeat(MAX_WOD_LENGTH) });
+    expect(res.status).toBe(200);
+  });
+
   it("rejects text that is too long", async () => {
-    const res = await post({ text: "x".repeat(4001) });
+    const res = await post({ text: "x".repeat(MAX_WOD_LENGTH + 1) });
     expect(res.status).toBe(400);
     expect(mockParseWod).not.toHaveBeenCalled();
   });

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Dumbbell, Plus, Repeat, X } from "lucide-react";
-import type { Movement, Wod } from "@/lib/wod";
+import { MAX_WOD_LENGTH, type Movement, type Wod } from "@/lib/wod";
 
 type MovementItem = Movement & { id: string };
 type WodState = Omit<Wod, "movements"> & { movements: MovementItem[] };
@@ -36,6 +36,8 @@ export default function Home() {
   const [wod, setWod] = useState<WodState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const atLimit = text.length >= MAX_WOD_LENGTH;
+  const tooLong = text.trim().length > MAX_WOD_LENGTH;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -71,12 +73,22 @@ export default function Home() {
           onChange={(e) => setText(e.target.value)}
           placeholder={EXAMPLE}
           rows={7}
+          maxLength={MAX_WOD_LENGTH}
+          aria-describedby="wod-length"
           className="w-full rounded-lg border border-zinc-300 bg-white p-3 font-mono text-sm focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
         />
+        <p
+          id="wod-length"
+          className={`-mt-2 text-right text-xs ${atLimit ? "text-red-600 dark:text-red-400" : "text-zinc-500"}`}
+        >
+          {atLimit
+            ? `Maximum length reached (${MAX_WOD_LENGTH} characters)`
+            : `${text.length} / ${MAX_WOD_LENGTH}`}
+        </p>
         <div className="flex gap-2">
           <button
             type="submit"
-            disabled={loading || !text.trim()}
+            disabled={loading || !text.trim() || tooLong}
             className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
           >
             {loading ? "Parsing…" : "Break it down"}

@@ -1,7 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { parseWod, WodParseError } from "@/lib/parse-wod";
-
-const MAX_LENGTH = 4000;
+import { MAX_WOD_LENGTH } from "@/lib/wod";
 
 export async function POST(request: Request) {
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -14,7 +13,7 @@ export async function POST(request: Request) {
   if (!text) {
     return Response.json({ error: "Paste a workout first." }, { status: 400 });
   }
-  if (text.length > MAX_LENGTH) {
+  if (text.length > MAX_WOD_LENGTH) {
     return Response.json({ error: "That's too long for one workout." }, { status: 400 });
   }
 

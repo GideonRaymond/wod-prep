@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Home from "./page";
 import { fran } from "@/test/fixtures";
+import { MAX_WOD_LENGTH } from "@/lib/wod";
 
 const fetchMock = vi.fn();
 
@@ -41,6 +42,39 @@ describe("Home", () => {
     expect(submit).toBeDisabled();
     await user.type(screen.getByRole("textbox"), "Fran");
     expect(submit).toBeEnabled();
+  });
+
+  it("shows a character count", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+    expect(screen.getByText(`0 / ${MAX_WOD_LENGTH}`)).toBeInTheDocument();
+
+    await user.type(screen.getByRole("textbox"), "Fran");
+    expect(screen.getByText(`4 / ${MAX_WOD_LENGTH}`)).toBeInTheDocument();
+  });
+
+  it("limits the textarea to the max length", () => {
+    render(<Home />);
+    expect(screen.getByRole("textbox")).toHaveAttribute("maxLength", String(MAX_WOD_LENGTH));
+  });
+
+  it("warns when the max length is reached", () => {
+    render(<Home />);
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "x".repeat(MAX_WOD_LENGTH) },
+    });
+
+    expect(screen.getByText(/Maximum length reached/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Break it down" })).toBeEnabled();
+  });
+
+  it("disables submit when the text is over the max length", () => {
+    render(<Home />);
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "x".repeat(MAX_WOD_LENGTH + 1) },
+    });
+
+    expect(screen.getByRole("button", { name: "Break it down" })).toBeDisabled();
   });
 
   it("fills in the example and hides the example button", async () => {
