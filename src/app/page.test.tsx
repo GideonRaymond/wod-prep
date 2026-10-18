@@ -32,6 +32,16 @@ describe("Home", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("doesn't let the user resize text boxes", async () => {
+    await parseFran();
+    for (const textarea of screen
+      .getAllByRole("textbox")
+      .filter((el) => el.tagName === "TEXTAREA")) {
+      expect(textarea).toHaveClass("resize-none");
+    }
   });
 
   it("disables submit until a workout is entered", async () => {
@@ -215,6 +225,19 @@ describe("Home", () => {
 
       await user.type(stimulusBox(), " Scale to finish under 10.");
       expect(stimulusBox()).toHaveValue(`${fran.stimulus} Scale to finish under 10.`);
+    });
+
+    it("grows to fit its content", async () => {
+      vi.spyOn(HTMLTextAreaElement.prototype, "scrollHeight", "get").mockImplementation(function (
+        this: HTMLTextAreaElement,
+      ) {
+        return this.value.split("\n").length * 20;
+      });
+      const user = await parseFran();
+      expect(stimulusBox().style.height).toBe("20px");
+
+      await user.type(stimulusBox(), "{Enter}Line two{Enter}Line three");
+      expect(stimulusBox().style.height).toBe("60px");
     });
 
     it("is required", async () => {

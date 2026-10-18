@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Dumbbell, Plus, Repeat, RotateCcw, X } from "lucide-react";
 import { MAX_WOD_LENGTH, type Movement, type Wod } from "@/lib/wod";
+import { useAutoResize } from "@/lib/use-auto-resize";
 import { useUndoableText } from "@/lib/use-undoable-text";
 
 type MovementItem = Movement & { id: string };
@@ -76,7 +77,7 @@ export default function Home() {
           rows={7}
           maxLength={MAX_WOD_LENGTH}
           aria-describedby="wod-length"
-          className="w-full rounded-lg border border-zinc-300 bg-white p-3 font-mono text-sm focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+          className="w-full resize-none rounded-lg border border-zinc-300 bg-white p-3 font-mono text-sm focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
         />
         <p
           id="wod-length"
@@ -182,6 +183,7 @@ function StimulusEditor({
   stimulus: ReturnType<typeof useUndoableText>;
 }) {
   const missing = !stimulus.value.trim();
+  const textareaRef = useAutoResize(stimulus.value);
   const edited = stimulus.value !== original;
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -215,14 +217,15 @@ function StimulusEditor({
       </div>
       <textarea
         id="stimulus"
+        ref={textareaRef}
         value={stimulus.value}
         onChange={(e) => stimulus.edit(e.target.value)}
         onKeyDown={handleKeyDown}
-        rows={3}
+        rows={1}
         required
         aria-invalid={missing}
         aria-describedby={missing ? "stimulus-error" : undefined}
-        className={`mt-1 w-full rounded-lg border bg-white p-3 text-sm focus:outline-none dark:bg-zinc-900 ${
+        className={`mt-1 w-full resize-none overflow-hidden rounded-lg border bg-white p-3 text-sm focus:outline-none dark:bg-zinc-900 ${
           missing
             ? "border-red-500 focus:border-red-600"
             : "border-zinc-300 focus:border-zinc-500 dark:border-zinc-700"
