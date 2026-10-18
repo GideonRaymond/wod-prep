@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+const { mockVideos } = vi.hoisted(() => ({ mockVideos: vi.fn() }));
+vi.mock("@/services/videosApi", () => ({ requestMovementVideos: mockVideos }));
+
 import { WorkoutPage } from "./WorkoutPage";
 import { WodProvider } from "@/providers/WodProvider";
 import { WOD_STORAGE_KEY } from "@/stores/wodStore";
 import type { WodState } from "@/types/wod";
-import { strengthAndMetcon } from "@/test/fixtures";
+import { fran, strengthAndMetcon } from "@/test/fixtures";
 import { toWodState } from "@/utils/toWodState";
 
 function renderPage(wod: WodState | null) {
@@ -18,6 +21,9 @@ function renderPage(wod: WodState | null) {
 }
 
 describe("WorkoutPage", () => {
+  beforeEach(() => {
+    mockVideos.mockReset().mockResolvedValue([]);
+  });
   afterEach(() => {
     cleanup();
   });
@@ -58,6 +64,28 @@ describe("WorkoutPage", () => {
     );
     expect(html).toContain("Your workout");
     expect(html).not.toContain("no workout to show");
+  });
+
+  it("finds videos for the movements and lists them under Before class", async () => {
+    mockVideos.mockImplementation(async (name: string) =>
+      name === "Thruster"
+        ? [{ title: "How to Thruster", url: "https://www.youtube.com/watch?v=t", duration: "3:05" }]
+        : [],
+    );
+    renderPage(toWodState(fran));
+    expect(screen.getByRole("status")).toHaveTextContent("Finding videos…");
+
+    const link = await screen.findByRole("link", { name: /How to Thruster/ });
+    expect(link).toHaveAttribute("href", "https://www.youtube.com/watch?v=t");
+    expect(screen.getByText("Video · 3:05 · Thruster")).toBeInTheDocument();
+    expect(screen.queryByText("Finding videos…")).not.toBeInTheDocument();
+  });
+
+  it("explains when videos can't be found", async () => {
+    mockVideos.mockRejectedValue(new Error("Videos need a YouTube API key."));
+    renderPage(toWodState(fran));
+    expect(await screen.findByText("Videos need a YouTube API key.")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Fran" })).toBeInTheDocument();
   });
 
   it("shows the edited stimulus", () => {

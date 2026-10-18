@@ -23,6 +23,14 @@ describe("createWodStore", () => {
     expect(createWodStore().get()).toEqual(value);
   });
 
+  it("keeps the videos found for each movement", () => {
+    const wod = toWodState(fran);
+    const videos = [{ title: "How to Thruster", url: "https://youtu.be/a", duration: "3:05" }];
+    wod.parts[0].movements[0] = { ...wod.parts[0].movements[0], videos };
+    sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(withText(wod)));
+    expect(createWodStore().get()?.wod.parts[0].movements[0].videos).toEqual(videos);
+  });
+
   it("returns the same object on every read, as useSyncExternalStore needs", () => {
     sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(withText(toWodState(fran))));
     const store = createWodStore();

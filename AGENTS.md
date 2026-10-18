@@ -15,6 +15,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - One folder per component: `Name/Name.tsx`, `Name/Name.test.tsx`, `Name/index.ts`. Import through the folder (`@/components/shared/Button`).
 - App-wide state in `src/providers/` (e.g. `WodProvider`, the current workout shared by the review and workout pages). It reads from a store in `src/stores/` (`wodStore`) via `useSyncExternalStore`; every change (and the text the workout was parsed from) is written through to sessionStorage so a refresh restores it. Don't read `sessionStorage` during render elsewhere — it isn't available on the server.
 - Hooks in `src/hooks/`, client API calls in `src/services/`, server-only code in `src/server/`, Zod schemas in `src/schemas/`, constants in `src/constants/`, hand-written content in `src/data/`, pure helpers in `src/utils/`.
-- Claude calls use the shared client in `src/server/anthropic.ts`. Routes map errors with `claudeErrorResponse` (`src/server/apiErrors.ts`). Dev caching goes through `createFileCache` (`src/server/fileCache.ts`).
+- Claude calls use the shared client in `src/server/anthropic.ts`. Routes map errors with `claudeErrorResponse` (`src/server/apiErrors.ts`). Dev caching goes through `createFileCache` (`src/server/fileCache.ts`). YouTube search lives in `src/server/movementVideos.ts` (key `YOUTUBE_API_KEY`; cached per movement for 30 days).
 - Middleware is `src/proxy.ts` (Next.js 16 name), one file only.
 - Every change comes with tests next to the code it covers.
