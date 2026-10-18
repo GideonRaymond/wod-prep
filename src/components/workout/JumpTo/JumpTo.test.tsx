@@ -37,10 +37,7 @@ describe("JumpTo", () => {
     const whiteboard = menu.getByRole("button", { name: /Whiteboard/ });
     expect(whiteboard).toHaveAttribute("aria-current", "true");
     expect(whiteboard).toHaveFocus();
-    expect(menu.getByRole("button", { name: /B · Fran/ })).toHaveAttribute(
-      "aria-current",
-      "false",
-    );
+    expect(menu.getByRole("button", { name: /B · Fran/ })).toHaveAttribute("aria-current", "false");
   });
 
   it("jumps to a stage and closes", async () => {
