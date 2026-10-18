@@ -8,10 +8,7 @@ export type CardProps = HTMLAttributes<HTMLElement> & {
 export function Card({ as: Tag = "div", className, ...props }: CardProps) {
   return (
     <Tag
-      className={cn(
-        "bg-background rounded-lg border border-zinc-200 p-4 dark:border-zinc-800",
-        className,
-      )}
+      className={cn("rounded-lg border border-zinc-200 p-4 dark:border-zinc-800", className)}
       {...props}
     />
   );
