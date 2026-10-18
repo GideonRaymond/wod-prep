@@ -17,7 +17,8 @@ Open http://localhost:3000.
 In development, every parsed WOD is saved to `.cache/parsed-wods.json` and every AI-generated set of points of performance to `.cache/points-of-performance.json` (both gitignored), so testing with the same workouts costs nothing after the first time. Cached results even work without an API key.
 
 - **Formatting is ignored:** `"Fran" 21-15-9 for time: Thrusters (95/65 lb), Pull-ups` and `fran 21-15-9 for time thrusters 95/65lb pullups` hit the same entry.
-- **Named workouts** are also stored under their name, so after parsing Fran once, typing just `Fran` is a cache hit.
+- **Multi-part WODs** are also cached part by part, so pasting just one part of a day you parsed before (e.g. only its Part B) is a hit.
+- **Named workouts** (and named parts) are also stored under their name, so after parsing Fran once, even as Part B of a longer class, typing just `Fran` is a cache hit. Made-up titles like "Intense Couplet" aren't.
 - **Different wording** (e.g. `21-15-9 pullups and thrusters`) is parsed once more, then cached too.
 - Responses carry an `X-Cache: HIT` or `MISS` header (visible in the browser's network tab).
 - **Clear the cache:** delete `.cache/`. **Turn it on or off:** set `WOD_CACHE=on|off`. It's off in production by default.

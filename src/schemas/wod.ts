@@ -43,6 +43,9 @@ export const WorkoutPartSchema = z.object({
   named: z
     .boolean()
     .describe("True when the title is the workout's real name, false when you made it up"),
+  sourceText: z
+    .string()
+    .describe("The lines of the original text that belong to this part, copied exactly"),
   format: z.enum(["for_time", "amrap", "emom", "rounds", "intervals", "strength", "other"]),
   duration: z
     .string()
