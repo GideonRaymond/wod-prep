@@ -6,6 +6,8 @@ export const fran: Wod = {
   duration: null,
   rounds: "21-15-9",
   notes: null,
+  stimulus:
+    "Short and intense: a sprint that should finish in under 7 minutes. Light enough to keep thrusters unbroken early and pull-ups in big sets.",
   movements: [
     {
       name: "Thruster",

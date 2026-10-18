@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { WodSchema, type Movement } from "./wod";
+import { WodSchema, type Movement, type Wod } from "./wod";
 import { fran } from "@/test/fixtures";
 
 describe("WodSchema", () => {
@@ -14,6 +14,13 @@ describe("WodSchema", () => {
       movements: [{ ...fran.movements[0], reps: null, load: null }],
     };
     expect(WodSchema.safeParse(wod).success).toBe(true);
+  });
+
+  it("requires a stimulus", () => {
+    const wod: Partial<Wod> = { ...fran };
+    delete wod.stimulus;
+    expect(WodSchema.safeParse(wod).success).toBe(false);
+    expect(WodSchema.safeParse({ ...fran, stimulus: null }).success).toBe(false);
   });
 
   it("rejects an unknown format", () => {
