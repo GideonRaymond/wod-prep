@@ -8,7 +8,7 @@ import { useWod } from "@/providers/WodProvider";
 
 /** The confirmed workout with the details for each part and movement. */
 export function WorkoutPage() {
-  const { wod } = useWod();
+  const { wod, restored } = useWod();
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-12">
@@ -29,12 +29,14 @@ export function WorkoutPage() {
           ))}
         </div>
       ) : (
-        <Card className="mt-8">
-          <p className="text-zinc-600 dark:text-zinc-400">There&apos;s no workout to show yet.</p>
-          <ButtonLink href="/" size="sm" className="mt-3">
-            Paste a workout
-          </ButtonLink>
-        </Card>
+        restored && (
+          <Card className="mt-8">
+            <p className="text-zinc-600 dark:text-zinc-400">There&apos;s no workout to show yet.</p>
+            <ButtonLink href="/" size="sm" className="mt-3">
+              Paste a workout
+            </ButtonLink>
+          </Card>
+        )
       )}
     </main>
   );

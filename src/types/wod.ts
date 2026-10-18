@@ -13,3 +13,6 @@ export type WorkoutPartState = Omit<WorkoutPart, "movements"> & {
 
 /** A parsed WOD as held in UI state. */
 export type WodState = { parts: WorkoutPartState[] };
+
+/** The current WOD and the text it was parsed from, as kept across refreshes. */
+export type SavedWod = { text: string; wod: WodState };
