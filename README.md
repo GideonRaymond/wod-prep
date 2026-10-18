@@ -73,4 +73,7 @@ Middleware is called **proxy** in Next.js 16 and must live in a single `src/prox
 3. Videos agent (YouTube)
 4. Alternative movements agent + friction toggles
 5. Articles agent
-6. Per-movement caching
+6. Production caching (before going live)
+   - Move the parse cache from the local file to a shared store (e.g. Upstash Redis / Vercel KV, or Postgres) so it works on serverless hosting
+   - Cache research per movement, so agent results for common movements are reused across workouts
+   - Revisit the "first version wins" name lookup: in production the cache is shared by all users
