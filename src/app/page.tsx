@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Dumbbell, Plus, Repeat, RotateCcw, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Dumbbell, Pencil, Plus, Repeat, RotateCcw, X } from "lucide-react";
 import { MAX_WOD_LENGTH, type Movement, type Wod } from "@/lib/wod";
 import { useAutoResize } from "@/lib/use-auto-resize";
 import { useUndoableText } from "@/lib/use-undoable-text";
@@ -182,9 +182,110 @@ function StimulusEditor({
   original: string;
   stimulus: ReturnType<typeof useUndoableText>;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [valueBeforeEdit, setValueBeforeEdit] = useState(stimulus.value);
   const missing = !stimulus.value.trim();
-  const textareaRef = useAutoResize(stimulus.value);
   const edited = stimulus.value !== original;
+
+  function startEditing() {
+    setValueBeforeEdit(stimulus.value);
+    setEditing(true);
+  }
+
+  function cancel() {
+    stimulus.replace(valueBeforeEdit);
+    setEditing(false);
+  }
+
+  return (
+    <div className="mt-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-medium">
+            {editing ? <label htmlFor="stimulus">Stimulus</label> : "Stimulus"}
+          </h3>
+          {edited && !editing && (
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+              edited
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {edited && (
+            <button
+              type="button"
+              onClick={() => stimulus.replace(original)}
+              aria-label="Revert stimulus to original"
+              className={iconButtonClass}
+            >
+              <RotateCcw size={14} aria-hidden /> Revert
+            </button>
+          )}
+          {!editing && (
+            <button
+              type="button"
+              onClick={startEditing}
+              aria-label="Edit stimulus"
+              className={iconButtonClass}
+            >
+              <Pencil size={14} aria-hidden /> Edit
+            </button>
+          )}
+        </div>
+      </div>
+
+      {editing ? (
+        <>
+          <StimulusTextarea stimulus={stimulus} missing={missing} />
+          {missing && (
+            <p id="stimulus-error" className="text-sm text-red-600 dark:text-red-400">
+              Stimulus is required.
+            </p>
+          )}
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              disabled={missing}
+              className="flex items-center gap-1 rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
+            >
+              <Check size={14} aria-hidden /> Done
+            </button>
+            <button
+              type="button"
+              onClick={cancel}
+              className="rounded-md px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            >
+              Cancel
+            </button>
+          </div>
+        </>
+      ) : (
+        <p className="mt-2 text-sm whitespace-pre-line text-zinc-600 dark:text-zinc-400">
+          {stimulus.value}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function StimulusTextarea({
+  stimulus,
+  missing,
+}: {
+  stimulus: ReturnType<typeof useUndoableText>;
+  missing: boolean;
+}) {
+  const ref = useAutoResize(stimulus.value);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
+    // Only on mount: focus the box with the cursor at the end when editing starts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (!(e.metaKey || e.ctrlKey)) return;
@@ -200,45 +301,27 @@ function StimulusEditor({
   }
 
   return (
-    <div className="mt-4">
-      <div className="flex items-center justify-between">
-        <label htmlFor="stimulus" className="font-medium">
-          Stimulus
-        </label>
-        <button
-          type="button"
-          onClick={() => stimulus.replace(original)}
-          disabled={!edited}
-          aria-label="Revert stimulus to original"
-          className="flex items-center gap-1 rounded px-2 py-1 text-sm text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:hover:bg-transparent dark:text-zinc-400 dark:hover:bg-zinc-800"
-        >
-          <RotateCcw size={14} aria-hidden /> Revert
-        </button>
-      </div>
-      <textarea
-        id="stimulus"
-        ref={textareaRef}
-        value={stimulus.value}
-        onChange={(e) => stimulus.edit(e.target.value)}
-        onKeyDown={handleKeyDown}
-        rows={1}
-        required
-        aria-invalid={missing}
-        aria-describedby={missing ? "stimulus-error" : undefined}
-        className={`mt-1 w-full resize-none overflow-hidden rounded-lg border bg-white p-3 text-sm focus:outline-none dark:bg-zinc-900 ${
-          missing
-            ? "border-red-500 focus:border-red-600"
-            : "border-zinc-300 focus:border-zinc-500 dark:border-zinc-700"
-        }`}
-      />
-      {missing && (
-        <p id="stimulus-error" className="text-sm text-red-600 dark:text-red-400">
-          Stimulus is required.
-        </p>
-      )}
-    </div>
+    <textarea
+      id="stimulus"
+      ref={ref}
+      value={stimulus.value}
+      onChange={(e) => stimulus.edit(e.target.value)}
+      onKeyDown={handleKeyDown}
+      rows={1}
+      required
+      aria-invalid={missing}
+      aria-describedby={missing ? "stimulus-error" : undefined}
+      className={`mt-2 w-full resize-none overflow-hidden rounded-lg border bg-white p-3 text-sm focus:outline-none dark:bg-zinc-900 ${
+        missing
+          ? "border-red-500 focus:border-red-600"
+          : "border-zinc-300 focus:border-zinc-500 dark:border-zinc-700"
+      }`}
+    />
   );
 }
+
+const iconButtonClass =
+  "flex items-center gap-1 rounded px-2 py-1 text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800";
 
 const inputClass =
   "w-full rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-sm focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900";

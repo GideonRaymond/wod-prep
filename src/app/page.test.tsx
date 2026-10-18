@@ -36,12 +36,11 @@ describe("Home", () => {
   });
 
   it("doesn't let the user resize text boxes", async () => {
-    await parseFran();
-    for (const textarea of screen
-      .getAllByRole("textbox")
-      .filter((el) => el.tagName === "TEXTAREA")) {
-      expect(textarea).toHaveClass("resize-none");
-    }
+    const user = await parseFran();
+    await user.click(screen.getByRole("button", { name: "Edit stimulus" }));
+    const textareas = screen.getAllByRole("textbox").filter((el) => el.tagName === "TEXTAREA");
+    expect(textareas).toHaveLength(2);
+    for (const textarea of textareas) expect(textarea).toHaveClass("resize-none");
   });
 
   it("disables submit until a workout is entered", async () => {
@@ -217,59 +216,83 @@ describe("Home", () => {
 
   describe("stimulus", () => {
     const stimulusBox = () => screen.getByRole("textbox", { name: "Stimulus" });
-    const revert = () => screen.getByRole("button", { name: "Revert stimulus to original" });
+    const queryStimulusBox = () => screen.queryByRole("textbox", { name: "Stimulus" });
+    const button = (name: string) => screen.getByRole("button", { name });
+    const revert = () => button("Revert stimulus to original");
 
-    it("shows the parsed stimulus in an editable field", async () => {
+    async function editTo(user: ReturnType<typeof userEvent.setup>, text: string) {
+      await user.click(button("Edit stimulus"));
+      await user.clear(stimulusBox());
+      await user.type(stimulusBox(), text);
+    }
+
+    it("shows the parsed stimulus read-only until Edit is clicked", async () => {
       const user = await parseFran();
-      expect(stimulusBox()).toHaveValue(fran.stimulus);
+      expect(screen.getByText(fran.stimulus)).toBeInTheDocument();
+      expect(queryStimulusBox()).not.toBeInTheDocument();
 
-      await user.type(stimulusBox(), " Scale to finish under 10.");
-      expect(stimulusBox()).toHaveValue(`${fran.stimulus} Scale to finish under 10.`);
+      await user.click(button("Edit stimulus"));
+      expect(stimulusBox()).toHaveValue(fran.stimulus);
+      expect(stimulusBox()).toHaveFocus();
+      expect(screen.queryByRole("button", { name: "Edit stimulus" })).not.toBeInTheDocument();
     });
 
-    it("grows to fit its content", async () => {
-      vi.spyOn(HTMLTextAreaElement.prototype, "scrollHeight", "get").mockImplementation(function (
-        this: HTMLTextAreaElement,
-      ) {
-        return this.value.split("\n").length * 20;
-      });
+    it("saves edits with Done and marks the stimulus as edited", async () => {
       const user = await parseFran();
-      expect(stimulusBox().style.height).toBe("20px");
+      expect(screen.queryByText("edited")).not.toBeInTheDocument();
 
-      await user.type(stimulusBox(), "{Enter}Line two{Enter}Line three");
-      expect(stimulusBox().style.height).toBe("60px");
+      await editTo(user, "Heavy and slow.");
+      await user.click(button("Done"));
+
+      expect(queryStimulusBox()).not.toBeInTheDocument();
+      expect(screen.getByText("Heavy and slow.")).toBeInTheDocument();
+      expect(screen.getByText("edited")).toBeInTheDocument();
+    });
+
+    it("discards the current edit on Cancel", async () => {
+      const user = await parseFran();
+      await editTo(user, "Heavy and slow.");
+      await user.click(button("Done"));
+
+      await editTo(user, "Something else.");
+      await user.click(button("Cancel"));
+      expect(screen.getByText("Heavy and slow.")).toBeInTheDocument();
     });
 
     it("is required", async () => {
       const user = await parseFran();
+      await user.click(button("Edit stimulus"));
       expect(screen.queryByText("Stimulus is required.")).not.toBeInTheDocument();
 
       await user.clear(stimulusBox());
       expect(stimulusBox()).toBeRequired();
       expect(stimulusBox()).toHaveAttribute("aria-invalid", "true");
       expect(screen.getByText("Stimulus is required.")).toBeInTheDocument();
+      expect(button("Done")).toBeDisabled();
 
       await user.type(stimulusBox(), "   ");
-      expect(screen.getByText("Stimulus is required.")).toBeInTheDocument();
+      expect(button("Done")).toBeDisabled();
+
+      await user.type(stimulusBox(), "Fast.");
+      expect(button("Done")).toBeEnabled();
     });
 
     it("reverts to the original", async () => {
       const user = await parseFran();
-      expect(revert()).toBeDisabled();
+      expect(screen.queryByRole("button", { name: /Revert/ })).not.toBeInTheDocument();
 
-      await user.clear(stimulusBox());
-      await user.type(stimulusBox(), "Heavy and slow.");
-      expect(revert()).toBeEnabled();
-
+      await editTo(user, "Heavy and slow.");
+      await user.click(button("Done"));
       await user.click(revert());
-      expect(stimulusBox()).toHaveValue(fran.stimulus);
-      expect(revert()).toBeDisabled();
+
+      expect(screen.getByText(fran.stimulus)).toBeInTheDocument();
+      expect(screen.queryByText("edited")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Revert/ })).not.toBeInTheDocument();
     });
 
     it("undoes and redoes edits with Ctrl+Z / Ctrl+Shift+Z", async () => {
       const user = await parseFran();
-      await user.clear(stimulusBox());
-      await user.type(stimulusBox(), "Heavy and slow.");
+      await editTo(user, "Heavy and slow.");
 
       await user.keyboard("{Control>}z{/Control}");
       expect(stimulusBox()).toHaveValue(fran.stimulus);
@@ -280,8 +303,7 @@ describe("Home", () => {
 
     it("supports Cmd+Z and Ctrl+Y", async () => {
       const user = await parseFran();
-      await user.clear(stimulusBox());
-      await user.type(stimulusBox(), "Heavy and slow.");
+      await editTo(user, "Heavy and slow.");
 
       await user.keyboard("{Meta>}z{/Meta}");
       expect(stimulusBox()).toHaveValue(fran.stimulus);
@@ -292,13 +314,27 @@ describe("Home", () => {
 
     it("can undo a revert", async () => {
       const user = await parseFran();
-      await user.clear(stimulusBox());
-      await user.type(stimulusBox(), "Heavy and slow.");
+      await editTo(user, "Heavy and slow.");
+      await user.click(button("Done"));
       await user.click(revert());
 
-      await user.click(stimulusBox());
+      await user.click(button("Edit stimulus"));
       await user.keyboard("{Control>}z{/Control}");
       expect(stimulusBox()).toHaveValue("Heavy and slow.");
+    });
+
+    it("grows to fit its content while editing", async () => {
+      vi.spyOn(HTMLTextAreaElement.prototype, "scrollHeight", "get").mockImplementation(function (
+        this: HTMLTextAreaElement,
+      ) {
+        return this.value.split("\n").length * 20;
+      });
+      const user = await parseFran();
+      await user.click(button("Edit stimulus"));
+      expect(stimulusBox().style.height).toBe("20px");
+
+      await user.type(stimulusBox(), "{Enter}Line two{Enter}Line three");
+      expect(stimulusBox().style.height).toBe("60px");
     });
   });
 });
