@@ -3,6 +3,7 @@ import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { WodSchema, type Wod } from "@/schemas/wod";
 import { anthropic, MODEL } from "./anthropic";
 import { UnusableResultError } from "./apiErrors";
+import { fillMissingLabels } from "@/utils/fillMissingLabels";
 import { mergeDuplicateMovements } from "@/utils/mergeDuplicateMovements";
 
 const SYSTEM = `You parse CrossFit workouts (WODs) into structured data.
@@ -33,9 +34,12 @@ export async function parseWod(text: string): Promise<Wod> {
   if (!response.parsed_output) {
     throw new WodParseError("Couldn't read that as a workout. Try rephrasing it.");
   }
-  // Safety net in case the model still lists a movement twice within a part.
+  // Safety nets in case the model still lists a movement twice within a part, or labels some
+  // parts but not others.
   const { parts } = response.parsed_output;
   return {
-    parts: parts.map((part) => ({ ...part, movements: mergeDuplicateMovements(part.movements) })),
+    parts: fillMissingLabels(
+      parts.map((part) => ({ ...part, movements: mergeDuplicateMovements(part.movements) })),
+    ),
   };
 }
