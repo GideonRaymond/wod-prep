@@ -6,7 +6,7 @@ import { StimulusCard } from "@/components/home/StimulusCard";
 import { FORMAT_LABELS } from "@/constants/wod";
 import { useUndoableText } from "@/hooks/useUndoableText";
 import type { Movement } from "@/schemas/wod";
-import type { WodState } from "@/types/wod";
+import type { MovementItem, WodState } from "@/types/wod";
 import { withId } from "@/utils/withId";
 
 export type WodSummaryProps = {
@@ -22,6 +22,8 @@ export function WodSummary({ wod, onChange }: WodSummaryProps) {
     onChange({ ...wod, movements: wod.movements.filter((m) => m.id !== id) });
   const add = (movement: Movement) =>
     onChange({ ...wod, movements: [...wod.movements, withId(movement)] });
+  const replace = (id: string, movement: MovementItem) =>
+    onChange({ ...wod, movements: wod.movements.map((m) => (m.id === id ? movement : m)) });
 
   return (
     <section className="mt-8">
@@ -37,7 +39,7 @@ export function WodSummary({ wod, onChange }: WodSummaryProps) {
         ))}
       </ul>
 
-      <AddMovementForm onAdd={add} />
+      <AddMovementForm movements={wod.movements} onAdd={add} onMerge={replace} />
     </section>
   );
 }

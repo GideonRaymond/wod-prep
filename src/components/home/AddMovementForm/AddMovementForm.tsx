@@ -2,25 +2,33 @@
 
 import { useState, type FormEvent } from "react";
 import { Plus } from "lucide-react";
+import { MergeMovementDialog } from "@/components/home/MergeMovementDialog";
 import { Button } from "@/components/shared/Button";
 import { Card } from "@/components/shared/Card";
 import { Select } from "@/components/shared/Select";
 import { TextInput } from "@/components/shared/TextInput";
 import { MOVEMENT_CATEGORIES } from "@/constants/wod";
 import type { Movement } from "@/schemas/wod";
+import type { MovementItem } from "@/types/wod";
+import { isSameMovement, mergeMovement } from "@/utils/mergeDuplicateMovements";
 
 const CATEGORY_OPTIONS = MOVEMENT_CATEGORIES.map((c) => ({ value: c, label: c }));
 
 export type AddMovementFormProps = {
+  /** Movements already in the workout, to detect duplicates. */
+  movements: MovementItem[];
   onAdd: (movement: Movement) => void;
+  /** Replaces the movement with this id by the merged result. */
+  onMerge: (id: string, merged: MovementItem) => void;
 };
 
-export function AddMovementForm({ onAdd }: AddMovementFormProps) {
+export function AddMovementForm({ movements, onAdd, onMerge }: AddMovementFormProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [reps, setReps] = useState("");
   const [load, setLoad] = useState("");
   const [category, setCategory] = useState<Movement["category"]>("other");
+  const [pending, setPending] = useState<{ existing: MovementItem; added: Movement } | null>(null);
 
   function reset() {
     setName("");
@@ -34,13 +42,26 @@ export function AddMovementForm({ onAdd }: AddMovementFormProps) {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) return;
-    onAdd({
+    const movement: Movement = {
       name: trimmed,
       originalText: trimmed,
       reps: reps.trim() || null,
       load: load.trim() || null,
       category,
-    });
+    };
+    const existing = movements.find((m) => isSameMovement(m, movement));
+    if (existing) {
+      setPending({ existing, added: movement });
+      return;
+    }
+    onAdd(movement);
+    reset();
+  }
+
+  function confirmMerge() {
+    if (!pending) return;
+    onMerge(pending.existing.id, mergeMovement(pending.existing, pending.added));
+    setPending(null);
     reset();
   }
 
@@ -95,6 +116,12 @@ export function AddMovementForm({ onAdd }: AddMovementFormProps) {
           Cancel
         </Button>
       </div>
+      <MergeMovementDialog
+        existing={pending?.existing ?? null}
+        added={pending?.added ?? null}
+        onMerge={confirmMerge}
+        onCancel={() => setPending(null)}
+      />
     </Card>
   );
 }

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { useState } from "react";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { WodSummary } from "./WodSummary";
@@ -48,5 +48,19 @@ describe("WodSummary", () => {
 
     expect(screen.getAllByRole("listitem")).toHaveLength(3);
     expect(screen.getByRole("heading", { name: "Wall Balls" })).toBeInTheDocument();
+  });
+
+  it("merges a movement that's added again", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole("button", { name: "Add movement" }));
+    await user.type(screen.getByPlaceholderText(/Movement/), "Pull-ups");
+    await user.type(screen.getByPlaceholderText(/Reps/), "10");
+    await user.click(screen.getByRole("button", { name: "Add" }));
+    await user.click(screen.getByRole("button", { name: "Merge" }));
+
+    const cards = screen.getAllByRole("listitem");
+    expect(cards).toHaveLength(2);
+    expect(within(cards[1]).getByTitle("Reps")).toHaveTextContent("21-15-9 + 10");
   });
 });

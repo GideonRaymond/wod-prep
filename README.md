@@ -31,7 +31,7 @@ src/
 │   ├── page.tsx          #   renders <HomePage />
 │   └── api/parse/        #   POST /api/parse
 ├── components/
-│   ├── shared/           # Generic, reusable UI (Button, TextArea, TextInput, Select, Card, Badge, …)
+│   ├── shared/           # Generic, reusable UI (Button, TextArea, TextInput, Select, Card, Badge, Dialog, …)
 │   └── home/             # Components used only by the home page (HomePage, StimulusCard, …)
 ├── hooks/                # React hooks (useParseWod, useUndoableText, useAutoResize, …)
 ├── services/             # Client-side API calls (wodApi)

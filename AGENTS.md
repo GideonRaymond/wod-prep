@@ -11,7 +11,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Project conventions
 
 - `src/app/` holds routes only. Page UI lives in `src/components/<page>/` and the page file just renders it.
-- Generic, reusable UI goes in `src/components/shared/`. Build new UI from these (Button, TextArea, TextInput, Select, Card, Badge, Alert, FieldError, CharacterCount) instead of styling raw elements.
+- Generic, reusable UI goes in `src/components/shared/`. Build new UI from these (Button, TextArea, TextInput, Select, Card, Badge, Alert, Dialog, FieldError, CharacterCount) instead of styling raw elements.
 - One folder per component: `Name/Name.tsx`, `Name/Name.test.tsx`, `Name/index.ts`. Import through the folder (`@/components/shared/Button`).
 - Hooks in `src/hooks/`, client API calls in `src/services/`, server-only code in `src/server/`, Zod schemas in `src/schemas/`, constants in `src/constants/`, pure helpers in `src/utils/`.
 - Middleware is `src/proxy.ts` (Next.js 16 name), one file only.
