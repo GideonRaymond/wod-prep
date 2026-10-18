@@ -43,6 +43,20 @@ const normalize = (text: string) =>
 // Same movement at the same load counts as a duplicate; different loads stay separate.
 const keyOf = (m: Movement) => `${normalize(m.name)}|${normalize(m.load ?? "")}`;
 
+/** Whether two movements are the same movement at the same load. */
+export function isSameMovement(a: Movement, b: Movement) {
+  return keyOf(a) === keyOf(b);
+}
+
+/** Folds `added` into `existing`, adding up the reps. Keeps everything else (incl. ids) from `existing`. */
+export function mergeMovement<T extends Movement>(existing: T, added: Movement): T {
+  return {
+    ...existing,
+    reps: sumReps(existing.reps, added.reps),
+    originalText: `${existing.originalText} · ${added.originalText}`,
+  };
+}
+
 /**
  * Combines movements that appear more than once (e.g. the two runs in Murph) into a single
  * entry with the reps added up, keeping the position of the first occurrence.
@@ -52,16 +66,7 @@ export function mergeDuplicateMovements(movements: Movement[]): Movement[] {
   for (const movement of movements) {
     const key = keyOf(movement);
     const existing = merged.get(key);
-    merged.set(
-      key,
-      existing
-        ? {
-            ...existing,
-            reps: sumReps(existing.reps, movement.reps),
-            originalText: `${existing.originalText} · ${movement.originalText}`,
-          }
-        : movement,
-    );
+    merged.set(key, existing ? mergeMovement(existing, movement) : movement);
   }
   return [...merged.values()];
 }

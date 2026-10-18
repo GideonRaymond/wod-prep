@@ -1,4 +1,5 @@
-import { Dumbbell, Repeat, X } from "lucide-react";
+import { X } from "lucide-react";
+import { MovementDetails } from "@/components/home/MovementDetails";
 import { Badge, type BadgeTone } from "@/components/shared/Badge";
 import { Button } from "@/components/shared/Button";
 import { Card } from "@/components/shared/Card";
@@ -17,7 +18,7 @@ export type MovementCardProps = {
 };
 
 export function MovementCard({ movement, onRemove }: MovementCardProps) {
-  const { name, reps, load, category, originalText } = movement;
+  const { name, category } = movement;
 
   return (
     <Card as="li">
@@ -34,19 +35,7 @@ export function MovementCard({ movement, onRemove }: MovementCardProps) {
           />
         </div>
       </div>
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-        {reps && (
-          <span className="flex items-center gap-1.5" title="Reps">
-            <Repeat size={14} aria-hidden /> {reps}
-          </span>
-        )}
-        {load && (
-          <span className="flex items-center gap-1.5" title="Load">
-            <Dumbbell size={14} aria-hidden /> {load}
-          </span>
-        )}
-        {!reps && !load && <span>{originalText}</span>}
-      </div>
+      <MovementDetails movement={movement} />
     </Card>
   );
 }

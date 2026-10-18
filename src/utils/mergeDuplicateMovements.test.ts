@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { mergeDuplicateMovements, sumReps } from "./mergeDuplicateMovements";
+import {
+  isSameMovement,
+  mergeDuplicateMovements,
+  mergeMovement,
+  sumReps,
+} from "./mergeDuplicateMovements";
 import type { Movement } from "@/schemas/wod";
 
 const movement = (overrides: Partial<Movement>): Movement => ({
@@ -94,5 +99,33 @@ describe("mergeDuplicateMovements", () => {
   it("leaves a list without duplicates unchanged", () => {
     const list = [movement({}), movement({ name: "Row" })];
     expect(mergeDuplicateMovements(list)).toEqual(list);
+  });
+});
+
+describe("isSameMovement", () => {
+  it("matches the same movement at the same load", () => {
+    expect(isSameMovement(movement({ name: "Pull-ups" }), movement({ name: "pull up" }))).toBe(
+      true,
+    );
+    expect(isSameMovement(movement({ load: "95 lb" }), movement({ load: "95lb", reps: "5" }))).toBe(
+      true,
+    );
+  });
+
+  it("doesn't match different movements or loads", () => {
+    expect(isSameMovement(movement({}), movement({ name: "Row" }))).toBe(false);
+    expect(isSameMovement(movement({ load: "95 lb" }), movement({ load: "135 lb" }))).toBe(false);
+  });
+});
+
+describe("mergeMovement", () => {
+  it("adds up the reps and keeps the existing movement's other fields", () => {
+    const existing = { ...movement({ originalText: "1 mile Run" }), id: "abc" };
+    const merged = mergeMovement(existing, movement({ name: "run", originalText: "Run" }));
+    expect(merged).toEqual({
+      ...existing,
+      reps: "2 miles",
+      originalText: "1 mile Run · Run",
+    });
   });
 });
