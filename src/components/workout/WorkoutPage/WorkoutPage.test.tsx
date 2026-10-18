@@ -97,6 +97,16 @@ describe("WorkoutPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("marks a single-part workout as WOD and keeps part labels otherwise", () => {
+    renderPage(toWodState(fran));
+    expect(screen.getByText("WOD")).toBeInTheDocument();
+    cleanup();
+
+    renderPage(toWodState(strengthAndMetcon));
+    expect(screen.queryByText("WOD")).not.toBeInTheDocument();
+    expect(screen.getByText("Cool-down")).toBeInTheDocument();
+  });
+
   it("links back to the review page", () => {
     renderPage(toWodState(strengthAndMetcon));
     expect(screen.getByRole("link", { name: "Back to edit" })).toHaveAttribute("href", "/");

@@ -32,6 +32,7 @@ export function WorkoutPage() {
               key={part.id}
               part={part}
               defaultOpen={i === 0}
+              only={wod.parts.length === 1}
               last={i === wod.parts.length - 1}
             />
           ))}

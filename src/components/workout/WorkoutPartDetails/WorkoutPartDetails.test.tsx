@@ -22,6 +22,21 @@ describe("WorkoutPartDetails", () => {
     expect(toggle(/Heavy Back Squats/)).toHaveTextContent("7/10Hard");
   });
 
+  it("marks the only part of a workout as WOD, even if it has a label", () => {
+    const { rerender } = render(<WorkoutPartDetails part={{ ...fran, label: null }} only />);
+    expect(screen.getByText("WOD")).toBeInTheDocument();
+
+    rerender(<WorkoutPartDetails part={{ ...fran, label: "A" }} only />);
+    expect(screen.getByText("WOD")).toBeInTheDocument();
+    expect(screen.queryByText("A")).not.toBeInTheDocument();
+  });
+
+  it("keeps the part label when there are several parts", () => {
+    render(<WorkoutPartDetails part={fran} />);
+    expect(screen.getByText("B")).toBeInTheDocument();
+    expect(screen.queryByText("WOD")).not.toBeInTheDocument();
+  });
+
   it("doesn't show the parser's notes, since the workout is already confirmed", () => {
     render(
       <WorkoutPartDetails
