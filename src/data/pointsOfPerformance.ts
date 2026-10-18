@@ -212,6 +212,34 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
     ],
   },
   {
+    names: ["Sumo Deadlift"],
+    cues: [
+      "Wide stance, toes turned out",
+      "Narrow grip, hands inside the knees",
+      "Knees pushed out over the toes",
+      "Chest up, back flat, bar over the middle of the foot",
+      "Push the floor apart and drive the hips forward",
+      "Finish at full hip and knee extension",
+    ],
+    faults: [
+      {
+        fault: "Knees cave in",
+        fix: "Push the knees out in line with the toes",
+        cue: "Knees out!",
+      },
+      {
+        fault: "Hips rise first",
+        fix: "Push the floor away so hips and shoulders rise together",
+        cue: "Chest up!",
+      },
+      {
+        fault: "Back rounds",
+        fix: "Brace the midline and set the back flat before pulling",
+        cue: "Flat back!",
+      },
+    ],
+  },
+  {
     names: ["Sumo Deadlift High Pull", "SDHP"],
     cues: [
       "Wide stance, narrow grip inside the legs",
@@ -378,6 +406,34 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
     ],
   },
   {
+    names: ["Kettlebell Snatch", "KB Snatch"],
+    cues: [
+      "Hinge and hike the bell back between the legs",
+      "Snap the hips to drive the bell up",
+      "Keep the bell close, elbow high",
+      "Punch the hand through so the bell rolls onto the forearm",
+      "Finish overhead, arm locked, biceps by the ear",
+      "Tip the bell over and hinge to absorb on the way down",
+    ],
+    faults: [
+      {
+        fault: "Bell flips over and bangs the wrist",
+        fix: "Loosen the grip and punch through before the bell turns over",
+        cue: "Punch through!",
+      },
+      {
+        fault: "Pressing the bell up with the arm",
+        fix: "Let the hip snap float the bell up",
+        cue: "Snap the hips!",
+      },
+      {
+        fault: "Bell swings out in a wide arc",
+        fix: "Pull the bell up close to the body",
+        cue: "Zip it up!",
+      },
+    ],
+  },
+  {
     names: ["Double-under", "DU"],
     cues: [
       "Tall posture, small knee bend",
@@ -396,6 +452,34 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
         fault: "Arms swing wide",
         fix: "Keep the elbows in and turn the rope with the wrists",
         cue: "Wrists!",
+      },
+    ],
+  },
+  {
+    names: ["Crossover", "Criss-cross", "Jump Rope Crossover"],
+    cues: [
+      "Start with a steady single-under bounce",
+      "Cross the arms as the rope passes overhead",
+      "Cross deep: hands reach toward the opposite hips",
+      "Keep the hands low so the loop stays open",
+      "Uncross on the next jump",
+      "Small, quick jumps on the balls of the feet",
+    ],
+    faults: [
+      {
+        fault: "Loop is too small and catches the feet",
+        fix: "Cross deeper, with the hands out past the hips",
+        cue: "Cross deep!",
+      },
+      {
+        fault: "Crossing too late",
+        fix: "Start crossing as the rope passes overhead",
+        cue: "Cross early!",
+      },
+      {
+        fault: "Hands rise up to the chest",
+        fix: "Keep the hands at hip height",
+        cue: "Hands low!",
       },
     ],
   },
@@ -536,6 +620,34 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
     ],
   },
   {
+    names: ["Squat Clean", "Clean", "Full Clean"],
+    cues: [
+      "Start like a deadlift, bar over the middle of the foot",
+      "Keep the bar close to the body",
+      "Extend the hips and knees explosively, then shrug",
+      "Pull yourself under into a full front squat",
+      "Fast elbows into the front rack",
+      "Ride the bounce out of the bottom and stand",
+    ],
+    faults: [
+      {
+        fault: "Pulling with the arms early",
+        fix: "Keep the arms long until the hips have fully opened",
+        cue: "Hips first!",
+      },
+      {
+        fault: "Elbows drop in the bottom",
+        fix: "Drive the elbows up as you catch and stand",
+        cue: "Elbows up!",
+      },
+      {
+        fault: "Bar crashes onto the shoulders",
+        fix: "Pull under actively to meet the bar",
+        cue: "Meet the bar!",
+      },
+    ],
+  },
+  {
     names: ["Power Snatch"],
     cues: [
       "Wide grip, bar over the middle of the foot",
@@ -559,6 +671,34 @@ export const CURATED_POINTS_OF_PERFORMANCE: CuratedEntry[] = [
       {
         fault: "Soft elbows overhead",
         fix: "Punch up and lock the arms as you receive",
+        cue: "Punch!",
+      },
+    ],
+  },
+  {
+    names: ["Squat Snatch", "Snatch", "Full Snatch"],
+    cues: [
+      "Wide grip, bar over the middle of the foot",
+      "Keep the bar close to the body",
+      "Extend the hips and knees explosively, then shrug",
+      "Pull under aggressively into a full overhead squat",
+      "Catch with the arms locked, bar over the middle of the foot",
+      "Stand with the bar still locked out",
+    ],
+    faults: [
+      {
+        fault: "Pulling with the arms early",
+        fix: "Keep the arms long until the hips have fully opened",
+        cue: "Hips first!",
+      },
+      {
+        fault: "Catching high and riding down",
+        fix: "Pull yourself under to full depth",
+        cue: "Get under!",
+      },
+      {
+        fault: "Pressing out after the catch",
+        fix: "Punch up and lock the arms as you land",
         cue: "Punch!",
       },
     ],

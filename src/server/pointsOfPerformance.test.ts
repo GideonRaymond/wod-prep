@@ -24,17 +24,42 @@ const points = {
 };
 
 describe("findCuratedPoints", () => {
-  it.each(["Thruster", "pull ups", "T2B", "Wall-ball shot", "Air Squats", "Row (calories)"])(
-    "knows %s",
-    (name) => {
-      expect(findCuratedPoints(name)?.cues.length).toBeGreaterThan(0);
-    },
-  );
+  it.each([
+    "Thruster",
+    "pull ups",
+    "T2B",
+    "Toes to bar",
+    "toes-to-bar",
+    "Wall-ball shot",
+    "Air Squats",
+    "Row (calories)",
+    "Kettlebell Snatch",
+    "Sumo Deadlift",
+    "Crossovers",
+    "criss cross",
+    "Squat Snatch",
+    "Snatch",
+    "Squat Clean",
+    "Clean",
+  ])("knows %s", (name) => {
+    expect(findCuratedPoints(name)?.cues.length).toBeGreaterThan(0);
+  });
 
   it("covers every movement in Fran and Murph", () => {
     for (const name of ["Thruster", "Pull-up", "Run", "Push-up", "Air Squat"]) {
       expect(findCuratedPoints(name)).not.toBeNull();
     }
+  });
+
+  it("tells similar movements apart", () => {
+    expect(findCuratedPoints("Sumo Deadlift")).not.toEqual(
+      findCuratedPoints("Sumo Deadlift High Pull"),
+    );
+    expect(findCuratedPoints("Snatch")).not.toEqual(findCuratedPoints("Power Snatch"));
+    expect(findCuratedPoints("Clean")).not.toEqual(findCuratedPoints("Power Clean"));
+    expect(findCuratedPoints("Kettlebell Snatch")).not.toEqual(
+      findCuratedPoints("Kettlebell Swing"),
+    );
   });
 
   it("returns null for movements it doesn't know", () => {
