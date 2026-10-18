@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { JumpTo } from "./JumpTo";
@@ -33,11 +33,11 @@ describe("JumpTo", () => {
   it("lists every stage with the current one marked and focused", async () => {
     const { user } = setup();
     await user.click(button());
-    expect(screen.getByRole("dialog", { name: "Jump to" })).toBeInTheDocument();
-    const whiteboard = screen.getByRole("button", { name: /Whiteboard/ });
+    const menu = within(screen.getByRole("dialog", { name: "Jump to" }));
+    const whiteboard = menu.getByRole("button", { name: /Whiteboard/ });
     expect(whiteboard).toHaveAttribute("aria-current", "true");
     expect(whiteboard).toHaveFocus();
-    expect(screen.getByRole("button", { name: /B · Fran/ })).toHaveAttribute(
+    expect(menu.getByRole("button", { name: /B · Fran/ })).toHaveAttribute(
       "aria-current",
       "false",
     );
