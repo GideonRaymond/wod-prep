@@ -69,7 +69,7 @@ export function IntensityGauge({ value, className }: IntensityGaugeProps) {
         <p className="text-sm font-semibold">
           {intensity}/{MAX}
         </p>
-        <p className="text-xs text-zinc-500">{word}</p>
+        <p className="text-subtle text-xs">{word}</p>
       </div>
     </div>
   );

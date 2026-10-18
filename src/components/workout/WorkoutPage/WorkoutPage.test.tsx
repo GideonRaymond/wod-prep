@@ -29,6 +29,14 @@ describe("WorkoutPage", () => {
     expect(screen.getByRole("region", { name: "Fran" })).toBeInTheDocument();
   });
 
+  it("opens the first part and folds the rest, on one rail", () => {
+    renderPage(toWodState(strengthAndMetcon));
+    const toggles = screen.getAllByRole("button", { expanded: true });
+    expect(toggles).toHaveLength(1);
+    expect(toggles[0]).toHaveTextContent("Heavy Back Squats");
+    expect(screen.getAllByRole("button", { expanded: false }).length).toBeGreaterThanOrEqual(2);
+  });
+
   it("restores the workout after a page refresh", () => {
     sessionStorage.setItem(
       WOD_STORAGE_KEY,

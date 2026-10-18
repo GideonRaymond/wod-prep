@@ -24,6 +24,6 @@ describe("TextInput", () => {
     render(<TextInput aria-label="Reps" invalid />);
     const input = screen.getByLabelText("Reps");
     expect(input).toHaveAttribute("aria-invalid", "true");
-    expect(input).toHaveClass("border-red-500");
+    expect(input).toHaveClass("border-rose-500");
   });
 });

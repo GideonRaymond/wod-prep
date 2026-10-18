@@ -41,7 +41,7 @@ export function HomePage() {
               Confirm workout
             </Button>
             {missingStimulus && (
-              <p id="confirm-hint" className="text-sm text-zinc-500">
+              <p id="confirm-hint" className="text-subtle text-sm">
                 Every part needs a stimulus before you can confirm.
               </p>
             )}

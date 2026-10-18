@@ -39,7 +39,7 @@ export function WorkoutPart({ part, onChange }: WorkoutPartProps) {
     <section aria-labelledby={headingId}>
       <div className="flex items-center gap-2">
         {part.label && (
-          <Badge className="bg-zinc-900 text-sm font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">
+          <Badge className="bg-purple-600 text-sm font-semibold text-white dark:bg-purple-400 dark:text-purple-950">
             {part.label}
           </Badge>
         )}
@@ -48,7 +48,7 @@ export function WorkoutPart({ part, onChange }: WorkoutPartProps) {
         </h2>
       </div>
       <p className="text-zinc-600 dark:text-zinc-400">{meta.join(" · ")}</p>
-      {part.notes && <p className="mt-1 text-sm text-zinc-500">{part.notes}</p>}
+      {part.notes && <p className="text-subtle mt-1 text-sm">{part.notes}</p>}
 
       <StimulusCard
         original={part.originalStimulus}

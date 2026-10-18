@@ -25,7 +25,7 @@ describe("MovementCard", () => {
   it("shows the name and category", () => {
     renderCard(thruster);
     expect(screen.getByRole("heading", { name: "Thruster" })).toBeInTheDocument();
-    expect(screen.getByText("weightlifting")).toHaveClass("bg-amber-100");
+    expect(screen.getByText("weightlifting")).toHaveClass("bg-purple-800");
   });
 
   it("shows the reps and load", () => {
