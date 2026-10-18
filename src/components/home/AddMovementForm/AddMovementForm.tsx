@@ -7,7 +7,7 @@ import { Button } from "@/components/shared/Button";
 import { Card } from "@/components/shared/Card";
 import { Select } from "@/components/shared/Select";
 import { TextInput } from "@/components/shared/TextInput";
-import { MOVEMENT_CATEGORIES } from "@/constants/wod";
+import { MAX_MOVEMENT_NAME_LENGTH, MOVEMENT_CATEGORIES } from "@/constants/wod";
 import type { Movement } from "@/schemas/wod";
 import type { MovementItem } from "@/types/wod";
 import { isSameMovement, mergeMovement } from "@/utils/mergeDuplicateMovements";
@@ -89,6 +89,7 @@ export function AddMovementForm({ movements, onAdd, onMerge }: AddMovementFormPr
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Movement, e.g. Wall Balls"
+        maxLength={MAX_MOVEMENT_NAME_LENGTH}
       />
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <TextInput

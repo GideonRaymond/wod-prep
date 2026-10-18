@@ -1,4 +1,5 @@
 import type { Movement } from "@/schemas/wod";
+import { normalizeMovementName } from "./normalizeMovementName";
 
 type Unit = { singular: string; plural: string };
 
@@ -34,14 +35,9 @@ export function sumReps(a: string | null, b: string | null): string | null {
   return `${total} ${total === 1 ? singular : plural}`;
 }
 
-const normalize = (text: string) =>
-  text
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "")
-    .replace(/s$/, "");
-
 // Same movement at the same load counts as a duplicate; different loads stay separate.
-const keyOf = (m: Movement) => `${normalize(m.name)}|${normalize(m.load ?? "")}`;
+const keyOf = (m: Movement) =>
+  `${normalizeMovementName(m.name)}|${normalizeMovementName(m.load ?? "")}`;
 
 /** Whether two movements are the same movement at the same load. */
 export function isSameMovement(a: Movement, b: Movement) {
