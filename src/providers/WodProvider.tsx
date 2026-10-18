@@ -16,8 +16,11 @@ type WodContextValue = {
   wod: WodState | null;
   /** The text the WOD was parsed from. */
   sourceText: string | null;
-  /** Replaces the WOD with an edited version, keeping its source text; `null` clears both. */
-  setWod: (wod: WodState | null) => void;
+  /**
+   * Replaces the WOD with an edited version, keeping its source text; `null` clears both.
+   * Pass a function to update the latest WOD, e.g. from a request that finishes later.
+   */
+  setWod: (next: WodUpdate) => void;
   /** Stores a freshly parsed WOD with the text it came from. */
   loadWod: (text: string, wod: WodState) => void;
   /**
@@ -26,6 +29,8 @@ type WodContextValue = {
    */
   restored: boolean;
 };
+
+type WodUpdate = WodState | null | ((wod: WodState | null) => WodState | null);
 
 const WodContext = createContext<WodContextValue | null>(null);
 
@@ -59,7 +64,11 @@ export function WodProvider({
   );
 
   const setWod = useCallback(
-    (wod: WodState | null) => store.set(wod && { text: store.get()?.text ?? "", wod }),
+    (next: WodUpdate) => {
+      const saved = store.get();
+      const wod = typeof next === "function" ? next(saved?.wod ?? null) : next;
+      store.set(wod && { text: saved?.text ?? "", wod });
+    },
     [store],
   );
   const loadWod = useCallback((text: string, wod: WodState) => store.set({ text, wod }), [store]);
