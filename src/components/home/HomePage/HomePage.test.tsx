@@ -3,7 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HomePage } from "./HomePage";
-import { fran } from "@/test/fixtures";
+import { fran, franPart, strengthAndMetcon } from "@/test/fixtures";
 
 const fetchMock = vi.fn();
 
@@ -36,10 +36,19 @@ describe("HomePage", () => {
     expect(await screen.findByRole("heading", { name: "Fran" })).toBeInTheDocument();
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ text: "Fran" });
     expect(screen.getByText("For Time · 21-15-9")).toBeInTheDocument();
-    expect(screen.getByText(fran.stimulus)).toBeInTheDocument();
+    expect(screen.getByText(franPart.stimulus.description)).toBeInTheDocument();
     const cards = screen.getAllByRole("listitem");
     expect(cards).toHaveLength(2);
     expect(within(cards[0]).getByRole("heading", { name: "Thruster" })).toBeInTheDocument();
+  });
+
+  it("splits a multi-part WOD into sections", async () => {
+    respond(200, { wod: strengthAndMetcon });
+    await submit("A) Back squat 5x5 B) Fran C) 5 min easy row");
+
+    expect(await screen.findByRole("region", { name: "Part A" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Part B: Fran" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Cool-down" })).toBeInTheDocument();
   });
 
   it("shows a loading state while parsing", async () => {

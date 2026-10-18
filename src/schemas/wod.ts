@@ -14,7 +14,27 @@ export const MovementSchema = z.object({
   category: z.enum(["weightlifting", "gymnastics", "monostructural", "other"]),
 });
 
-export const WodSchema = z.object({
+export const StimulusSchema = z.object({
+  description: z
+    .string()
+    .describe(
+      "The intended stimulus in 1-3 sentences: energy system, intensity, target time or pace, and how it should feel",
+    ),
+  intensity: z
+    .number()
+    .int()
+    .min(1)
+    .max(10)
+    .describe("Intended intensity from 1 (easy, recovery) to 10 (all-out max effort)"),
+});
+
+export const WorkoutPartSchema = z.object({
+  label: z
+    .string()
+    .nullable()
+    .describe(
+      'The part\'s label as programmed, e.g. "A", "B", "C", "Cool-down"; null for a single-part WOD',
+    ),
   title: z.string().nullable().describe('Named WOD if given, e.g. "Fran"'),
   format: z.enum(["for_time", "amrap", "emom", "rounds", "intervals", "strength", "other"]),
   duration: z
@@ -23,13 +43,16 @@ export const WodSchema = z.object({
     .describe('Time cap or duration, e.g. "12 min AMRAP", "20 min cap"'),
   rounds: z.string().nullable().describe('Round scheme, e.g. "5 rounds", "21-15-9"'),
   movements: z.array(MovementSchema),
-  stimulus: z
-    .string()
-    .describe(
-      "The intended stimulus in 1-3 sentences: energy system, intensity, target time or pace, and how it should feel",
-    ),
+  stimulus: StimulusSchema,
   notes: z.string().nullable().describe("Anything else worth knowing (rest, partner, buy-in)"),
 });
 
+/** A day's programming: one part, or several (A, B, C, cool-down, ...). */
+export const WodSchema = z.object({
+  parts: z.array(WorkoutPartSchema).min(1),
+});
+
 export type Movement = z.infer<typeof MovementSchema>;
+export type Stimulus = z.infer<typeof StimulusSchema>;
+export type WorkoutPart = z.infer<typeof WorkoutPartSchema>;
 export type Wod = z.infer<typeof WodSchema>;

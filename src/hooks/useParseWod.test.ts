@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fran } from "@/test/fixtures";
+import { fran, strengthAndMetcon } from "@/test/fixtures";
 
 const { mockRequest } = vi.hoisted(() => ({ mockRequest: vi.fn() }));
 vi.mock("@/services/wodApi", () => ({ requestParseWod: mockRequest }));
@@ -13,16 +13,19 @@ describe("useParseWod", () => {
     mockRequest.mockReset();
   });
 
-  it("stores the parsed WOD with an id on every movement", async () => {
-    mockRequest.mockResolvedValue(fran);
+  it("stores the parsed WOD with an id on every part and movement", async () => {
+    mockRequest.mockResolvedValue(strengthAndMetcon);
     const { result } = renderHook(() => useParseWod());
 
-    await act(() => result.current.parse("Fran"));
+    await act(() => result.current.parse("A) squats B) Fran"));
 
-    expect(mockRequest).toHaveBeenCalledWith("Fran");
-    expect(result.current.wod?.title).toBe("Fran");
-    expect(result.current.wod?.movements.map((m) => m.name)).toEqual(["Thruster", "Pull-up"]);
-    expect(result.current.wod?.movements.every((m) => typeof m.id === "string")).toBe(true);
+    expect(mockRequest).toHaveBeenCalledWith("A) squats B) Fran");
+    const parts = result.current.wod!.parts;
+    expect(parts.map((p) => p.label)).toEqual(["A", "B", "Cool-down"]);
+    expect(parts[1].movements.map((m) => m.name)).toEqual(["Thruster", "Pull-up"]);
+    const ids = [...parts.map((p) => p.id), ...parts.flatMap((p) => p.movements.map((m) => m.id))];
+    expect(ids.every((id) => typeof id === "string")).toBe(true);
+    expect(new Set(ids).size).toBe(ids.length);
     expect(result.current.error).toBeNull();
   });
 

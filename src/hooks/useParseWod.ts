@@ -15,7 +15,11 @@ export function useParseWod() {
     setWod(null);
     try {
       const parsed = await requestParseWod(text);
-      setWod({ ...parsed, movements: parsed.movements.map(withId) });
+      setWod({
+        parts: parsed.parts.map((part) =>
+          withId({ ...part, movements: part.movements.map(withId) }),
+        ),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {

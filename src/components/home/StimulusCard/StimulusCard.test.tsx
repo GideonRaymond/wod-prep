@@ -4,11 +4,17 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { StimulusCard } from "./StimulusCard";
 import { useUndoableText } from "@/hooks/useUndoableText";
-import { fran } from "@/test/fixtures";
+import { franPart } from "@/test/fixtures";
 
 function Harness() {
-  const stimulus = useUndoableText(fran.stimulus);
-  return <StimulusCard original={fran.stimulus} stimulus={stimulus} />;
+  const stimulus = useUndoableText(franPart.stimulus.description);
+  return (
+    <StimulusCard
+      original={franPart.stimulus.description}
+      intensity={franPart.stimulus.intensity}
+      stimulus={stimulus}
+    />
+  );
 }
 
 const stimulusBox = () => screen.getByRole("textbox", { name: "Stimulus" });
@@ -33,13 +39,20 @@ describe("StimulusCard", () => {
     vi.restoreAllMocks();
   });
 
+  it("shows the intensity as a gauge, also while editing", async () => {
+    const user = setup();
+    expect(screen.getByRole("meter", { name: "Intensity" })).toHaveAttribute("aria-valuenow", "9");
+    await user.click(button("Edit stimulus"));
+    expect(screen.getByRole("meter", { name: "Intensity" })).toBeInTheDocument();
+  });
+
   it("shows the stimulus read-only until Edit is clicked", async () => {
     const user = setup();
-    expect(screen.getByText(fran.stimulus)).toBeInTheDocument();
+    expect(screen.getByText(franPart.stimulus.description)).toBeInTheDocument();
     expect(queryStimulusBox()).not.toBeInTheDocument();
 
     await user.click(button("Edit stimulus"));
-    expect(stimulusBox()).toHaveValue(fran.stimulus);
+    expect(stimulusBox()).toHaveValue(franPart.stimulus.description);
     expect(stimulusBox()).toHaveFocus();
     expect(screen.queryByRole("button", { name: "Edit stimulus" })).not.toBeInTheDocument();
   });
@@ -92,7 +105,7 @@ describe("StimulusCard", () => {
     await user.click(button("Done"));
     await user.click(revert());
 
-    expect(screen.getByText(fran.stimulus)).toBeInTheDocument();
+    expect(screen.getByText(franPart.stimulus.description)).toBeInTheDocument();
     expect(screen.queryByText("edited")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Revert/ })).not.toBeInTheDocument();
   });
@@ -117,7 +130,7 @@ describe("StimulusCard", () => {
     await editTo(user, "Heavy and slow.");
 
     await user.keyboard("{Control>}z{/Control}");
-    expect(stimulusBox()).toHaveValue(fran.stimulus);
+    expect(stimulusBox()).toHaveValue(franPart.stimulus.description);
 
     await user.keyboard("{Control>}{Shift>}z{/Shift}{/Control}");
     expect(stimulusBox()).toHaveValue("Heavy and slow.");

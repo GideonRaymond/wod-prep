@@ -4,9 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MovementCard } from "./MovementCard";
 import type { Movement } from "@/schemas/wod";
-import { fran } from "@/test/fixtures";
+import { franPart } from "@/test/fixtures";
 
-const [thruster] = fran.movements;
+const [thruster] = franPart.movements;
 
 function renderCard(movement: Movement, onRemove = vi.fn()) {
   render(

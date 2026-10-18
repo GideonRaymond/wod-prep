@@ -6,18 +6,21 @@ import { Badge } from "@/components/shared/Badge";
 import { Button } from "@/components/shared/Button";
 import { Card } from "@/components/shared/Card";
 import { FieldError } from "@/components/shared/FieldError";
+import { IntensityGauge } from "@/components/shared/IntensityGauge";
 import { TextArea } from "@/components/shared/TextArea";
 import type { useUndoableText } from "@/hooks/useUndoableText";
 import { useUndoShortcuts } from "@/hooks/useUndoShortcuts";
 
 export type StimulusCardProps = {
-  /** The stimulus as parsed, used by Revert. */
+  /** The stimulus description as parsed, used by Revert. */
   original: string;
+  /** Intended intensity, 1-10. */
+  intensity: number;
   /** Editable stimulus with undo history, owned by the parent so it can use the current value. */
   stimulus: ReturnType<typeof useUndoableText>;
 };
 
-export function StimulusCard({ original, stimulus }: StimulusCardProps) {
+export function StimulusCard({ original, intensity, stimulus }: StimulusCardProps) {
   const [editing, setEditing] = useState(false);
   const [valueBeforeEdit, setValueBeforeEdit] = useState(stimulus.value);
   const missing = !stimulus.value.trim();
@@ -69,6 +72,8 @@ export function StimulusCard({ original, stimulus }: StimulusCardProps) {
           </div>
         )}
       </div>
+
+      <IntensityGauge value={intensity} className="mt-3" />
 
       {editing ? (
         <>
