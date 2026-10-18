@@ -19,7 +19,13 @@ describe("requestMovementVideos", () => {
     await expect(requestMovementVideos("Thruster")).resolves.toEqual(videos);
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("/api/videos");
-    expect(JSON.parse(init.body)).toEqual({ name: "Thruster" });
+    expect(JSON.parse(init.body)).toEqual({ name: "Thruster", kind: "movement" });
+  });
+
+  it("can ask for videos about a named workout", async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ videos }) });
+    await requestMovementVideos("Fran", "workout");
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ name: "Fran", kind: "workout" });
   });
 
   it("throws the API's error message", async () => {

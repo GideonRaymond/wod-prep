@@ -4,12 +4,13 @@ import { useId, useState } from "react";
 import { BookOpen, ChevronDown, ExternalLink, Play, type LucideIcon } from "lucide-react";
 import type { WorkoutPartState } from "@/types/wod";
 import { cn } from "@/utils/cn";
+import { pickVideos } from "./pickVideos";
 import { referenceCounts } from "./referenceCounts";
 
 type Reference = { key: string; icon: LucideIcon; title: string; url: string; meta: string[] };
 
 /**
- * Reading and watching for a workout part: its articles ("Read") and each movement's videos
+ * Reading and watching for a workout part: its articles ("Read") and a short pick of videos
  * ("Watch"), side by side on a faint purple ground. It folds on its own and renders nothing
  * while a part has no reference material.
  */
@@ -26,15 +27,13 @@ export function BeforeClass({ part }: { part: WorkoutPartState }) {
       (x): x is string => Boolean(x),
     ),
   }));
-  const videos: Reference[] = part.movements.flatMap((m) =>
-    (m.videos ?? []).map((v, i) => ({
-      key: `${m.id}-${i}`,
-      icon: Play,
-      title: v.title,
-      url: v.url,
-      meta: ["Video", v.duration, m.name].filter((x): x is string => Boolean(x)),
-    })),
-  );
+  const videos: Reference[] = pickVideos(part).map((v) => ({
+    key: v.url,
+    icon: Play,
+    title: v.title,
+    url: v.url,
+    meta: ["Video", v.duration, v.about].filter((x): x is string => Boolean(x)),
+  }));
   if (articles.length === 0 && videos.length === 0) return null;
 
   return (

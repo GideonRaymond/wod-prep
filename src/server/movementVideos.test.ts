@@ -73,14 +73,26 @@ describe("searchMovementVideos", () => {
     expect(details.searchParams.get("part")).toBe("contentDetails");
   });
 
-  it("puts the official CrossFit channel first, then keeps YouTube's order", async () => {
+  it("ranks the CrossFit channel first, then titles naming the movement, then YouTube's order", async () => {
     youtubeReturns([
-      { id: "a", title: "A" },
-      { id: "b", title: "B" },
-      { id: "c", title: "C", channel: "CrossFit" },
+      { id: "a", title: "Grip tips" },
+      { id: "b", title: "Better PULL-UPS fast" },
+      { id: "c", title: "Kipping basics", channel: "CrossFit" },
+      { id: "d", title: "Pull Up Progressions", channel: "CrossFit" },
+      { id: "e", title: "Shoulder warm-up" },
     ]);
     const videos = await searchMovementVideos("Pull-up");
-    expect(videos.map((v) => v.title)).toEqual(["C", "A", "B"]);
+    expect(videos.map((v) => v.title)).toEqual([
+      "Pull Up Progressions",
+      "Kipping basics",
+      "Better PULL-UPS fast",
+    ]);
+  });
+
+  it("searches for a named workout with its own query", async () => {
+    youtubeReturns([{ id: "f", title: "Fran Tips" }]);
+    await searchMovementVideos("Fran", "workout");
+    expect(requestedUrl(0).searchParams.get("q")).toBe("Fran CrossFit workout");
   });
 
   it("returns at most three videos", async () => {
@@ -190,6 +202,13 @@ describe("video cache", () => {
     await cacheVideos("Pull-ups", videos);
     await expect(getCachedVideos("pull up")).resolves.toEqual(videos);
     await expect(getCachedVideos("Push-up")).resolves.toBeNull();
+  });
+
+  it("keeps movement and workout videos apart", async () => {
+    const videos = [{ title: "Fran", url: "https://www.youtube.com/watch?v=f" }];
+    await cacheVideos("Fran", videos, "workout");
+    await expect(getCachedVideos("Fran", "workout")).resolves.toEqual(videos);
+    await expect(getCachedVideos("Fran")).resolves.toBeNull();
   });
 
   it("caches an empty result, so it isn't searched again", async () => {

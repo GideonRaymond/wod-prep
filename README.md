@@ -33,10 +33,16 @@ On the workout page (after **Confirm workout**), each movement card has a collap
 
 ## Videos
 
-When the workout page opens, it finds up to three YouTube demos for each movement and lists them under **Watch** in each part's **Before class** panel. The videos are stored with the workout, so a refresh doesn't search again.
+When the workout page opens, it searches YouTube for each movement (and for each named workout, like Fran or Murph) and lists a short pick under **Watch** in each part's **Before class** panel:
+
+- **One video per movement** — two when the part is a single movement, like a run.
+- **One extra video about the workout itself** when it's a named workout.
+- **No repeats:** if a movement's best video is already shown, its next one is used.
+
+The videos are stored with the workout, so a refresh doesn't search again.
 
 - Search uses the [YouTube Data API](https://developers.google.com/youtube/v3/getting-started): create a key in Google Cloud (enable "YouTube Data API v3", then Credentials → Create API key) and set `YOUTUBE_API_KEY`. The free quota is about 100 searches a day.
-- Videos from the official CrossFit channel come first; livestreams and videos over 20 minutes are skipped.
+- **Ranking:** videos from the official CrossFit channel first, then titles that name the movement, then YouTube's order. Livestreams and videos over 20 minutes are skipped. The top three per search are kept, as spares for avoiding repeats.
 - Results are cached per movement in `.cache/movement-videos.json` for **30 days**, then searched again. Any spelling of a movement shares one entry ("Pull-ups" = "pull up"). Bump `VIDEOS_CACHE_VERSION` in `src/server/movementVideos.ts` when the search or ranking changes.
 
 ## Checks

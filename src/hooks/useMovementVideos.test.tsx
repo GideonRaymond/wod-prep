@@ -43,6 +43,21 @@ describe("useMovementVideos", () => {
     expect(result.current.videos.error).toBeNull();
   });
 
+  it("also finds videos about a named workout, stored on its part", async () => {
+    mockRequest.mockImplementation(async (name: string, kind: string) => [
+      video(`${kind} ${name}`),
+    ]);
+    const { result } = renderWithWod(toWodState(strengthAndMetcon));
+
+    await waitFor(() => expect(result.current.videos.loading).toBe(false));
+    expect(mockRequest).toHaveBeenCalledWith("Fran", "workout");
+    expect(mockRequest).toHaveBeenCalledWith("Thruster", "movement");
+    const [squats, fran, coolDown] = result.current.wod!.parts;
+    expect(fran.videos).toEqual([video("workout Fran")]);
+    expect(squats.videos).toBeUndefined();
+    expect(coolDown.videos).toBeUndefined();
+  });
+
   it("looks up a movement once, even when it's in several parts", async () => {
     const wod = toWodState(strengthAndMetcon);
     wod.parts[0].movements.push({ ...wod.parts[1].movements[1], id: "extra", name: "Pull-ups" });
@@ -50,11 +65,12 @@ describe("useMovementVideos", () => {
     const { result } = renderWithWod(wod);
 
     await waitFor(() => expect(result.current.videos.loading).toBe(false));
-    expect(mockRequest.mock.calls.map(([name]) => name)).toEqual([
-      "Back Squat",
-      "Pull-ups",
-      "Thruster",
-      "Row",
+    expect(mockRequest.mock.calls).toEqual([
+      ["Back Squat", "movement"],
+      ["Pull-ups", "movement"],
+      ["Fran", "workout"],
+      ["Thruster", "movement"],
+      ["Row", "movement"],
     ]);
     expect(result.current.wod!.parts[1].movements[1].videos).toEqual([video("Pull-ups")]);
   });
@@ -63,6 +79,7 @@ describe("useMovementVideos", () => {
     const wod = toWodState(strengthAndMetcon);
     wod.parts = wod.parts.map((part) => ({
       ...part,
+      videos: [],
       movements: part.movements.map((m) => ({ ...m, videos: [] })),
     }));
     const { result } = renderWithWod(wod);
@@ -78,7 +95,7 @@ describe("useMovementVideos", () => {
 
     await waitFor(() => expect(result.current.videos.loading).toBe(false));
     expect(result.current.wod!.parts[0].movements[0].videos).toEqual([]);
-    expect(mockRequest).toHaveBeenCalledTimes(4);
+    expect(mockRequest).toHaveBeenCalledTimes(5);
   });
 
   it("keeps every result when requests finish in any order", async () => {
@@ -87,9 +104,9 @@ describe("useMovementVideos", () => {
       (name: string) => new Promise((resolve) => resolvers.set(name, () => resolve([video(name)]))),
     );
     const { result } = renderWithWod(toWodState(strengthAndMetcon));
-    await waitFor(() => expect(resolvers.size).toBe(4));
+    await waitFor(() => expect(resolvers.size).toBe(5));
 
-    for (const name of ["Row", "Thruster", "Back Squat", "Pull-up"]) {
+    for (const name of ["Row", "Thruster", "Fran", "Back Squat", "Pull-up"]) {
       await act(async () => resolvers.get(name)!());
     }
     expect(videoTitles(result.current.wod)).toEqual([

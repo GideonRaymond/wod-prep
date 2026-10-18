@@ -19,6 +19,8 @@ export type WorkoutPartState = Omit<WorkoutPart, "movements"> & {
   /** The stimulus description as parsed, to revert edits to. */
   originalStimulus: string;
   movements: MovementItem[];
+  /** Videos about this part as a whole, for named workouts like "Fran", once they're found. */
+  videos?: ReferenceVideo[];
   /** Articles for this part, once they're found (not parsed from the WOD). */
   articles?: ReferenceArticle[];
 };

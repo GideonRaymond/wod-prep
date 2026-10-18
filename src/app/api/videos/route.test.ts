@@ -43,8 +43,20 @@ describe("POST /api/videos", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("X-Cache")).toBe("MISS");
     await expect(res.json()).resolves.toEqual({ videos });
-    expect(mocks.searchMovementVideos).toHaveBeenCalledWith("Thruster");
-    expect(mocks.cacheVideos).toHaveBeenCalledWith("Thruster", videos);
+    expect(mocks.searchMovementVideos).toHaveBeenCalledWith("Thruster", "movement");
+    expect(mocks.cacheVideos).toHaveBeenCalledWith("Thruster", videos, "movement");
+  });
+
+  it("searches and caches videos about a named workout separately", async () => {
+    mocks.searchMovementVideos.mockResolvedValue(videos);
+    await post({ name: "Fran", kind: "workout" });
+    expect(mocks.getCachedVideos).toHaveBeenCalledWith("Fran", "workout");
+    expect(mocks.searchMovementVideos).toHaveBeenCalledWith("Fran", "workout");
+    expect(mocks.cacheVideos).toHaveBeenCalledWith("Fran", videos, "workout");
+  });
+
+  it("rejects an unknown kind", async () => {
+    expect((await post({ name: "Fran", kind: "article" })).status).toBe(400);
   });
 
   it("returns cached videos without searching, even without an API key", async () => {

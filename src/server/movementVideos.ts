@@ -1,20 +1,25 @@
 import "server-only";
 import { z } from "zod";
-import { ReferenceVideosSchema, type ReferenceVideo } from "@/schemas/videos";
+import { ReferenceVideosSchema, type ReferenceVideo, type VideoKind } from "@/schemas/videos";
 import { normalizeMovementName } from "@/utils/normalizeMovementName";
 import { createFileCache } from "./fileCache";
 
 /** Bump when the search or ranking changes, so old results are searched again. */
-export const VIDEOS_CACHE_VERSION = 1;
+export const VIDEOS_CACHE_VERSION = 2;
 
-/** How many videos to show per movement. */
-export const VIDEOS_PER_MOVEMENT = 3;
+/** How many videos to keep per search; the page shows fewer, but needs spares to avoid repeats. */
+export const VIDEOS_PER_SEARCH = 3;
 
 /** Longer videos are usually full workouts or livestreams, not movement demos. */
 const MAX_DURATION_SECONDS = 20 * 60;
 
-/** The official CrossFit channel's demos come first. */
+/** The official CrossFit channel's videos come first. */
 const PREFERRED_CHANNEL = "CrossFit";
+
+const QUERIES: Record<VideoKind, (name: string) => string> = {
+  movement: (name) => `${name} CrossFit how to`,
+  workout: (name) => `${name} CrossFit workout`,
+};
 
 const API = "https://www.googleapis.com/youtube/v3";
 
@@ -24,17 +29,21 @@ export const VIDEOS_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const CacheEntrySchema = z.object({ savedAt: z.number(), videos: ReferenceVideosSchema });
 
 const cache = createFileCache("movement-videos", CacheEntrySchema);
-const cacheKey = (name: string) => `v${VIDEOS_CACHE_VERSION}:${normalizeMovementName(name)}`;
+const cacheKey = (name: string, kind: VideoKind) =>
+  `v${VIDEOS_CACHE_VERSION}:${kind}:${normalizeMovementName(name)}`;
 
-/** Cached videos for a movement, or null when there are none or they're over a month old. */
-export async function getCachedVideos(name: string): Promise<ReferenceVideo[] | null> {
-  const entry = await cache.get(cacheKey(name));
+/** Cached videos for a movement or workout, or null when there are none or they're over a month old. */
+export async function getCachedVideos(
+  name: string,
+  kind: VideoKind = "movement",
+): Promise<ReferenceVideo[] | null> {
+  const entry = await cache.get(cacheKey(name, kind));
   if (!entry || Date.now() - entry.savedAt > VIDEOS_MAX_AGE_MS) return null;
   return entry.videos;
 }
 
-export function cacheVideos(name: string, videos: ReferenceVideo[]) {
-  return cache.set(cacheKey(name), { savedAt: Date.now(), videos });
+export function cacheVideos(name: string, videos: ReferenceVideo[], kind: VideoKind = "movement") {
+  return cache.set(cacheKey(name, kind), { savedAt: Date.now(), videos });
 }
 
 /** A YouTube API error; `reason` is YouTube's code, e.g. "quotaExceeded" or "keyInvalid". */
@@ -84,16 +93,20 @@ async function youtube<T>(endpoint: string, params: Record<string, string>, sche
 }
 
 /**
- * Searches YouTube for demos of a movement: the official CrossFit channel first, then the rest in
- * YouTube's order, skipping livestreams and videos over 20 minutes.
+ * Searches YouTube for videos about a movement (or a named workout), best first: the official
+ * CrossFit channel, then titles that name it, then YouTube's order. Livestreams and videos over
+ * 20 minutes are skipped.
  */
-export async function searchMovementVideos(name: string): Promise<ReferenceVideo[]> {
+export async function searchMovementVideos(
+  name: string,
+  kind: VideoKind = "movement",
+): Promise<ReferenceVideo[]> {
   const search = await youtube(
     "search",
     {
       part: "snippet",
       type: "video",
-      q: `${name} CrossFit how to`,
+      q: QUERIES[kind](name),
       maxResults: "10",
       safeSearch: "strict",
       relevanceLanguage: "en",
@@ -117,17 +130,26 @@ export async function searchMovementVideos(name: string): Promise<ReferenceVideo
       const length = seconds.get(item.id.videoId);
       return length !== undefined && length > 0 && length <= MAX_DURATION_SECONDS;
     })
-    .sort(
-      (a, b) =>
-        Number(b.snippet.channelTitle === PREFERRED_CHANNEL) -
-        Number(a.snippet.channelTitle === PREFERRED_CHANNEL),
-    )
-    .slice(0, VIDEOS_PER_MOVEMENT)
+    .map((item, order) => ({ item, order, score: rankScore(item.snippet, name) }))
+    .sort((a, b) => b.score - a.score || a.order - b.order)
+    .map(({ item }) => item)
+    .slice(0, VIDEOS_PER_SEARCH)
     .map((item) => ({
       title: decodeEntities(item.snippet.title),
       url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
       duration: formatDuration(seconds.get(item.id.videoId)!),
     }));
+}
+
+/** Higher is better: the official channel counts most, then a title that names the movement. */
+export function rankScore(video: { title: string; channelTitle: string }, name: string) {
+  const official = video.channelTitle === PREFERRED_CHANNEL ? 2 : 0;
+  const named = normalizeMovementName(decodeEntities(video.title)).includes(
+    normalizeMovementName(name),
+  )
+    ? 1
+    : 0;
+  return official + named;
 }
 
 /** Seconds in an ISO 8601 duration like "PT1H2M3S"; 0 for livestreams ("P0D") and anything else. */

@@ -10,6 +10,7 @@ export const WodStateSchema: z.ZodType<WodState> = z.object({
       WorkoutPartSchema.extend({
         id: z.string(),
         originalStimulus: z.string(),
+        videos: ReferenceVideosSchema.optional(),
         movements: z.array(
           MovementSchema.extend({ id: z.string(), videos: ReferenceVideosSchema.optional() }),
         ),
