@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { MovementSchema, WorkoutPartSchema } from "@/schemas/wod";
-import type { WodState } from "@/types/wod";
+import type { SavedWod, WodState } from "@/types/wod";
 
 /** Validates a WOD restored from storage, so stale or tampered data is dropped instead of crashing. */
 export const WodStateSchema: z.ZodType<WodState> = z.object({
@@ -13,4 +13,10 @@ export const WodStateSchema: z.ZodType<WodState> = z.object({
       }),
     )
     .min(1),
+});
+
+/** A saved WOD together with the text it was parsed from. */
+export const SavedWodSchema: z.ZodType<SavedWod> = z.object({
+  text: z.string(),
+  wod: WodStateSchema,
 });

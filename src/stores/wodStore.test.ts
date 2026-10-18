@@ -2,9 +2,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createWodStore, WOD_STORAGE_KEY } from "./wodStore";
 import { fran, strengthAndMetcon } from "@/test/fixtures";
+import type { SavedWod, WodState } from "@/types/wod";
 import { toWodState } from "@/utils/toWodState";
 
 const saved = () => JSON.parse(sessionStorage.getItem(WOD_STORAGE_KEY) ?? "null");
+const withText = (wod: WodState, text = "Fran"): SavedWod => ({ text, wod });
 
 describe("createWodStore", () => {
   afterEach(() => {
@@ -15,22 +17,30 @@ describe("createWodStore", () => {
     expect(createWodStore().get()).toBeNull();
   });
 
-  it("restores a saved WOD", () => {
-    const wod = toWodState(strengthAndMetcon);
-    sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(wod));
-    expect(createWodStore().get()).toEqual(wod);
+  it("restores a saved WOD with its text", () => {
+    const value = withText(toWodState(strengthAndMetcon), "A) squats B) Fran");
+    sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(value));
+    expect(createWodStore().get()).toEqual(value);
   });
 
   it("returns the same object on every read, as useSyncExternalStore needs", () => {
-    sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(toWodState(fran)));
+    sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(withText(toWodState(fran))));
     const store = createWodStore();
     expect(store.get()).toBe(store.get());
   });
 
   it("drops a saved WOD that doesn't match the schema", () => {
-    sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify({ parts: [{ title: "Fran" }] }));
+    sessionStorage.setItem(
+      WOD_STORAGE_KEY,
+      JSON.stringify({ text: "Fran", wod: { parts: [{ title: "Fran" }] } }),
+    );
     expect(createWodStore().get()).toBeNull();
     expect(sessionStorage.getItem(WOD_STORAGE_KEY)).toBeNull();
+  });
+
+  it("drops a WOD saved in the old shape, without its text", () => {
+    sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(toWodState(fran)));
+    expect(createWodStore().get()).toBeNull();
   });
 
   it("ignores saved text that isn't JSON", () => {
@@ -41,10 +51,12 @@ describe("createWodStore", () => {
   it("saves every change and clears storage when the WOD is cleared", () => {
     const store = createWodStore();
     const wod = toWodState(fran);
-    store.set(wod);
-    expect(saved()).toEqual(wod);
+    store.set(withText(wod));
+    expect(saved()).toEqual(withText(wod));
 
-    const edited = { parts: [{ ...wod.parts[0], movements: wod.parts[0].movements.slice(1) }] };
+    const edited = withText({
+      parts: [{ ...wod.parts[0], movements: wod.parts[0].movements.slice(1) }],
+    });
     store.set(edited);
     expect(saved()).toEqual(edited);
 
@@ -56,14 +68,14 @@ describe("createWodStore", () => {
     const store = createWodStore();
     const listener = vi.fn();
     const unsubscribe = store.subscribe(listener);
-    store.set(toWodState(fran));
+    store.set(withText(toWodState(fran)));
     unsubscribe();
     store.set(null);
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
   it("uses the initial WOD instead of the saved one", () => {
-    sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(toWodState(fran)));
+    sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(withText(toWodState(fran))));
     expect(createWodStore(null).get()).toBeNull();
   });
 
@@ -77,8 +89,8 @@ describe("createWodStore", () => {
     const store = createWodStore();
     expect(store.get()).toBeNull();
 
-    const wod = toWodState(fran);
-    store.set(wod);
-    expect(store.get()).toBe(wod);
+    const value = withText(toWodState(fran));
+    store.set(value);
+    expect(store.get()).toBe(value);
   });
 });

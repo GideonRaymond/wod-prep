@@ -1,17 +1,17 @@
-import { WodStateSchema } from "@/schemas/wodState";
-import type { WodState } from "@/types/wod";
+import { SavedWodSchema } from "@/schemas/wodState";
+import type { SavedWod } from "@/types/wod";
 
-/** Bump when WodState changes shape, so older saved workouts are ignored. */
-export const WOD_STORAGE_KEY = "wod-prep:wod:v1";
+/** Bump when SavedWod changes shape, so older saved workouts are ignored. */
+export const WOD_STORAGE_KEY = "wod-prep:wod:v2";
 
 export type WodStore = {
-  get: () => WodState | null;
-  set: (wod: WodState | null) => void;
+  get: () => SavedWod | null;
+  set: (saved: SavedWod | null) => void;
   subscribe: (listener: () => void) => () => void;
 };
 
 /**
- * Holds the current WOD in memory and writes every change through to sessionStorage, so a page
+ * Holds the current WOD (and the text it was parsed from) in memory and writes every change through to sessionStorage, so a page
  * refresh restores it (closing the tab clears it). Saving on every change rather than on unmount
  * or `beforeunload` is deliberate: a refresh doesn't unmount React, and `beforeunload` isn't
  * reliable on mobile. If storage is unavailable (e.g. blocked), the WOD still lives in memory.
@@ -19,7 +19,7 @@ export type WodStore = {
  * Shaped for `useSyncExternalStore`. Storage is read lazily on the first `get`, which only
  * happens in the browser.
  */
-export function createWodStore(initial?: WodState | null): WodStore {
+export function createWodStore(initial?: SavedWod | null): WodStore {
   let current = initial;
   const listeners = new Set<() => void>();
 
@@ -28,9 +28,9 @@ export function createWodStore(initial?: WodState | null): WodStore {
       if (current === undefined) current = load();
       return current;
     },
-    set(wod) {
-      current = wod;
-      save(wod);
+    set(saved) {
+      current = saved;
+      save(saved);
       listeners.forEach((listener) => listener());
     },
     subscribe(listener) {
@@ -40,11 +40,11 @@ export function createWodStore(initial?: WodState | null): WodStore {
   };
 }
 
-function load(): WodState | null {
+function load(): SavedWod | null {
   try {
     const raw = sessionStorage.getItem(WOD_STORAGE_KEY);
     if (!raw) return null;
-    const result = WodStateSchema.safeParse(JSON.parse(raw));
+    const result = SavedWodSchema.safeParse(JSON.parse(raw));
     if (result.success) return result.data;
     sessionStorage.removeItem(WOD_STORAGE_KEY);
   } catch {
@@ -53,9 +53,9 @@ function load(): WodState | null {
   return null;
 }
 
-function save(wod: WodState | null) {
+function save(saved: SavedWod | null) {
   try {
-    if (wod) sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(wod));
+    if (saved) sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(saved));
     else sessionStorage.removeItem(WOD_STORAGE_KEY);
   } catch {
     // Storage full or blocked: keep the WOD in memory only.

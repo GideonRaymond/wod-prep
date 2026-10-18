@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { hydrateRoot } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HomePage } from "./HomePage";
 import { WodProvider } from "@/providers/WodProvider";
 import { WOD_STORAGE_KEY } from "@/stores/wodStore";
-import type { WodState } from "@/types/wod";
+import type { SavedWod } from "@/types/wod";
 import { fran, franPart, strengthAndMetcon } from "@/test/fixtures";
+import { toWodState } from "@/utils/toWodState";
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
@@ -131,9 +134,10 @@ describe("HomePage", () => {
     await user.click(screen.getByRole("button", { name: "Edit stimulus" }));
     await user.type(screen.getByRole("textbox", { name: "Stimulus" }), " Go!");
 
-    const saved: WodState = JSON.parse(sessionStorage.getItem(WOD_STORAGE_KEY)!);
-    expect(saved.parts[0].movements.map((m) => m.name)).toEqual(["Pull-up"]);
-    expect(saved.parts[0].stimulus.description).toBe(`${franPart.stimulus.description} Go!`);
+    const saved: SavedWod = JSON.parse(sessionStorage.getItem(WOD_STORAGE_KEY)!);
+    expect(saved.text).toBe("Fran");
+    expect(saved.wod.parts[0].movements.map((m) => m.name)).toEqual(["Pull-up"]);
+    expect(saved.wod.parts[0].stimulus.description).toBe(`${franPart.stimulus.description} Go!`);
 
     cleanup();
     render(
@@ -141,9 +145,33 @@ describe("HomePage", () => {
         <HomePage />
       </WodProvider>,
     );
+    expect(screen.getByRole("textbox", { name: "Workout" })).toHaveValue("Fran");
+    expect(screen.getByRole("button", { name: "Break it down" })).toBeDisabled();
     expect(screen.getByRole("heading", { name: "Fran" })).toBeInTheDocument();
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
     expect(screen.getByText(`${franPart.stimulus.description} Go!`)).toBeInTheDocument();
+  });
+
+  it("fills the text box with the saved text after hydrating a server render", async () => {
+    sessionStorage.setItem(
+      WOD_STORAGE_KEY,
+      JSON.stringify({ text: "Fran", wod: toWodState(fran) }),
+    );
+    const page = (
+      <WodProvider>
+        <HomePage />
+      </WodProvider>
+    );
+    const container = document.createElement("div");
+    container.innerHTML = renderToString(page);
+    document.body.append(container);
+    expect(container.querySelector("textarea")).toHaveValue("");
+
+    const root = await act(async () => hydrateRoot(container, page));
+    expect(screen.getByRole("textbox", { name: "Workout" })).toHaveValue("Fran");
+    expect(screen.getByRole("heading", { name: "Fran" })).toBeInTheDocument();
+    act(() => root.unmount());
+    container.remove();
   });
 
   it("clears the saved workout when a new parse fails", async () => {

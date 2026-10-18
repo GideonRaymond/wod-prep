@@ -72,9 +72,13 @@ describe("WodInputForm", () => {
   });
 
   describe("after a parse", () => {
+    it("starts with the parsed text", () => {
+      setup(false, "Fran");
+      expect(textbox()).toHaveValue("Fran");
+    });
+
     it("disables submit until the text changes, with a hint", async () => {
       const { user } = setup(false, "Fran");
-      await user.type(textbox(), "Fran");
       expect(submitButton()).toBeDisabled();
       expect(submitButton()).toHaveAccessibleDescription(
         "Edit the workout to break it down again.",
@@ -87,13 +91,13 @@ describe("WodInputForm", () => {
 
     it("ignores leading and trailing whitespace", async () => {
       const { user } = setup(false, "Fran");
-      await user.type(textbox(), "  Fran\n");
+      await user.type(textbox(), "  \n");
       expect(submitButton()).toBeDisabled();
     });
 
     it("enables submit again when the text is changed back after an edit", async () => {
       const { user } = setup(false, "Fran");
-      await user.type(textbox(), "Frank");
+      await user.type(textbox(), "k");
       expect(submitButton()).toBeEnabled();
       await user.type(textbox(), "{Backspace}");
       expect(submitButton()).toBeDisabled();

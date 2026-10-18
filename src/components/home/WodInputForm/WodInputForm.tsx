@@ -8,13 +8,16 @@ import { EXAMPLE_WOD, MAX_WOD_LENGTH } from "@/constants/wod";
 
 export type WodInputFormProps = {
   loading: boolean;
-  /** Text of the last successful parse; submitting it again is disabled until the text changes. */
+  /**
+   * Text of the current workout. The form starts with it, and submitting it again is disabled
+   * until the text changes.
+   */
   parsedText?: string | null;
   onSubmit: (text: string) => void;
 };
 
 export function WodInputForm({ loading, parsedText, onSubmit }: WodInputFormProps) {
-  const [text, setText] = useState("");
+  const [text, setText] = useState(parsedText ?? "");
   const tooLong = text.trim().length > MAX_WOD_LENGTH;
   const unchanged = parsedText != null && text.trim() === parsedText.trim();
 

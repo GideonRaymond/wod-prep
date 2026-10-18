@@ -30,7 +30,10 @@ describe("WorkoutPage", () => {
   });
 
   it("restores the workout after a page refresh", () => {
-    sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(toWodState(strengthAndMetcon)));
+    sessionStorage.setItem(
+      WOD_STORAGE_KEY,
+      JSON.stringify({ text: "A) squats B) Fran", wod: toWodState(strengthAndMetcon) }),
+    );
     render(
       <WodProvider>
         <WorkoutPage />
