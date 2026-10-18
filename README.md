@@ -76,4 +76,4 @@ Middleware is called **proxy** in Next.js 16 and must live in a single `src/prox
 6. Production caching (before going live)
    - Move the parse cache from the local file to a shared store (e.g. Upstash Redis / Vercel KV, or Postgres) so it works on serverless hosting
    - Cache research per movement, so agent results for common movements are reused across workouts
-   - Revisit the "first version wins" name lookup: in production the cache is shared by all users
+   - Replace the "first version wins" name lookup, since in production the cache is shared by all users. Idea: only store a workout under its name when it's the standard version of a benchmark Girl or Hero WOD, so typing "Fran" or "Murph" always gives the official version and variants never take over the name. (A draft is in the local git stash "Benchmark-only name lookup…".)
