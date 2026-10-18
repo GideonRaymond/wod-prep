@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Dumbbell, Plus, Repeat, X } from "lucide-react";
+import { Dumbbell, Plus, Repeat, RotateCcw, X } from "lucide-react";
 import { MAX_WOD_LENGTH, type Movement, type Wod } from "@/lib/wod";
+import { useUndoableText } from "@/lib/use-undoable-text";
 
 type MovementItem = Movement & { id: string };
 type WodState = Omit<Wod, "movements"> & { movements: MovementItem[] };
@@ -122,12 +123,15 @@ function WodSummary({ wod, onChange }: { wod: WodState; onChange: (wod: WodState
   const remove = (id: string) =>
     onChange({ ...wod, movements: wod.movements.filter((m) => m.id !== id) });
   const add = (m: Movement) => onChange({ ...wod, movements: [...wod.movements, withId(m)] });
+  const stimulus = useUndoableText(wod.stimulus);
 
   return (
     <section className="mt-8">
       {wod.title && <h2 className="text-2xl font-semibold">{wod.title}</h2>}
       <p className="text-zinc-600 dark:text-zinc-400">{meta.join(" · ")}</p>
       {wod.notes && <p className="mt-1 text-sm text-zinc-500">{wod.notes}</p>}
+
+      <StimulusEditor original={wod.stimulus} stimulus={stimulus} />
 
       <ul className="mt-4 space-y-3">
         {wod.movements.map((m) => (
@@ -167,6 +171,69 @@ function WodSummary({ wod, onChange }: { wod: WodState; onChange: (wod: WodState
 
       <AddMovement onAdd={add} />
     </section>
+  );
+}
+
+function StimulusEditor({
+  original,
+  stimulus,
+}: {
+  original: string;
+  stimulus: ReturnType<typeof useUndoableText>;
+}) {
+  const missing = !stimulus.value.trim();
+  const edited = stimulus.value !== original;
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (!(e.metaKey || e.ctrlKey)) return;
+    const key = e.key.toLowerCase();
+    if (key === "z") {
+      e.preventDefault();
+      if (e.shiftKey) stimulus.redo();
+      else stimulus.undo();
+    } else if (key === "y") {
+      e.preventDefault();
+      stimulus.redo();
+    }
+  }
+
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-between">
+        <label htmlFor="stimulus" className="font-medium">
+          Stimulus
+        </label>
+        <button
+          type="button"
+          onClick={() => stimulus.replace(original)}
+          disabled={!edited}
+          aria-label="Revert stimulus to original"
+          className="flex items-center gap-1 rounded px-2 py-1 text-sm text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:hover:bg-transparent dark:text-zinc-400 dark:hover:bg-zinc-800"
+        >
+          <RotateCcw size={14} aria-hidden /> Revert
+        </button>
+      </div>
+      <textarea
+        id="stimulus"
+        value={stimulus.value}
+        onChange={(e) => stimulus.edit(e.target.value)}
+        onKeyDown={handleKeyDown}
+        rows={3}
+        required
+        aria-invalid={missing}
+        aria-describedby={missing ? "stimulus-error" : undefined}
+        className={`mt-1 w-full rounded-lg border bg-white p-3 text-sm focus:outline-none dark:bg-zinc-900 ${
+          missing
+            ? "border-red-500 focus:border-red-600"
+            : "border-zinc-300 focus:border-zinc-500 dark:border-zinc-700"
+        }`}
+      />
+      {missing && (
+        <p id="stimulus-error" className="text-sm text-red-600 dark:text-red-400">
+          Stimulus is required.
+        </p>
+      )}
+    </div>
   );
 }
 

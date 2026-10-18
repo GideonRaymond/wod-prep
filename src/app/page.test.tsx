@@ -204,4 +204,78 @@ describe("Home", () => {
     await user.click(screen.getByRole("button", { name: "Add movement" }));
     expect(screen.getByPlaceholderText(/Movement/)).toHaveValue("");
   });
+
+  describe("stimulus", () => {
+    const stimulusBox = () => screen.getByRole("textbox", { name: "Stimulus" });
+    const revert = () => screen.getByRole("button", { name: "Revert stimulus to original" });
+
+    it("shows the parsed stimulus in an editable field", async () => {
+      const user = await parseFran();
+      expect(stimulusBox()).toHaveValue(fran.stimulus);
+
+      await user.type(stimulusBox(), " Scale to finish under 10.");
+      expect(stimulusBox()).toHaveValue(`${fran.stimulus} Scale to finish under 10.`);
+    });
+
+    it("is required", async () => {
+      const user = await parseFran();
+      expect(screen.queryByText("Stimulus is required.")).not.toBeInTheDocument();
+
+      await user.clear(stimulusBox());
+      expect(stimulusBox()).toBeRequired();
+      expect(stimulusBox()).toHaveAttribute("aria-invalid", "true");
+      expect(screen.getByText("Stimulus is required.")).toBeInTheDocument();
+
+      await user.type(stimulusBox(), "   ");
+      expect(screen.getByText("Stimulus is required.")).toBeInTheDocument();
+    });
+
+    it("reverts to the original", async () => {
+      const user = await parseFran();
+      expect(revert()).toBeDisabled();
+
+      await user.clear(stimulusBox());
+      await user.type(stimulusBox(), "Heavy and slow.");
+      expect(revert()).toBeEnabled();
+
+      await user.click(revert());
+      expect(stimulusBox()).toHaveValue(fran.stimulus);
+      expect(revert()).toBeDisabled();
+    });
+
+    it("undoes and redoes edits with Ctrl+Z / Ctrl+Shift+Z", async () => {
+      const user = await parseFran();
+      await user.clear(stimulusBox());
+      await user.type(stimulusBox(), "Heavy and slow.");
+
+      await user.keyboard("{Control>}z{/Control}");
+      expect(stimulusBox()).toHaveValue(fran.stimulus);
+
+      await user.keyboard("{Control>}{Shift>}z{/Shift}{/Control}");
+      expect(stimulusBox()).toHaveValue("Heavy and slow.");
+    });
+
+    it("supports Cmd+Z and Ctrl+Y", async () => {
+      const user = await parseFran();
+      await user.clear(stimulusBox());
+      await user.type(stimulusBox(), "Heavy and slow.");
+
+      await user.keyboard("{Meta>}z{/Meta}");
+      expect(stimulusBox()).toHaveValue(fran.stimulus);
+
+      await user.keyboard("{Control>}y{/Control}");
+      expect(stimulusBox()).toHaveValue("Heavy and slow.");
+    });
+
+    it("can undo a revert", async () => {
+      const user = await parseFran();
+      await user.clear(stimulusBox());
+      await user.type(stimulusBox(), "Heavy and slow.");
+      await user.click(revert());
+
+      await user.click(stimulusBox());
+      await user.keyboard("{Control>}z{/Control}");
+      expect(stimulusBox()).toHaveValue("Heavy and slow.");
+    });
+  });
 });

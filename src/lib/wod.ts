@@ -25,6 +25,11 @@ export const WodSchema = z.object({
     .describe('Time cap or duration, e.g. "12 min AMRAP", "20 min cap"'),
   rounds: z.string().nullable().describe('Round scheme, e.g. "5 rounds", "21-15-9"'),
   movements: z.array(MovementSchema),
+  stimulus: z
+    .string()
+    .describe(
+      "The intended stimulus in 1-3 sentences: energy system, intensity, target time or pace, and how it should feel",
+    ),
   notes: z.string().nullable().describe("Anything else worth knowing (rest, partner, buy-in)"),
 });
 

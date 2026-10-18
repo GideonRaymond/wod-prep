@@ -7,7 +7,8 @@ const client = new Anthropic();
 
 const SYSTEM = `You parse CrossFit workouts (WODs) into structured data.
 List each distinct movement once, in the order it appears, using its standard CrossFit name.
-Keep loads and reps as written (e.g. "95/65 lb" means male/female). Do not invent anything that isn't in the text.`;
+Keep loads and reps as written (e.g. "95/65 lb" means male/female). Do not invent movements, loads or reps that aren't in the text.
+Always describe the intended stimulus as a coach would brief the class: the energy system, how heavy or light it should feel, the target time or pace, and whether to go unbroken or break early.`;
 
 export class WodParseError extends Error {}
 
