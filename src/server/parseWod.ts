@@ -1,7 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
-import { WodSchema, type Wod } from "./wod";
+import { WodSchema, type Wod } from "@/schemas/wod";
 
 const client = new Anthropic();
 
