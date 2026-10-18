@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const MAX_WOD_LENGTH = 4000;
+export const MAX_WOD_LENGTH = 2000;
 
 export const MovementSchema = z.object({
   name: z.string().describe('Canonical movement name, e.g. "Toes-to-Bar", "Thruster", "Row"'),
