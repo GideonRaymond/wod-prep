@@ -68,6 +68,12 @@ body {
 ::view-transition-group(.morph) {
   animation-duration: 400ms;
 }
+/* Only the board moves: the rest of the page switches at once instead of cross-fading, which
+   reads as a flash when the pages differ this much. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*),
   ::view-transition-old(*),

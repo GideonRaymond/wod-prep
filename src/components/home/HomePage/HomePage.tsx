@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, useState } from "react";
+import { Activity, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ParseProgress } from "@/components/home/ParseProgress";
 import { Welcome } from "@/components/home/Welcome";
@@ -26,10 +26,24 @@ export function HomePage() {
   const { wod, error, loading, progress, parsedText, restored, parse } = useParseWod();
   // New text waiting for the go-ahead to replace an edited workout.
   const [pending, setPending] = useState<string | null>(null);
+  // Read, and on the way to the review page: keep showing the parse until it takes over, so the
+  // text box doesn't flash back in between.
+  const [opening, setOpening] = useState(false);
+  // Leaving the page (Next.js keeps it, hidden) ends that, so coming back shows the text box.
+  useEffect(() => {
+    if (opening) return () => setOpening(false);
+  }, [opening]);
+  const reading = loading || opening;
 
   async function breakDown(text: string) {
     setPending(null);
-    if (await parse(text)) router.push(WOD_STEPS[STEP.review].href);
+    const review = WOD_STEPS[STEP.review].href;
+    // Ready before the parse finishes, so the board can glide straight into the review page.
+    router.prefetch(review);
+    if (await parse(text)) {
+      setOpening(true);
+      router.push(review);
+    }
   }
 
   function submit(text: string) {
@@ -43,13 +57,13 @@ export function HomePage() {
       reachable={wod ? STEP.review : undefined}
       board={
         <>
-          {loading && (
+          {reading && (
             <WodBoard {...partsBoard(progress.outline ?? [])} writing={!progress.outline} />
           )}
           {/* Hidden, not unmounted, while parsing, so the text is still there if it fails. A
               hidden Activity (unlike the hidden attribute) also stops its board counting as a
               second board for the page transition. */}
-          <Activity mode={loading ? "hidden" : "visible"}>
+          <Activity mode={reading ? "hidden" : "visible"}>
             {/* Remount once the saved workout is read, so the text box starts with its text. */}
             <WodInputForm
               key={restored ? "restored" : "server"}
@@ -63,7 +77,7 @@ export function HomePage() {
         </>
       }
     >
-      {loading ? <ParseProgress progress={progress} /> : <Welcome />}
+      {reading ? <ParseProgress progress={progress} /> : <Welcome />}
 
       <Dialog
         open={pending !== null}
