@@ -13,7 +13,10 @@ const OWN_SCROLL = ["wheel", "touchstart", "keydown", "pointerdown"] as const;
  */
 export function useCurrentStage(keys: string[]) {
   const keyList = keys.join("|");
-  const [current, setCurrent] = useState<string | undefined>(keys[0]);
+  // Until a stage scrolls in or is picked, the first one is current (also when the stages only
+  // arrive after the first render, as when a saved workout is read).
+  const [seen, setCurrent] = useState<string | undefined>();
+  const current = seen ?? keys[0];
   const pinned = useRef(false);
 
   useEffect(() => {
