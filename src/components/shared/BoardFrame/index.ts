@@ -1,0 +1,1 @@
+export { BoardFrame } from "./BoardFrame";

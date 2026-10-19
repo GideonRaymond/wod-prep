@@ -16,4 +16,13 @@ describe("BoardLayout", () => {
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
   });
+
+  it("can put the side above the board on phones", () => {
+    render(
+      <BoardLayout board={<p>Board</p>} sideFirstOnPhones>
+        <p>Side</p>
+      </BoardLayout>,
+    );
+    expect(screen.getByText("Side").parentElement).toHaveClass("max-md:order-first");
+  });
 });

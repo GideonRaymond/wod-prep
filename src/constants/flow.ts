@@ -1,10 +1,24 @@
 import type { Step } from "@/components/shared/Stepper";
 
-/** The three steps from a pasted workout to the class, as the stepper shows them. */
+/** The three steps from a pasted workout to the class, as the stepper and home screen show them. */
 export const WOD_STEPS = [
-  { label: "Workout", href: "/" },
-  { label: "Check", href: "/review" },
-  { label: "Class", href: "/workout" },
-] as const satisfies readonly Step[];
+  {
+    label: "Workout",
+    href: "/",
+    summary: "Write or paste today's workout on the board.",
+  },
+  {
+    label: "Check",
+    href: "/review",
+    summary:
+      "We break it into parts, movements and the intended stimulus. Fix anything we read wrong.",
+  },
+  {
+    label: "Class",
+    href: "/workout",
+    summary:
+      "Get the class built around it: a warm-up, skill practice, timing, videos and articles to read before, and a cool-down.",
+  },
+] as const satisfies readonly (Step & { summary: string })[];
 
 export const STEP = { workout: 0, review: 1, class: 2 } as const;

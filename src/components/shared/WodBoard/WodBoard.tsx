@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, ViewTransition } from "react";
+import { useState } from "react";
+import { BoardFrame } from "@/components/shared/BoardFrame";
 import { Button } from "@/components/shared/Button";
 import type { BoardBlock, WorkoutPartState } from "@/types/wod";
 import { cn } from "@/utils/cn";
@@ -36,8 +37,7 @@ export type WodBoardProps = {
  * Parts show their whiteboard lines (the workout written out cleanly, e.g. Murph in full), or
  * their own text when they have none. When no part has a real name (like "Fran"), "WOD" heads the
  * board. A planned warm-up and suggested stretches go on in a blue marker, and anything written
- * after the board first shows rises in. The board stays white in dark mode, like a real one, and
- * moves between pages as one board. On phones it's capped with a fade and a Show all button.
+ * after the board first shows rises in. On phones it's capped with a fade and a Show all button.
  */
 export function WodBoard({ parts, warmup, cooldown, writing = false }: WodBoardProps) {
   const [showAll, setShowAll] = useState(false);
@@ -55,50 +55,43 @@ export function WodBoard({ parts, warmup, cooldown, writing = false }: WodBoardP
   const [initial] = useState(() => new Set(blocks.map((b) => b.key)));
 
   return (
-    <ViewTransition name="wod-board" share="morph" default="none">
-      <div
-        aria-busy={writing || undefined}
-        className={cn(
-          "relative rounded-lg border-[6px] border-zinc-300 bg-[#fdfdfb] px-5 pt-4 pb-5 text-purple-950 shadow-[inset_0_0_0_1px_#e4e4e7]",
-          !showAll && "max-sm:max-h-[190px] max-sm:overflow-hidden",
+    <BoardFrame
+      aria-busy={writing || undefined}
+      className={cn(!showAll && "max-sm:max-h-[190px] max-sm:overflow-hidden")}
+    >
+      <div className="flex items-start justify-between gap-3">
+        {!named && (
+          <p className={cn(markerFont.className, "mb-2 text-2xl leading-8 text-purple-800")}>WOD</p>
         )}
-      >
-        <div className="flex items-start justify-between gap-3">
-          {!named && (
-            <p className={cn(markerFont.className, "mb-2 text-2xl leading-8 text-purple-800")}>
-              WOD
-            </p>
-          )}
-          <Button
-            variant="secondary"
-            size="xs"
-            onClick={() => setShowAll(!showAll)}
-            aria-expanded={showAll}
-            className="ml-auto text-zinc-600 hover:bg-zinc-100 sm:hidden dark:text-zinc-600 dark:hover:bg-zinc-100"
-          >
-            {showAll ? "Show less" : "Show all"}
-          </Button>
-        </div>
-        <div className="space-y-3">
-          {blocks.map(({ key, block, ink }) => (
-            <Block
-              key={key}
-              block={block}
-              ink={ink}
-              added={ink === ADDED_INK}
-              arriving={!initial.has(key)}
-            />
-          ))}
-          {writing && <WritingLine first={parts.length === 0} />}
-        </div>
-        {!showAll && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-linear-to-b from-[#fdfdfb]/0 to-[#fdfdfb] sm:hidden"
-          />
-        )}
+        <Button
+          variant="secondary"
+          size="xs"
+          onClick={() => setShowAll(!showAll)}
+          aria-expanded={showAll}
+          className="ml-auto text-zinc-600 hover:bg-zinc-100 sm:hidden dark:text-zinc-600 dark:hover:bg-zinc-100"
+        >
+          {showAll ? "Show less" : "Show all"}
+        </Button>
       </div>
-    </ViewTransition>
+      <div className="space-y-3">
+        {blocks.map(({ key, block, ink }) => (
+          <Block
+            key={key}
+            block={block}
+            ink={ink}
+            added={ink === ADDED_INK}
+            arriving={!initial.has(key)}
+          />
+        ))}
+        {writing && <WritingLine first={parts.length === 0} />}
+      </div>
+      {!showAll && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-linear-to-b from-[#fdfdfb]/0 to-[#fdfdfb] sm:hidden"
+        />
+      )}
+    </BoardFrame>
   );
 }
 

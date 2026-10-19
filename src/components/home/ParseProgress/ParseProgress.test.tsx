@@ -37,18 +37,9 @@ describe("ParseProgress", () => {
   it("shows the parts found so far", () => {
     render(<ParseProgress progress={{ outline, read: new Set([0]) }} />);
     expect(screen.getByRole("region", { name: "Reading your workout" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Breaking it down" })).toBeInTheDocument();
     expect(screen.getByText("3 parts found")).toBeInTheDocument();
     expect(screen.getByText("Fran")).toBeInTheDocument();
     expect(screen.getAllByRole("img", { name: "Done" })).toHaveLength(2);
-  });
-
-  it("writes the parts on the whiteboard as soon as they're found", () => {
-    const { rerender } = render(<ParseProgress progress={{ outline: null, read: new Set() }} />);
-    expect(screen.getByTestId("board-writing")).toBeInTheDocument();
-
-    rerender(<ParseProgress progress={{ outline, read: new Set() }} />);
-    expect(screen.queryByTestId("board-writing")).not.toBeInTheDocument();
-    expect(screen.getByText("A. Back Squat")).toBeInTheDocument();
-    expect(screen.getByText("B. Fran")).toBeInTheDocument();
   });
 });

@@ -116,4 +116,10 @@ describe("WodInputForm", () => {
     await user.type(textbox(), "!");
     expect(screen.queryByRole("link", { name: "Continue checking" })).not.toBeInTheDocument();
   });
+
+  it("is written on the whiteboard, in handwriting", () => {
+    setup();
+    expect(textbox()).toHaveClass("font-kalam");
+    expect(textbox().parentElement).toHaveClass("bg-[#fdfdfb]");
+  });
 });

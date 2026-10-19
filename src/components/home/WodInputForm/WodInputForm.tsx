@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { BoardFrame } from "@/components/shared/BoardFrame";
 import { Button } from "@/components/shared/Button";
 import { ButtonLink } from "@/components/shared/ButtonLink";
 import { CharacterCount } from "@/components/shared/CharacterCount";
 import { TextArea } from "@/components/shared/TextArea";
+import { handFont } from "@/components/shared/WodBoard";
 import { EXAMPLE_WOD, MAX_WOD_LENGTH } from "@/constants/wod";
+import { cn } from "@/utils/cn";
 
 export type WodInputFormProps = {
   loading: boolean;
@@ -19,6 +22,10 @@ export type WodInputFormProps = {
   onSubmit: (text: string) => void;
 };
 
+/**
+ * Where the workout is written: a text box on the whiteboard, in handwriting, with the example
+ * workout as its placeholder. Under the board: the length, Break it down and Use example.
+ */
 export function WodInputForm({ loading, parsedText, continueTo, onSubmit }: WodInputFormProps) {
   const [text, setText] = useState(parsedText ?? "");
   const tooLong = text.trim().length > MAX_WOD_LENGTH;
@@ -30,19 +37,24 @@ export function WodInputForm({ loading, parsedText, continueTo, onSubmit }: WodI
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6 space-y-3">
-      <TextArea
-        aria-label="Workout"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder={EXAMPLE_WOD}
-        rows={7}
-        maxLength={MAX_WOD_LENGTH}
-        aria-describedby="wod-length"
-        className="font-mono"
-      />
-      <CharacterCount id="wod-length" length={text.length} max={MAX_WOD_LENGTH} className="-mt-2" />
-      <div className="flex items-center gap-2">
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <BoardFrame className="focus-within:border-purple-300">
+        <TextArea
+          aria-label="Workout"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder={EXAMPLE_WOD}
+          rows={12}
+          maxLength={MAX_WOD_LENGTH}
+          aria-describedby="wod-length"
+          className={cn(
+            handFont.className,
+            "rounded-none border-0 bg-transparent p-0 text-[17px] leading-[23px] text-purple-950 placeholder:text-purple-400 dark:bg-transparent",
+          )}
+        />
+      </BoardFrame>
+      <CharacterCount id="wod-length" length={text.length} max={MAX_WOD_LENGTH} className="-mt-1" />
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           type="submit"
           disabled={loading || !text.trim() || tooLong || unchanged}
