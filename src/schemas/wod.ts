@@ -75,7 +75,36 @@ export const WodSchema = z.object({
   parts: z.array(WorkoutPartSchema).min(1),
 });
 
+/** Where a part sits in a class. */
+export const PART_KINDS = ["warmup", "part", "cooldown"] as const;
+
+/** A part as the first, quick read of a workout finds it: just enough to show its structure. */
+export const PartOutlineSchema = WorkoutPartSchema.pick({
+  label: true,
+  title: true,
+  named: true,
+  sourceText: true,
+}).extend({
+  kind: z
+    .enum(PART_KINDS)
+    .describe("warmup or cooldown for a warm-up or cool-down part, otherwise part"),
+});
+
+/** The structure of a day's programming, from the quick first read. */
+export const WodOutlineSchema = z.object({ parts: z.array(PartOutlineSchema).min(1) });
+
+/** Everything about a part besides its outline, from the slower second read. */
+export const PartDetailsSchema = WorkoutPartSchema.omit({
+  label: true,
+  title: true,
+  named: true,
+  sourceText: true,
+});
+
 export type Movement = z.infer<typeof MovementSchema>;
 export type Stimulus = z.infer<typeof StimulusSchema>;
 export type WorkoutPart = z.infer<typeof WorkoutPartSchema>;
 export type Wod = z.infer<typeof WodSchema>;
+export type PartKind = (typeof PART_KINDS)[number];
+export type PartOutline = z.infer<typeof PartOutlineSchema>;
+export type PartDetails = z.infer<typeof PartDetailsSchema>;

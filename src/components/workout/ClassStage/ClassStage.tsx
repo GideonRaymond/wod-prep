@@ -21,6 +21,8 @@ export type ClassStageProps = {
   onToggle: () => void;
   /** The last stage: its rail stops at the marker. */
   last?: boolean;
+  /** Settle in after the loading screen, this many places after the first (60 ms apart). */
+  settleIndex?: number;
   children: ReactNode;
 };
 
@@ -39,6 +41,7 @@ export function ClassStage({
   open,
   onToggle,
   last = false,
+  settleIndex,
   children,
 }: ClassStageProps) {
   const titleId = useId();
@@ -48,7 +51,11 @@ export function ClassStage({
     <section
       id={`stage-${id}`}
       aria-labelledby={titleId}
-      className="grid scroll-mt-4 grid-cols-[36px_minmax(0,1fr)] gap-x-3"
+      style={settleIndex === undefined ? undefined : { animationDelay: `${settleIndex * 60}ms` }}
+      className={cn(
+        "grid scroll-mt-4 grid-cols-[36px_minmax(0,1fr)] gap-x-3",
+        settleIndex !== undefined && "motion-safe:animate-settle",
+      )}
     >
       <div className="flex flex-col items-center" aria-hidden>
         {marker}

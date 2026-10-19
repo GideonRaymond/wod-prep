@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ParseHandlers } from "@/services/wodApi";
 import { fran, strengthAndMetcon } from "@/test/fixtures";
+import { outlineOf } from "@/test/parseStream";
 
 const { mockRequest } = vi.hoisted(() => ({ mockRequest: vi.fn() }));
 vi.mock("@/services/wodApi", () => ({ requestParseWod: mockRequest }));
@@ -20,7 +22,7 @@ describe("useParseWod", () => {
 
     await act(() => result.current.parse("A) squats B) Fran"));
 
-    expect(mockRequest).toHaveBeenCalledWith("A) squats B) Fran");
+    expect(mockRequest).toHaveBeenCalledWith("A) squats B) Fran", expect.any(Object));
     const parts = result.current.wod!.parts;
     expect(parts.map((p) => p.label)).toEqual(["A", "B", "Cool-down"]);
     expect(parts[1].movements.map((m) => m.name)).toEqual(["Thruster", "Pull-up"]);
@@ -28,6 +30,31 @@ describe("useParseWod", () => {
     expect(ids.every((id) => typeof id === "string")).toBe(true);
     expect(new Set(ids).size).toBe(ids.length);
     expect(result.current.error).toBeNull();
+  });
+
+  it("follows the streamed progress: the outline, then each part as it's read", async () => {
+    let finish: (wod: typeof fran) => void = () => {};
+    let handlers: ParseHandlers = {};
+    mockRequest.mockImplementation((_text: string, h: ParseHandlers) => {
+      handlers = h;
+      return new Promise((r) => (finish = r));
+    });
+    const { result } = renderHook(() => useParseWod(), { wrapper: WodProvider });
+
+    act(() => {
+      void result.current.parse("A) squats B) Fran");
+    });
+    expect(result.current.progress).toEqual({ outline: null, read: new Set() });
+
+    const outline = outlineOf(strengthAndMetcon);
+    act(() => handlers.onOutline!(outline));
+    act(() => handlers.onPart!(1, strengthAndMetcon.parts[1]));
+    expect(result.current.progress.outline).toEqual(outline);
+    expect(result.current.progress.read).toEqual(new Set([1]));
+
+    await act(async () => finish(strengthAndMetcon));
+    expect(result.current.loading).toBe(false);
+    expect(result.current.wod!.parts).toHaveLength(3);
   });
 
   it("is loading while the request is in flight", async () => {

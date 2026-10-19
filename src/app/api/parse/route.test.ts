@@ -1,6 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fran } from "@/test/fixtures";
+import type { ParseProgress } from "@/server/parseWod";
+import { fran, strengthAndMetcon } from "@/test/fixtures";
+import { outlineOf, parseEvents } from "@/test/parseStream";
+import type { ParseEvent } from "@/types/parse";
 import { MAX_WOD_LENGTH } from "@/constants/wod";
 
 const { mockParseWod, mockGetCachedWod, mockCacheWod } = vi.hoisted(() => ({
@@ -31,6 +34,15 @@ function post(body: unknown) {
   );
 }
 
+/** Every event in a streamed response. */
+async function events(res: Response): Promise<ParseEvent[]> {
+  const text = await res.text();
+  return text
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+}
+
 describe("POST /api/parse", () => {
   beforeEach(() => {
     vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
@@ -42,31 +54,37 @@ describe("POST /api/parse", () => {
     vi.unstubAllEnvs();
   });
 
-  it("returns the parsed workout", async () => {
-    mockParseWod.mockResolvedValue(fran);
+  it("streams the outline, each part, then the workout", async () => {
+    mockParseWod.mockImplementation(async (_text: string, progress: ParseProgress) => {
+      progress.onOutline?.(outlineOf(fran));
+      progress.onPart?.(0, fran.parts[0]);
+      return fran;
+    });
     const res = await post({ text: "  Fran  " });
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ wod: fran });
-    expect(mockParseWod).toHaveBeenCalledWith("Fran");
+    expect(res.headers.get("Content-Type")).toMatch(/application\/x-ndjson/);
+    expect(await events(res)).toEqual(parseEvents(fran));
+    expect(mockParseWod).toHaveBeenCalledWith("Fran", expect.any(Object));
   });
 
   it("parses and caches the workout on a cache miss", async () => {
     mockParseWod.mockResolvedValue(fran);
     const res = await post({ text: "Fran" });
+    await events(res);
 
     expect(res.headers.get("X-Cache")).toBe("MISS");
     expect(mockGetCachedWod).toHaveBeenCalledWith("Fran");
     expect(mockCacheWod).toHaveBeenCalledWith("Fran", fran);
   });
 
-  it("returns a cached workout without calling Claude", async () => {
-    mockGetCachedWod.mockResolvedValue(fran);
+  it("streams a cached workout all at once without calling Claude", async () => {
+    mockGetCachedWod.mockResolvedValue(strengthAndMetcon);
     const res = await post({ text: "Fran" });
 
     expect(res.status).toBe(200);
     expect(res.headers.get("X-Cache")).toBe("HIT");
-    expect(await res.json()).toEqual({ wod: fran });
+    expect(await events(res)).toEqual(parseEvents(strengthAndMetcon));
     expect(mockParseWod).not.toHaveBeenCalled();
     expect(mockCacheWod).not.toHaveBeenCalled();
   });
@@ -80,7 +98,7 @@ describe("POST /api/parse", () => {
 
   it("doesn't cache failed parses", async () => {
     mockParseWod.mockRejectedValue(new WodParseError("Couldn't read that."));
-    await post({ text: "hello" });
+    await events(await post({ text: "hello" }));
     expect(mockCacheWod).not.toHaveBeenCalled();
   });
 
@@ -116,38 +134,31 @@ describe("POST /api/parse", () => {
     expect(mockParseWod).not.toHaveBeenCalled();
   });
 
-  it("returns 422 with the message for WodParseError", async () => {
-    mockParseWod.mockRejectedValue(new WodParseError("Couldn't read that."));
-    const res = await post({ text: "hello" });
-
-    expect(res.status).toBe(422);
-    expect(await res.json()).toEqual({ error: "Couldn't read that." });
-  });
-
-  it("explains an invalid API key", async () => {
-    mockParseWod.mockRejectedValue(
+  it.each([
+    [
+      "the message of a WodParseError",
+      new WodParseError("Couldn't read that."),
+      "Couldn't read that.",
+    ],
+    [
+      "an invalid API key",
       new Anthropic.AuthenticationError(401, undefined, "bad key", new Headers()),
-    );
-    const res = await post({ text: "Fran" });
-
-    expect(res.status).toBe(500);
-    expect((await res.json()).error).toMatch(/invalid ANTHROPIC_API_KEY/);
-  });
-
-  it("returns 429 when rate limited", async () => {
-    mockParseWod.mockRejectedValue(
+      "Missing or invalid ANTHROPIC_API_KEY.",
+    ],
+    [
+      "a rate limit",
       new Anthropic.RateLimitError(429, undefined, "slow down", new Headers()),
-    );
-    const res = await post({ text: "Fran" });
-    expect(res.status).toBe(429);
-  });
-
-  it("returns a generic 500 for unexpected errors", async () => {
+      "Rate limited. Try again in a moment.",
+    ],
+    [
+      "a generic message for anything else",
+      new Error("boom"),
+      "Something went wrong parsing the workout.",
+    ],
+  ])("streams %s as an error", async (_label, err, message) => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    mockParseWod.mockRejectedValue(new Error("boom"));
+    mockParseWod.mockRejectedValue(err);
     const res = await post({ text: "Fran" });
-
-    expect(res.status).toBe(500);
-    expect((await res.json()).error).toBe("Something went wrong parsing the workout.");
+    expect(await events(res)).toEqual([{ type: "error", error: message }]);
   });
 });

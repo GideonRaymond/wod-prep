@@ -6,6 +6,8 @@ import {
   type StretchArea,
 } from "@/data/stretches";
 import type { Movement } from "@/schemas/wod";
+import type { WorkoutPartState } from "@/types/wod";
+import { stageKind } from "./classPlan";
 
 /** How many stretches a cool-down suggests at most. To become a setting (see the README roadmap). */
 export const STRETCHES_PER_CLASS = 3;
@@ -76,4 +78,15 @@ function pickWeighted<T>(options: T[], weights: number[], random: number): T {
     if (at < 0) return option;
   }
   return options[options.length - 1];
+}
+
+/** The stretches for a class: for the movements of its workout parts, seeded by their text. */
+export function classStretches(
+  parts: Pick<WorkoutPartState, "label" | "movements" | "sourceText">[],
+) {
+  const workoutParts = parts.filter((part) => stageKind(part) === "part");
+  return suggestStretches(
+    workoutParts.flatMap((part) => part.movements),
+    workoutParts.map((part) => part.sourceText).join("\n"),
+  );
 }

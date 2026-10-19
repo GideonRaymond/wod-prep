@@ -16,6 +16,30 @@
   --color-accent-faint: var(--accent-faint);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Checklist rows and "Maybe while you wait" slide in; class stages settle in after loading. */
+  --animate-row-in: row-in 0.3s ease both;
+  --animate-rise-in: rise-in 0.4s ease both;
+  --animate-settle: settle 0.45s ease both;
+
+  @keyframes row-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @keyframes settle {
+    from {
+      opacity: 0;
+      transform: translateX(12px);
+    }
+  }
 }
 
 @media (prefers-color-scheme: dark) {

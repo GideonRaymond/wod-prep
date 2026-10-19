@@ -8,7 +8,10 @@ import { HomePage } from "./HomePage";
 import { WodProvider } from "@/providers/WodProvider";
 import { WOD_STORAGE_KEY } from "@/stores/wodStore";
 import type { SavedWod } from "@/types/wod";
+import type { Wod } from "@/schemas/wod";
 import { fran, franPart, strengthAndMetcon } from "@/test/fixtures";
+import { parseEvents, streamResponse } from "@/test/parseStream";
+import type { ParseEvent } from "@/types/parse";
 import { toWodState } from "@/utils/toWodState";
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
@@ -16,8 +19,11 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
 const fetchMock = vi.fn();
 
-function respond(status: number, body: unknown) {
-  fetchMock.mockResolvedValue({ ok: status < 400, json: async () => body });
+/** A streamed parse of `wod`, or a JSON error with a status. */
+function respond(status: number, body: { wod?: Wod; error?: string }) {
+  fetchMock.mockImplementation(async () =>
+    body.wod ? streamResponse(parseEvents(body.wod)) : Response.json(body, { status }),
+  );
 }
 
 async function submit(text: string) {
@@ -41,6 +47,38 @@ describe("HomePage", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+  });
+
+  it("shows the parts as they're found, ticking each off as it's read", async () => {
+    const encoder = new TextEncoder();
+    let push: (event: ParseEvent) => void = () => {};
+    let end: () => void = () => {};
+    fetchMock.mockImplementation(async () => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          push = (event) => controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+          end = () => controller.close();
+        },
+      });
+      return new Response(body);
+    });
+    await submit("A) squats B) Fran");
+    expect(await screen.findByText("Reading your workout")).toBeInTheDocument();
+
+    const [outline, a, b, cooldown, done] = parseEvents(strengthAndMetcon);
+    await act(async () => push(outline));
+    expect(await screen.findByText("3 parts found")).toBeInTheDocument();
+    expect(screen.getByText("Fran")).toBeInTheDocument();
+
+    await act(async () => push(b));
+    await act(async () => {
+      push(a);
+      push(cooldown);
+      push(done);
+      end();
+    });
+    expect(await screen.findByRole("region", { name: "Fran" })).toBeInTheDocument();
+    expect(screen.queryByText("3 parts found")).not.toBeInTheDocument();
   });
 
   it("parses the workout and shows the summary, stimulus and movements", async () => {

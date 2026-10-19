@@ -12,7 +12,8 @@ type Search = { name: string; kind: VideoKind };
  * every named part (e.g. "Fran"), and stores them on the WOD, so they're kept across refreshes and
  * shown in Before class. Each name is looked up once, even if it appears in several parts.
  *
- * `loading` is true while anything is still waiting for videos; `error` is the first failure.
+ * `loading` is true while anything is still waiting for videos, and `pending` holds the search
+ * keys (see videoSearchKey) still waiting; `error` is the first failure.
  * Failed searches aren't retried until the page is opened again.
  */
 export function useMovementVideos() {
@@ -23,7 +24,8 @@ export function useMovementVideos() {
   const [error, setError] = useState<string | null>(null);
 
   const missing = wod ? searchesWithoutVideos(wod) : new Map<string, Search>();
-  const loading = [...missing.keys()].some((key) => !failed.has(key));
+  const pending = new Set([...missing.keys()].filter((key) => !failed.has(key)));
+  const loading = pending.size > 0;
 
   useEffect(() => {
     if (!wod) return;
@@ -44,10 +46,13 @@ export function useMovementVideos() {
     }
   }, [wod, setWod]);
 
-  return { loading, error };
+  return { loading, pending, error };
 }
 
-const keyFor = (name: string, kind: VideoKind) => `${kind}:${normalizeMovementName(name)}`;
+/** Identifies a video search, so any spelling of a movement is searched once. */
+export const videoSearchKey = (name: string, kind: VideoKind) =>
+  `${kind}:${normalizeMovementName(name)}`;
+const keyFor = videoSearchKey;
 
 /** Movements and named parts that don't have videos yet, by search key. */
 function searchesWithoutVideos(wod: WodState) {
