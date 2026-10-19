@@ -70,7 +70,10 @@ describe("WodBoard", () => {
     render(<WodBoard parts={parts} />);
     const toggle = screen.getByRole("button", { name: "Show all" });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
+    // Folded on phones, it's a short preview, not the full board height.
+    expect(toggle.closest(".min-h-80")).toHaveClass("max-sm:min-h-0");
     await userEvent.click(toggle);
+    expect(toggle.closest(".min-h-80")).not.toHaveClass("max-sm:min-h-0");
     expect(screen.getByRole("button", { name: "Show less" })).toHaveAttribute(
       "aria-expanded",
       "true",

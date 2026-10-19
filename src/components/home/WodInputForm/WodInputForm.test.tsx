@@ -120,7 +120,9 @@ describe("WodInputForm", () => {
   it("is written on the whiteboard, in handwriting", () => {
     setup();
     expect(textbox()).toHaveClass("font-kalam", "placeholder:text-zinc-400");
-    expect(textbox().parentElement).toHaveClass("bg-[#fdfdfb]");
+    // It fills the board, which every page's board is at least as tall as.
+    expect(textbox()).toHaveClass("flex-1");
+    expect(textbox().parentElement).toHaveClass("bg-[#fdfdfb]", "min-h-80");
   });
 
   it("shows the example workout, in grey, while the board is empty", () => {

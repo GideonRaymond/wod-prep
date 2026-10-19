@@ -57,7 +57,7 @@ export function WodBoard({ parts, warmup, cooldown, writing = false }: WodBoardP
   return (
     <BoardFrame
       aria-busy={writing || undefined}
-      className={cn(!showAll && "max-sm:max-h-[190px] max-sm:overflow-hidden")}
+      className={cn(!showAll && "max-sm:max-h-[190px] max-sm:min-h-0 max-sm:overflow-hidden")}
     >
       <div className="flex items-start justify-between gap-3">
         {!named && (
