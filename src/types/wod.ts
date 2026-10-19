@@ -1,4 +1,5 @@
 import type { ReferenceArticle } from "@/schemas/articles";
+import type { ClassPrep } from "@/schemas/classPrep";
 import type { ReferenceVideo } from "@/schemas/videos";
 import type { Movement, WorkoutPart } from "@/schemas/wod";
 
@@ -28,7 +29,11 @@ export type WorkoutPartState = Omit<WorkoutPart, "movements" | "minutes" | "equi
 };
 
 /** A parsed WOD as held in UI state. */
-export type WodState = { parts: WorkoutPartState[] };
+export type WodState = {
+  parts: WorkoutPartState[];
+  /** The planned warm-up and skill practice, with the workout it was planned for (see prepKey). */
+  prep?: { key: string; plan: ClassPrep };
+};
 
 /** The current WOD and the text it was parsed from, as kept across refreshes. */
 export type SavedWod = { text: string; wod: WodState };

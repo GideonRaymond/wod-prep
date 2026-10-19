@@ -1,3 +1,4 @@
+import type { ClassPrep } from "@/schemas/classPrep";
 import type { Wod, WorkoutPart } from "@/schemas/wod";
 
 export const franPart: WorkoutPart = {
@@ -83,6 +84,45 @@ export const strengthAndMetcon: Wod = {
           category: "monostructural",
         },
       ],
+    },
+  ],
+};
+
+/** A planned start of class: a 10 minute warm-up and 11 minutes of pull-up practice. */
+export const classPrep: ClassPrep = {
+  warmup: {
+    minutes: 10,
+    focus: "Opens the hips and shoulders, then builds the thruster.",
+    rounds: "2 rounds, not for time",
+    drills: [
+      { name: "Easy row", dose: "2 min" },
+      { name: "World's greatest stretch", dose: "3 each side" },
+      { name: "Empty-bar thruster", dose: null },
+    ],
+    equipment: ["Rower", "Barbell"],
+  },
+  skills: [
+    {
+      movement: "Pull-up",
+      why: "A good kip keeps the sets big.",
+      setupMinutes: 2,
+      progressions: [
+        {
+          name: "Kip swing",
+          minutes: 4,
+          dose: "3 × 8 swings",
+          focus: "Swing from the shoulders.",
+          advanceWhen: "8 tight swings",
+        },
+        {
+          name: "Kipping pull-up",
+          minutes: 5,
+          dose: "3 × 3 reps",
+          focus: "Hips to the bar.",
+          advanceWhen: null,
+        },
+      ],
+      equipment: ["Pull-up bar", "Resistance band"],
     },
   ],
 };

@@ -67,6 +67,7 @@ function searchesWithoutVideos(wod: WodState) {
 
 function withVideos(wod: WodState, key: string, videos: ReferenceVideo[]): WodState {
   return {
+    ...wod,
     parts: wod.parts.map((part) => ({
       ...part,
       ...(part.named && !part.videos && keyFor(part.title, "workout") === key && { videos }),

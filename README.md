@@ -66,6 +66,25 @@ Where it looks:
 
 Only links that came back from Claude's own searches are kept, so a made-up URL never shows. Results are stored with the workout and cached in `.cache/articles.json` for **30 days**: named workouts by name, other parts by format, scheme and movements. A search takes about 30–40 seconds per part. Bump `ARTICLES_CACHE_VERSION` in `src/server/articles.ts` when the prompt changes.
 
+## Warm-up and skills
+
+The workout page plans the start of class with one Claude call per workout, sized to a **60-minute class for about 12 athletes**:
+
+- **Time budget:** 60 minutes, minus the 5-minute whiteboard, minus every part's minutes (programmed warm-up and cool-down included), minus 5 minutes to wrap up when no cool-down is programmed. Claude is told how much is left.
+- **Warm-up** (skipped when the workout already has a programmed warm-up), in this order:
+  1. About 2 minutes of easy cardio, if time allows.
+  2. Dynamic stretching, which has priority over the cardio.
+  3. Today's movements, building toward working loads.
+- **Skills,** only for skill movements (gymnastics like rope climbs, T2B, muscle-ups, HSPU, double-unders, kipping pull-ups; technical lifts like the snatch, clean and jerk or OHS):
+  - Progressions run from the simplest step to the full movement, each with its time, dose, coaching point and when to move on.
+  - At most two skills. Each comes **right before the first part that uses it**, so practice for OHS in B sits between A and B.
+- **Realistic timing:**
+  - The prompt counts explaining and demoing each step, practicing with feedback for 12 people, rotating on shared equipment (3–4 ropes, 4–6 rowers) and 2–3 minutes of setup.
+  - Then `fitPrep` (`src/utils/classPlan.ts`) checks the plan against the budget: it drops the hardest progressions or whole skills that don't fit, never the warm-up.
+- The plan's start times show on each stage. Its equipment is added to **Equipment today**.
+- **Saving:** the plan is stored with the workout and remembers what it was planned for, so editing the workout plans again.
+- **Caching:** plans are cached in `.cache/class-prep.json` for 30 days. Bump `PREP_CACHE_VERSION` in `src/server/classPrep.ts` when the prompt changes.
+
 ## Checks
 
 ```bash
@@ -83,7 +102,7 @@ CI runs all of these plus `npm run build` on every pull request. `main` is prote
 src/
 ├── app/                  # Next.js routes only (pages, layouts, API route handlers)
 │   ├── page.tsx          #   renders <HomePage />
-│   └── api/              #   POST /api/parse, /api/points-of-performance, /api/videos, /api/articles
+│   └── api/              #   POST /api/parse, /api/points-of-performance, /api/videos, /api/articles, /api/class-prep
 ├── components/
 │   ├── shared/           # Reusable UI (Button, ButtonLink, TextArea, Card, Badge, Dialog, IntensityGauge, MovementDetails, …)
 │   ├── home/             # Review page: paste, check and edit the parsed workout (HomePage, WorkoutPart, …)

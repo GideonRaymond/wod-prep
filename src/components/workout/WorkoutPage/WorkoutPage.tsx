@@ -7,6 +7,7 @@ import {
   Flame,
   Lightbulb,
   Snowflake,
+  Target,
   type LucideIcon,
 } from "lucide-react";
 import { BeforeClass, beforeClassCounts } from "@/components/workout/BeforeClass";
@@ -14,17 +15,28 @@ import { ClassStage, StageMarker } from "@/components/workout/ClassStage";
 import { EquipmentLine, EquipmentList } from "@/components/workout/EquipmentList";
 import { ExerciseList } from "@/components/workout/ExerciseList";
 import { JumpTo } from "@/components/workout/JumpTo";
+import { SkillPractice } from "@/components/workout/SkillPractice";
+import { WarmupPlan } from "@/components/workout/WarmupPlan";
 import { Whiteboard } from "@/components/workout/Whiteboard";
 import { ButtonLink } from "@/components/shared/ButtonLink";
 import { Card } from "@/components/shared/Card";
 import { CategoryBadge } from "@/components/shared/CategoryBadge";
 import { FORMAT_LABELS } from "@/constants/wod";
 import { useArticles } from "@/hooks/useArticles";
+import { useClassPrep } from "@/hooks/useClassPrep";
 import { useCurrentStage } from "@/hooks/useCurrentStage";
 import { useMovementVideos } from "@/hooks/useMovementVideos";
 import { useWod } from "@/providers/WodProvider";
+import type { ClassPrep } from "@/schemas/classPrep";
 import type { WodState, WorkoutPartState } from "@/types/wod";
-import { allEquipment, planClass, type PlannedPart } from "@/utils/classPlan";
+import {
+  allEquipment,
+  isPlannedPart,
+  planClass,
+  skillMinutes,
+  type PlannedPart,
+  type PlannedPrep,
+} from "@/utils/classPlan";
 import { describeIntensity } from "@/utils/describeIntensity";
 
 type Stage = {
@@ -45,14 +57,24 @@ const minute = (at: number | null) => (at === null ? null : `${at}′`);
 /** Before class and the whiteboard start open; the warm-up, parts and cool-down start folded. */
 const INITIALLY_OPEN = { pre: true, board: true };
 
-/** The class page: Before class, Whiteboard, Warm-up, each part and Cool-down on one rail. */
+/**
+ * The class page on one rail: Before class, Whiteboard, the warm-up (programmed or planned),
+ * skill practice when the workout needs it, each part and the cool-down.
+ */
 export function WorkoutPage() {
   const { wod, restored } = useWod();
   const videos = useMovementVideos();
   const articles = useArticles();
+  const prep = useClassPrep();
   const finding = [videos.loading && "videos", articles.loading && "reading"].filter(Boolean);
+  const busy = [
+    finding.length > 0 && `Finding ${finding.join(" and ")}`,
+    prep.loading && "Planning the warm-up",
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
-  const stages = wod ? classStages(wod) : [];
+  const stages = wod ? classStages(wod, prep.plan) : [];
   const [open, setOpen] = useState<Record<string, boolean>>(INITIALLY_OPEN);
   const current = useCurrentStage(stages.map((s) => s.key));
 
@@ -74,12 +96,13 @@ export function WorkoutPage() {
         Back to edit
       </ButtonLink>
       <h1 className="mt-2 text-3xl font-bold tracking-tight">Your workout</h1>
-      {wod && finding.length > 0 && (
+      {wod && busy && (
         <p role="status" className="text-subtle mt-1 text-sm">
-          Finding {finding.join(" and ")}…
+          {busy}…
         </p>
       )}
       {videos.error && <p className="text-subtle mt-1 text-sm">{videos.error}</p>}
+      {prep.error && <p className="text-subtle mt-1 text-sm">{prep.error}</p>}
       {articles.error && <p className="text-subtle mt-1 text-sm">{articles.error}</p>}
 
       {wod ? (
@@ -130,9 +153,19 @@ export function WorkoutPage() {
 }
 
 /** Every stage of the class, in order, with what to show folded and open. */
-function classStages(wod: WodState): Stage[] {
-  const plan = planClass(wod);
-  const workoutParts = plan.filter((p) => p.kind === "part").map((p) => p.part);
+function classStages(wod: WodState, prep: ClassPrep | null): Stage[] {
+  const plan = planClass(wod, prep);
+  const planned = plan.filter(isPlannedPart);
+  const partsOf = (kind: PlannedPart["kind"]) =>
+    planned.filter((p) => p.kind === kind).map((p) => p.part);
+  const workoutParts = partsOf("part");
+  // Everything the class needs, in the order it's used.
+  const equipment = allEquipment([
+    ...partsOf("warmup"),
+    ...(prep?.warmup ? [prep.warmup] : []),
+    ...(prep?.skills ?? []),
+    ...wod.parts,
+  ]);
   // A single-part workout is marked "WOD"; otherwise each part keeps its label.
   const markerFor = (part: WorkoutPartState) => (wod.parts.length === 1 ? "WOD" : part.label);
   const preCounts = beforeClassCounts(wod.parts);
@@ -161,14 +194,78 @@ function classStages(wod: WodState): Stage[] {
           notes={wod.parts.flatMap((part) =>
             part.notes ? [{ part: part.title, text: part.notes }] : [],
           )}
-          equipment={allEquipment(wod.parts)}
+          equipment={equipment}
           markerFor={markerFor}
         />
       ),
     },
-    ...plan.map((planned) => partStage(planned, markerFor)),
+    ...plan.map((planned) =>
+      isPlannedPart(planned) ? partStage(planned, markerFor) : prepStage(planned),
+    ),
   ];
 }
+
+/** The planned warm-up, or practice for one skill. */
+function prepStage(planned: PlannedPrep): Stage {
+  if (planned.kind === "planned-warmup") {
+    const { warmup } = planned;
+    return {
+      key: "planned-warmup",
+      title: "Warm-up",
+      label: "Warm-up",
+      icon: Flame,
+      when: minute(planned.startsAt),
+      subtitle: startsAndLasts(planned.startsAt, warmup.minutes),
+      summary: (
+        <>
+          <span className="text-subtle text-xs">
+            {warmup.drills.map((d) => d.name).join(" · ")}
+          </span>
+          <EquipmentLine items={warmup.equipment} />
+        </>
+      ),
+      body: (
+        <>
+          <EquipmentList items={warmup.equipment} />
+          <WarmupPlan warmup={warmup} />
+        </>
+      ),
+    };
+  }
+
+  const { skill } = planned;
+  const steps = skill.progressions.length;
+  return {
+    key: `skill-${skill.movement}`,
+    title: `Skill: ${skill.movement}`,
+    label: `Skill: ${skill.movement}`,
+    icon: Target,
+    when: minute(planned.startsAt),
+    subtitle: [
+      startsAndLasts(planned.startsAt, skillMinutes(skill)),
+      `${steps} progression${steps === 1 ? "" : "s"}`,
+    ].join(" · "),
+    summary: (
+      <>
+        <span className="text-subtle text-xs">
+          {skill.progressions.map((p) => p.name).join(" → ")}
+        </span>
+        <EquipmentLine items={skill.equipment} />
+      </>
+    ),
+    body: (
+      <>
+        <EquipmentList items={skill.equipment} />
+        <SkillPractice skill={skill} />
+      </>
+    ),
+  };
+}
+
+const startsAndLasts = (startsAt: number | null, minutes: number) =>
+  [startsAt !== null ? `Starts at ${startsAt}′` : null, `${minutes} min`]
+    .filter(Boolean)
+    .join(" · ");
 
 function partStage(
   { part, kind, startsAt }: PlannedPart,

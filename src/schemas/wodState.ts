@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ReferenceArticlesSchema } from "@/schemas/articles";
+import { ClassPrepSchema } from "@/schemas/classPrep";
 import { ReferenceVideosSchema } from "@/schemas/videos";
 import { MovementSchema, WorkoutPartSchema } from "@/schemas/wod";
 import type { SavedWod, WodState } from "@/types/wod";
@@ -22,6 +23,7 @@ export const WodStateSchema: z.ZodType<WodState> = z.object({
       }),
     )
     .min(1),
+  prep: z.object({ key: z.string(), plan: ClassPrepSchema }).optional(),
 });
 
 /** A saved WOD together with the text it was parsed from. */

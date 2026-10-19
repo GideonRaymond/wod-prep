@@ -11,7 +11,7 @@ export type WodSummaryProps = {
 /** All parts of a parsed WOD (A, B, cool-down, ...), one section each. */
 export function WodSummary({ wod, onChange }: WodSummaryProps) {
   const update = (changed: WorkoutPartState) =>
-    onChange({ parts: wod.parts.map((p) => (p.id === changed.id ? changed : p)) });
+    onChange({ ...wod, parts: wod.parts.map((p) => (p.id === changed.id ? changed : p)) });
 
   return (
     <div className="mt-8 space-y-10">

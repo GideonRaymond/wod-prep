@@ -3,18 +3,23 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const { mockVideos, mockArticles } = vi.hoisted(() => ({
+const { mockVideos, mockArticles, mockPrep } = vi.hoisted(() => ({
   mockVideos: vi.fn(),
   mockArticles: vi.fn(),
+  mockPrep: vi.fn(),
 }));
 vi.mock("@/services/videosApi", () => ({ requestMovementVideos: mockVideos }));
 vi.mock("@/services/articlesApi", () => ({ requestArticles: mockArticles }));
+vi.mock("@/services/classPrepApi", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/classPrepApi")>()),
+  requestClassPrep: mockPrep,
+}));
 
 import { WorkoutPage } from "./WorkoutPage";
 import { WodProvider } from "@/providers/WodProvider";
 import { WOD_STORAGE_KEY } from "@/stores/wodStore";
 import type { WodState } from "@/types/wod";
-import { fran, strengthAndMetcon } from "@/test/fixtures";
+import { classPrep, fran, strengthAndMetcon } from "@/test/fixtures";
 import { toWodState } from "@/utils/toWodState";
 
 function renderPage(wod: WodState | null) {
@@ -32,6 +37,7 @@ describe("WorkoutPage", () => {
   beforeEach(() => {
     mockVideos.mockReset().mockResolvedValue([]);
     mockArticles.mockReset().mockResolvedValue([]);
+    mockPrep.mockReset().mockResolvedValue({ warmup: null, skills: [] });
   });
   afterEach(() => {
     cleanup();
@@ -77,6 +83,63 @@ describe("WorkoutPage", () => {
     expect(within(board).getByRole("list", { name: "Equipment today" })).toHaveTextContent(
       "BarbellSquat rackPlatesPull-up barRower",
     );
+  });
+
+  it("plans a warm-up and puts each skill right before the part that uses it", async () => {
+    mockPrep.mockResolvedValue(classPrep);
+    renderPage(toWodState(strengthAndMetcon));
+
+    expect(await screen.findByRole("region", { name: "Skill: Pull-up" })).toBeInTheDocument();
+    const names = screen
+      .getAllByRole("heading", { level: 2 })
+      .map((h) => h.querySelector("[id]")?.textContent);
+    expect(names).toEqual([
+      "Before class",
+      "Whiteboard",
+      "Warm-up",
+      "Heavy Back Squats",
+      "Skill: Pull-up",
+      "Fran",
+      "Cool-down",
+    ]);
+    // 10 min warm-up, 15 min squats, then 11 min of pull-up practice before Fran.
+    expect(screen.getByText("Starts at 5′ · 10 min")).toBeInTheDocument();
+    expect(screen.getByText("Starts at 30′ · 11 min · 2 progressions")).toBeInTheDocument();
+    expect(screen.getByText("Kip swing → Kipping pull-up")).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("opens the planned warm-up and the skill practice", async () => {
+    const user = userEvent.setup();
+    mockPrep.mockResolvedValue(classPrep);
+    renderPage(toWodState(strengthAndMetcon));
+
+    await user.click(await screen.findByRole("button", { name: /^Warm-up/ }));
+    const warmup = screen.getByRole("region", { name: "Warm-up" });
+    expect(within(warmup).getByText(classPrep.warmup!.focus)).toBeVisible();
+    expect(within(warmup).getByRole("list", { name: "You'll need" })).toHaveTextContent(
+      "RowerBarbell",
+    );
+
+    await user.click(stageToggle("Skill: Pull-up"));
+    const skill = screen.getByRole("region", { name: "Skill: Pull-up" });
+    expect(within(skill).getByText("Move on after: 8 tight swings")).toBeVisible();
+  });
+
+  it("adds the warm-up and skill equipment to the whiteboard", async () => {
+    mockPrep.mockResolvedValue(classPrep);
+    renderPage(toWodState(strengthAndMetcon));
+    await screen.findByRole("region", { name: "Skill: Pull-up" });
+    const board = screen.getByRole("region", { name: "Whiteboard" });
+    expect(within(board).getByRole("list", { name: "Equipment today" })).toHaveTextContent(
+      "RowerBarbellPull-up barResistance bandSquat rackPlates",
+    );
+  });
+
+  it("explains when the warm-up can't be planned", async () => {
+    mockPrep.mockRejectedValue(new Error("Rate limited. Try again in a moment."));
+    renderPage(toWodState(strengthAndMetcon));
+    expect(await screen.findByText("Rate limited. Try again in a moment.")).toBeInTheDocument();
   });
 
   it("shows the edited stimulus", () => {
@@ -134,7 +197,9 @@ describe("WorkoutPage", () => {
       return [];
     });
     renderPage(toWodState(fran));
-    expect(screen.getByRole("status")).toHaveTextContent("Finding videos and reading…");
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Finding videos and reading · Planning the warm-up…",
+    );
 
     expect(await screen.findByRole("link", { name: /Fran explained/ })).toBeVisible();
     expect(screen.getByText("Video · 3:40 · Fran")).toBeInTheDocument();
