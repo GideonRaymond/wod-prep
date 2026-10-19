@@ -22,12 +22,9 @@ export type WodInputFormProps = {
   onSubmit: (text: string) => void;
 };
 
-/** What the empty board says, with the example workout under it. */
-export const BOARD_PLACEHOLDER = `Write your whiteboard, or paste it, here. For example:\n\n${EXAMPLE_WOD}`;
-
 /**
  * Where the workout is written: a text box on the whiteboard, in handwriting, with the example
- * workout in its placeholder. Under the board: the length, Break it down and Use example.
+ * workout as its placeholder. Under the board: the length, Break it down and Use example.
  */
 export function WodInputForm({ loading, parsedText, continueTo, onSubmit }: WodInputFormProps) {
   const [text, setText] = useState(parsedText ?? "");
@@ -46,13 +43,13 @@ export function WodInputForm({ loading, parsedText, continueTo, onSubmit }: WodI
           aria-label="Workout"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={BOARD_PLACEHOLDER}
+          placeholder={EXAMPLE_WOD}
           rows={12}
           maxLength={MAX_WOD_LENGTH}
           aria-describedby="wod-length"
           className={cn(
             handFont.className,
-            "rounded-none border-0 bg-transparent p-0 text-[17px] leading-[23px] text-purple-950 placeholder:text-purple-300 dark:bg-transparent",
+            "rounded-none border-0 bg-transparent p-0 text-[17px] leading-[23px] text-purple-950 placeholder:text-zinc-400 dark:bg-transparent",
           )}
         />
       </BoardFrame>
