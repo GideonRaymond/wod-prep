@@ -38,7 +38,7 @@ export function WodBoard({ parts }: { parts: WorkoutPartState[] }) {
   }, []);
 
   return (
-    <div className="relative pb-3">
+    <div className="relative">
       <div
         className={cn(
           "relative rounded-lg border-[6px] border-zinc-300 bg-[#fdfdfb] px-5 pt-4 pb-5 text-purple-950 shadow-[inset_0_0_0_1px_#e4e4e7]",
@@ -76,8 +76,6 @@ export function WodBoard({ parts }: { parts: WorkoutPartState[] }) {
           />
         )}
       </div>
-      {/* The marker tray under the board. */}
-      <span aria-hidden className="absolute inset-x-6 bottom-1.5 h-1.5 rounded-[3px] bg-zinc-300" />
     </div>
   );
 }

@@ -1,1 +1,1 @@
-export { WhileYouWait, type WhileYouWaitProps } from "./WhileYouWait";
+export { WhileYouWait, type WaitingReference, type WhileYouWaitProps } from "./WhileYouWait";

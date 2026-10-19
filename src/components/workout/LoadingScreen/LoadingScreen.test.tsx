@@ -58,11 +58,13 @@ describe("LoadingScreen", () => {
     expect(screen.queryByRole("button", { name: "Open your class" })).not.toBeInTheDocument();
   });
 
-  it("shows the reading as soon as Before class is done", () => {
-    const { update } = renderScreen(withReading, building);
-    expect(screen.queryByRole("region", { name: "Maybe while you wait" })).not.toBeInTheDocument();
-    update({ ...building, articlesLoading: false });
-    expect(screen.getByRole("region", { name: "Maybe while you wait" })).toBeInTheDocument();
+  it("shows a few videos and articles under the board as soon as they're found", () => {
+    renderScreen(base, building);
+    expect(screen.queryByRole("region", { name: "While you wait" })).not.toBeInTheDocument();
+    cleanup();
+
+    renderScreen(withReading, building);
+    expect(screen.getByRole("region", { name: "While you wait" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Pacing Fran/ })).toBeInTheDocument();
   });
 
@@ -81,7 +83,7 @@ describe("LoadingScreen", () => {
     expect(screen.getByText("Your class is ready")).toBeInTheDocument();
     expect(screen.getByText("Opening in 3…")).toBeInTheDocument();
 
-    fireEvent.pointerEnter(screen.getByRole("region", { name: "Maybe while you wait" }));
+    fireEvent.pointerEnter(screen.getByRole("region", { name: "While you wait" }));
     expect(screen.getByText("Waiting for you")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Open your class" }));

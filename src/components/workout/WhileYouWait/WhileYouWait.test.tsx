@@ -1,20 +1,19 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { WhileYouWait } from "./WhileYouWait";
+import { WhileYouWait, type WaitingReference } from "./WhileYouWait";
 
-const article = {
-  title: "Fooling Around with Fran",
-  url: "https://library.crossfit.com/a.pdf",
-  source: "CrossFit Journal",
-  minutes: 11,
-  about: "Fran",
-};
-const video = {
+const video: WaitingReference = {
+  kind: "video",
   title: "Fran explained",
   url: "https://example.com/v",
-  duration: "3:40",
-  about: "Fran",
+  meta: ["Video", "3:40", "Fran"],
+};
+const article: WaitingReference = {
+  kind: "article",
+  title: "Fooling Around with Fran",
+  url: "https://library.crossfit.com/a.pdf",
+  meta: ["Article", "CrossFit Journal", "11 min read"],
 };
 
 describe("WhileYouWait", () => {
@@ -22,23 +21,27 @@ describe("WhileYouWait", () => {
     cleanup();
   });
 
-  it("lists the reading and videos, opening in a new tab", () => {
-    render(<WhileYouWait articles={[article]} videos={[video]} />);
-    expect(screen.getByRole("region", { name: "Maybe while you wait" })).toBeInTheDocument();
-    const link = screen.getByRole("link", { name: /Fooling Around with Fran/ });
-    expect(link).toHaveAttribute("target", "_blank");
-    expect(screen.getByText("Article · CrossFit Journal · 11 min read")).toBeInTheDocument();
+  it("lists the videos and articles, opening in a new tab", () => {
+    const { container } = render(<WhileYouWait references={[video, article]} />);
+    expect(screen.getByRole("region", { name: "While you wait" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Fran explained/ })).toHaveAttribute(
+      "target",
+      "_blank",
+    );
     expect(screen.getByText("Video · 3:40 · Fran")).toBeInTheDocument();
+    expect(screen.getByText("Article · CrossFit Journal · 11 min read")).toBeInTheDocument();
+    expect(container.querySelector("svg.lucide-play")).toBeInTheDocument();
+    expect(container.querySelector("svg.lucide-book-open")).toBeInTheDocument();
   });
 
-  it("renders nothing without anything to read", () => {
-    const { container } = render(<WhileYouWait articles={[]} videos={[]} />);
+  it("renders nothing until there's something", () => {
+    const { container } = render(<WhileYouWait references={[]} />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it("says when someone is reading, by pointer or keyboard", () => {
     const onReading = vi.fn();
-    render(<WhileYouWait articles={[article]} videos={[]} onReading={onReading} />);
+    render(<WhileYouWait references={[article]} onReading={onReading} />);
     const region = screen.getByRole("region");
 
     fireEvent.pointerEnter(region);

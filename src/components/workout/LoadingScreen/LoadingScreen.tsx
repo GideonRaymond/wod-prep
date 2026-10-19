@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Checklist, type ChecklistItem } from "@/components/shared/Checklist";
-import { beforeClassReferences } from "@/components/workout/BeforeClass";
 import { ReadyToOpen } from "@/components/workout/ReadyToOpen";
 import { WhileYouWait } from "@/components/workout/WhileYouWait";
 import { WodBoard } from "@/components/workout/WodBoard";
 import type { WodState } from "@/types/wod";
 import { cn } from "@/utils/cn";
+import { waitingReferences } from "./waitingReferences";
 
 export type LoadingScreenProps = {
   wod: WodState;
@@ -20,15 +20,14 @@ export type LoadingScreenProps = {
 
 /**
  * What members see while the class is built: the pasted workout on a whiteboard, a checklist that
- * grows from the fixed structure into this workout's own parts and skills, the Before class
- * reading as soon as it arrives, and, once everything is ready, a short countdown to the class.
+ * grows from the fixed structure into this workout's own parts and skills, a few videos and
+ * articles under the board as soon as they're found, and, once everything is ready, a short
+ * countdown to the class.
  * A polite live region announces each step as it finishes.
  */
 export function LoadingScreen({ wod, checklist, onOpen, leaving = false }: LoadingScreenProps) {
   const [reading, setReading] = useState(false);
   const live = useAnnouncements(checklist);
-  const { articles, videos } = beforeClassReferences(wod.parts);
-  const preDone = checklist.items.find((item) => item.id === "pre")?.state === "done";
 
   return (
     <div
@@ -44,11 +43,13 @@ export function LoadingScreen({ wod, checklist, onOpen, leaving = false }: Loadi
       </p>
 
       <div className="mt-6 grid gap-6 sm:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-        <WodBoard parts={wod.parts} />
+        <div>
+          <WodBoard parts={wod.parts} />
+          <WhileYouWait references={waitingReferences(wod)} onReading={setReading} />
+        </div>
         <div>
           <h2 className="mb-2 text-sm font-semibold">Getting it ready</h2>
           <Checklist items={checklist.items} label="Getting it ready" />
-          {preDone && <WhileYouWait articles={articles} videos={videos} onReading={setReading} />}
           {checklist.ready && <ReadyToOpen onOpen={onOpen} paused={reading} />}
         </div>
       </div>
