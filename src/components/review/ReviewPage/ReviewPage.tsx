@@ -8,7 +8,7 @@ import { Card } from "@/components/shared/Card";
 import { FlowPage } from "@/components/shared/FlowPage";
 import { OvertimeNote } from "@/components/shared/OvertimeNote";
 import { WodBoard } from "@/components/shared/WodBoard";
-import { STEP, WOD_STEPS } from "@/constants/flow";
+import { STEP, WOD_STEPS, stepTransition } from "@/constants/flow";
 import { useWod } from "@/providers/WodProvider";
 import { partsBoard } from "@/utils/boardItems";
 import { minimumOvertime } from "@/utils/classPlan";
@@ -56,7 +56,11 @@ export function ReviewPage() {
           <WodSummary wod={wod} onChange={setWod} className="mt-6" />
           <div className="mt-10 flex flex-col items-end gap-2 border-t border-zinc-200 pt-6 dark:border-zinc-800">
             <Button
-              onClick={() => router.push(WOD_STEPS[STEP.class].href)}
+              onClick={() =>
+                router.push(WOD_STEPS[STEP.class].href, {
+                  transitionTypes: stepTransition(STEP.review, STEP.class),
+                })
+              }
               disabled={missingStimulus}
               aria-describedby={missingStimulus ? "confirm-hint" : undefined}
             >
@@ -75,7 +79,12 @@ export function ReviewPage() {
             <p className="text-zinc-600 dark:text-zinc-400">
               There&apos;s no workout to check yet.
             </p>
-            <ButtonLink href={WOD_STEPS[STEP.workout].href} size="sm" className="mt-3">
+            <ButtonLink
+              href={WOD_STEPS[STEP.workout].href}
+              transitionTypes={stepTransition(STEP.review, STEP.workout)}
+              size="sm"
+              className="mt-3"
+            >
               Paste a workout
             </ButtonLink>
           </Card>

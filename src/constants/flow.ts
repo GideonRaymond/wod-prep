@@ -22,3 +22,11 @@ export const WOD_STEPS = [
 ] as const satisfies readonly (Step & { summary: string })[];
 
 export const STEP = { workout: 0, review: 1, class: 2 } as const;
+
+/**
+ * The view transition type for moving between steps (see FlowPage): the page beside the board
+ * slides in from the right going forward, and from the left going back.
+ */
+export const stepTransition = (from: number, to: number) => [
+  to > from ? "nav-forward" : "nav-back",
+];

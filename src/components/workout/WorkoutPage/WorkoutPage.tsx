@@ -24,7 +24,7 @@ import { FlowPage } from "@/components/shared/FlowPage";
 import { OvertimeNote } from "@/components/shared/OvertimeNote";
 import { WodBoard, type BoardNav } from "@/components/shared/WodBoard";
 import { MOCK_LOAD } from "@/constants/dev";
-import { STEP } from "@/constants/flow";
+import { STEP, WOD_STEPS, stepTransition } from "@/constants/flow";
 import { FORMAT_LABELS } from "@/constants/wod";
 import { useArticles } from "@/hooks/useArticles";
 import { useBoardRedraw } from "@/hooks/useBoardRedraw";
@@ -236,7 +236,12 @@ export function WorkoutPage() {
                 <p className="text-zinc-600 dark:text-zinc-400">
                   There&apos;s no workout to show yet.
                 </p>
-                <ButtonLink href="/" size="sm" className="mt-3">
+                <ButtonLink
+                  href={WOD_STEPS[STEP.workout].href}
+                  transitionTypes={stepTransition(STEP.class, STEP.workout)}
+                  size="sm"
+                  className="mt-3"
+                >
                   Paste a workout
                 </ButtonLink>
               </Card>
