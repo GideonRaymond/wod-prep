@@ -52,7 +52,6 @@ describe("LoadingScreen", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Building your class" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Your workout")).toBeInTheDocument();
     expect(screen.getByText(base.parts[0].sourceText.split("\n")[0])).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Getting it ready" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Open your class" })).not.toBeInTheDocument();
@@ -81,7 +80,7 @@ describe("LoadingScreen", () => {
     const onOpen = vi.fn();
     renderScreen(withReading, done, onOpen);
     expect(screen.getByText("Your class is ready")).toBeInTheDocument();
-    expect(screen.getByText("Opening in 3…")).toBeInTheDocument();
+    expect(screen.getByText("Opening in 7…")).toBeInTheDocument();
 
     fireEvent.pointerEnter(screen.getByRole("region", { name: "While you wait" }));
     expect(screen.getByText("Waiting for you")).toBeInTheDocument();

@@ -25,13 +25,13 @@ Open http://localhost:3000.
 
 After **Confirm workout**, the workout page shows a loading screen while the class is still being built (reading, videos, the warm-up and skills plan). This follows the WOD Prep design system's **LoadingScreen**.
 
-- **Left:** the pasted workout on a whiteboard. Each block's first line is in Permanent Marker and the rest in Kalam, in purple inks only; both fonts are loaded with `next/font/google` and used only here. Each part gets circled in turn, with its marker. On phones the board is capped with a fade and a **Show all** button.
+- **Left:** the pasted workout on a whiteboard. Each block's first line is in Permanent Marker and the rest in Kalam, in purple inks only; both fonts are loaded with `next/font/google` and used only here. When no part has a real name (like Fran), "WOD" heads the board. On phones the board is capped with a fade and a **Show all** button.
 - **Right:** a checklist (`classChecklist`) with these rows:
   - **Reading your workout**, **Before class**, **Warm-up**, **Workout** and **Cool-down**.
   - The Workout row grows into this workout's own parts and skills, in class order. A part ticks off once its videos are found, and skills appear once the plan arrives.
   - **Timing the class** comes last, with every stage's start minute.
 - **While you wait:** under the whiteboard, up to 3 videos or articles as soon as they're found. Videos come first, because articles take the longest.
-- **Opening the class:** "Your class is ready" appears with **Open your class** and a 3-second countdown. The countdown pauses while the pointer or focus is on the reading list. Then the screen fades out, the class page's stages settle in 60 ms apart, and focus moves to the page heading.
+- **Opening the class:** "Your class is ready" appears with **Open your class** and a 7-second countdown. The countdown pauses while the pointer or focus is on the reading list. Then the screen fades out, the class page's stages settle in 60 ms apart, and focus moves to the page heading.
 - **Accessibility:** a polite live region announces each step ("Warm-up ready") and when the class is ready. With `prefers-reduced-motion`, nothing slides or fades.
 - **When it's skipped:** if everything is already there when the page opens (say, after a refresh), the class shows straight away.
 
