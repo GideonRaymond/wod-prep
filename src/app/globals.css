@@ -63,3 +63,15 @@ body {
     cursor: pointer;
   }
 }
+
+/* The whiteboard glides from where it was to where it is on the next step (see WodBoard). */
+::view-transition-group(.morph) {
+  animation-duration: 400ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

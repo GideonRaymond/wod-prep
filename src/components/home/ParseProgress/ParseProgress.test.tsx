@@ -41,4 +41,14 @@ describe("ParseProgress", () => {
     expect(screen.getByText("Fran")).toBeInTheDocument();
     expect(screen.getAllByRole("img", { name: "Done" })).toHaveLength(2);
   });
+
+  it("writes the parts on the whiteboard as soon as they're found", () => {
+    const { rerender } = render(<ParseProgress progress={{ outline: null, read: new Set() }} />);
+    expect(screen.getByTestId("board-writing")).toBeInTheDocument();
+
+    rerender(<ParseProgress progress={{ outline, read: new Set() }} />);
+    expect(screen.queryByTestId("board-writing")).not.toBeInTheDocument();
+    expect(screen.getByText("A. Back Squat")).toBeInTheDocument();
+    expect(screen.getByText("B. Fran")).toBeInTheDocument();
+  });
 });

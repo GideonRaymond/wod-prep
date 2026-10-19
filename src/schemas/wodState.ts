@@ -13,6 +13,9 @@ export const WodStateSchema: z.ZodType<WodState> = z.object({
         // Optional so workouts saved before these fields existed still restore.
         minutes: WorkoutPartSchema.shape.minutes.optional(),
         equipment: WorkoutPartSchema.shape.equipment.optional(),
+        board: WorkoutPartSchema.shape.board.optional(),
+        parsedKey: z.string().optional(),
+        boardKey: z.string().optional(),
         id: z.string(),
         originalStimulus: z.string(),
         videos: ReferenceVideosSchema.optional(),

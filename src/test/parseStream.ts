@@ -7,11 +7,12 @@ export function parseEvents(wod: Wod): ParseEvent[] {
   return [
     {
       type: "outline",
-      parts: wod.parts.map(({ label, title, named, sourceText }) => ({
+      parts: wod.parts.map(({ label, title, named, sourceText, board }) => ({
         label,
         title,
         named,
         sourceText,
+        board,
         kind: stageKind({ label }),
       })),
     },

@@ -84,11 +84,12 @@ function mockStream(wod: Wod) {
 
 /** The same events a fresh parse sends, all at once, for a cached workout. */
 function eventsFor(wod: Wod): ParseEvent[] {
-  const outline: PartOutline[] = wod.parts.map(({ label, title, named, sourceText }) => ({
+  const outline: PartOutline[] = wod.parts.map(({ label, title, named, sourceText, board }) => ({
     label,
     title,
     named,
     sourceText,
+    board,
     kind: stageKind({ label }),
   }));
   return [

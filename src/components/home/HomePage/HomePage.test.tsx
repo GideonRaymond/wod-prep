@@ -7,11 +7,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HomePage } from "./HomePage";
 import { WodProvider } from "@/providers/WodProvider";
 import { WOD_STORAGE_KEY } from "@/stores/wodStore";
-import type { SavedWod } from "@/types/wod";
 import type { Wod } from "@/schemas/wod";
-import { fran, franPart, strengthAndMetcon } from "@/test/fixtures";
+import { fran, strengthAndMetcon } from "@/test/fixtures";
 import { parseEvents, streamResponse } from "@/test/parseStream";
 import type { ParseEvent } from "@/types/parse";
+import type { WodState } from "@/types/wod";
 import { toWodState } from "@/utils/toWodState";
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
@@ -26,13 +26,18 @@ function respond(status: number, body: { wod?: Wod; error?: string }) {
   );
 }
 
-async function submit(text: string) {
-  const user = userEvent.setup();
+function renderPage(saved?: { text: string; wod: WodState }) {
+  if (saved) sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(saved));
   render(
     <WodProvider>
       <HomePage />
     </WodProvider>,
   );
+  return userEvent.setup();
+}
+
+async function submit(text: string) {
+  const user = renderPage();
   await user.type(screen.getByRole("textbox", { name: "Workout" }), text);
   await user.click(screen.getByRole("button", { name: "Break it down" }));
   return user;
@@ -49,14 +54,21 @@ describe("HomePage", () => {
     vi.unstubAllGlobals();
   });
 
-  it("shows the parts as they're found, ticking each off as it's read", async () => {
+  it("is the first of three steps", () => {
+    renderPage();
+    const progress = screen.getByRole("navigation", { name: "Progress" });
+    expect(within(progress).getByText("Workout").closest("[aria-current]")).toBeInTheDocument();
+    expect(within(progress).queryByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("writes the parts on the board as they're found, ticking each off as it's read", async () => {
     const encoder = new TextEncoder();
-    let push: (event: ParseEvent) => void = () => {};
+    let send: (event: ParseEvent) => void = () => {};
     let end: () => void = () => {};
     fetchMock.mockImplementation(async () => {
       const body = new ReadableStream<Uint8Array>({
         start(controller) {
-          push = (event) => controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+          send = (event) => controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
           end = () => controller.close();
         },
       });
@@ -64,73 +76,41 @@ describe("HomePage", () => {
     });
     await submit("A) squats B) Fran");
     expect(await screen.findByText("Reading your workout")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Workout" })).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Workout", hidden: true })).not.toBeVisible();
+    expect(screen.getByTestId("board-writing")).toBeInTheDocument();
 
     const [outline, a, b, cooldown, done] = parseEvents(strengthAndMetcon);
-    await act(async () => push(outline));
+    await act(async () => send(outline));
     expect(await screen.findByText("3 parts found")).toBeInTheDocument();
-    expect(screen.getByText("Fran")).toBeInTheDocument();
+    expect(screen.getByText("B. Fran")).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
 
-    await act(async () => push(b));
     await act(async () => {
-      push(a);
-      push(cooldown);
-      push(done);
+      send(b);
+      send(a);
+      send(cooldown);
+      send(done);
       end();
     });
-    expect(await screen.findByRole("region", { name: "Fran" })).toBeInTheDocument();
-    expect(screen.queryByText("3 parts found")).not.toBeInTheDocument();
+    expect(push).toHaveBeenCalledWith("/review");
   });
 
-  it("parses the workout and shows the summary, stimulus and movements", async () => {
+  it("sends the text and moves on to checking it once it's read", async () => {
     respond(200, { wod: fran });
     await submit("Fran");
-
-    expect(await screen.findByRole("heading", { name: "Fran" })).toBeInTheDocument();
+    await vi.waitFor(() => expect(push).toHaveBeenCalledWith("/review"));
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ text: "Fran" });
-    expect(screen.getByText("For Time · 21-15-9")).toBeInTheDocument();
-    expect(screen.getByText(franPart.stimulus.description)).toBeInTheDocument();
-    const cards = screen.getAllByRole("listitem");
-    expect(cards).toHaveLength(2);
-    expect(within(cards[0]).getByRole("heading", { name: "Thruster" })).toBeInTheDocument();
+    expect(JSON.parse(sessionStorage.getItem(WOD_STORAGE_KEY)!).text).toBe("Fran");
   });
 
-  it("disables Break it down until the workout is edited", async () => {
-    respond(200, { wod: fran });
-    const user = await submit("Fran");
-    await screen.findByRole("heading", { name: "Fran" });
-    const button = screen.getByRole("button", { name: "Break it down" });
-    expect(button).toBeDisabled();
-
-    await user.type(screen.getByRole("textbox", { name: "Workout" }), " and Grace");
-    expect(button).toBeEnabled();
-  });
-
-  it("keeps Break it down enabled after a failed parse, so it can be retried", async () => {
-    respond(500, { error: "Something broke." });
-    await submit("Fran");
-    await screen.findByText("Something broke.");
-    expect(screen.getByRole("button", { name: "Break it down" })).toBeEnabled();
-  });
-
-  it("splits a multi-part WOD into sections", async () => {
-    respond(200, { wod: strengthAndMetcon });
-    await submit("A) Back squat 5x5 B) Fran C) 5 min easy row");
-
-    expect(await screen.findByRole("region", { name: "Heavy Back Squats" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Fran" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Easy Flush" })).toBeInTheDocument();
-  });
-
-  it("shows a loading state while parsing", async () => {
-    fetchMock.mockReturnValue(new Promise(() => {}));
-    await submit("Fran");
-    expect(screen.getByRole("button", { name: "Parsing…" })).toBeDisabled();
-  });
-
-  it("shows the API error message", async () => {
+  it("shows the API error message and lets it be retried", async () => {
     respond(422, { error: "Couldn't read that as a workout." });
     await submit("hello");
     expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't read that as a workout.");
+    expect(screen.getByRole("textbox", { name: "Workout" })).toHaveValue("hello");
+    expect(screen.getByRole("button", { name: "Break it down" })).toBeEnabled();
+    expect(push).not.toHaveBeenCalled();
   });
 
   it("shows an error when the request fails", async () => {
@@ -139,55 +119,18 @@ describe("HomePage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Failed to fetch");
   });
 
-  it("removes a movement", async () => {
-    respond(200, { wod: fran });
-    const user = await submit("Fran");
-    await user.click(await screen.findByRole("button", { name: "Remove Thruster" }));
-
-    expect(screen.getAllByRole("listitem")).toHaveLength(1);
-    expect(screen.queryByRole("heading", { name: "Thruster" })).not.toBeInTheDocument();
-  });
-
-  it("doesn't let the user resize any text box", async () => {
-    respond(200, { wod: fran });
-    const user = await submit("Fran");
-    await user.click(await screen.findByRole("button", { name: "Edit stimulus" }));
-
-    const textareas = screen.getAllByRole("textbox").filter((el) => el.tagName === "TEXTAREA");
-    expect(textareas).toHaveLength(2);
-    for (const textarea of textareas) expect(textarea).toHaveClass("resize-none");
-  });
-
-  it("doesn't show points of performance while reviewing", async () => {
-    respond(200, { wod: fran });
-    await submit("Fran");
-    await screen.findByRole("heading", { name: "Fran" });
-    expect(screen.queryByRole("button", { name: "Points of performance" })).not.toBeInTheDocument();
-  });
-
-  it("saves the parsed workout and its edits, so a refresh restores them", async () => {
-    respond(200, { wod: fran });
-    const user = await submit("Fran");
-    await user.click(await screen.findByRole("button", { name: "Remove Thruster" }));
-    await user.click(screen.getByRole("button", { name: "Edit stimulus" }));
-    await user.type(screen.getByRole("textbox", { name: "Stimulus" }), " Go!");
-
-    const saved: SavedWod = JSON.parse(sessionStorage.getItem(WOD_STORAGE_KEY)!);
-    expect(saved.text).toBe("Fran");
-    expect(saved.wod.parts[0].movements.map((m) => m.name)).toEqual(["Pull-up"]);
-    expect(saved.wod.parts[0].stimulus.description).toBe(`${franPart.stimulus.description} Go!`);
-
-    cleanup();
-    render(
-      <WodProvider>
-        <HomePage />
-      </WodProvider>,
-    );
+  it("starts with the current workout's text, offering to carry on checking it", async () => {
+    const user = renderPage({ text: "Fran", wod: toWodState(fran) });
     expect(screen.getByRole("textbox", { name: "Workout" })).toHaveValue("Fran");
     expect(screen.getByRole("button", { name: "Break it down" })).toBeDisabled();
-    expect(screen.getByRole("heading", { name: "Fran" })).toBeInTheDocument();
-    expect(screen.getAllByRole("listitem")).toHaveLength(1);
-    expect(screen.getByText(`${franPart.stimulus.description} Go!`)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Continue checking" })).toHaveAttribute(
+      "href",
+      "/review",
+    );
+    expect(screen.getByRole("link", { name: "Check" })).toHaveAttribute("href", "/review");
+
+    await user.type(screen.getByRole("textbox", { name: "Workout" }), " and Grace");
+    expect(screen.getByRole("button", { name: "Break it down" })).toBeEnabled();
   });
 
   it("fills the text box with the saved text after hydrating a server render", async () => {
@@ -207,15 +150,12 @@ describe("HomePage", () => {
 
     const root = await act(async () => hydrateRoot(container, page));
     expect(screen.getByRole("textbox", { name: "Workout" })).toHaveValue("Fran");
-    expect(screen.getByRole("heading", { name: "Fran" })).toBeInTheDocument();
     act(() => root.unmount());
     container.remove();
   });
 
   it("clears the saved workout when a new parse fails", async () => {
-    respond(200, { wod: fran });
-    const user = await submit("Fran");
-    await screen.findByRole("heading", { name: "Fran" });
+    const user = renderPage({ text: "Fran", wod: toWodState(fran) });
     respond(422, { error: "Couldn't read that as a workout." });
     await user.type(screen.getByRole("textbox", { name: "Workout" }), "!");
     await user.click(screen.getByRole("button", { name: "Break it down" }));
@@ -224,38 +164,48 @@ describe("HomePage", () => {
     expect(sessionStorage.getItem(WOD_STORAGE_KEY)).toBeNull();
   });
 
-  it("only shows Confirm once a workout is parsed", async () => {
-    respond(200, { wod: fran });
-    render(
-      <WodProvider>
-        <HomePage />
-      </WodProvider>,
-    );
-    expect(screen.queryByRole("button", { name: "Confirm workout" })).not.toBeInTheDocument();
-  });
-
-  it("goes to the workout page on Confirm", async () => {
-    respond(200, { wod: fran });
-    const user = await submit("Fran");
-    await user.click(await screen.findByRole("button", { name: "Confirm workout" }));
-    expect(push).toHaveBeenCalledWith("/workout");
-  });
-
-  it("can't confirm while a stimulus is empty", async () => {
+  it("replaces an unedited workout without asking", async () => {
+    const user = renderPage({ text: "Fran", wod: toWodState(fran) });
     respond(200, { wod: strengthAndMetcon });
-    const user = await submit("A) squats B) Fran");
-    const partB = await screen.findByRole("region", { name: "Fran" });
+    await user.type(screen.getByRole("textbox", { name: "Workout" }), "!");
+    await user.click(screen.getByRole("button", { name: "Break it down" }));
 
-    await user.click(within(partB).getByRole("button", { name: "Edit stimulus" }));
-    await user.clear(within(partB).getByRole("textbox", { name: "Stimulus" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await vi.waitFor(() => expect(push).toHaveBeenCalledWith("/review"));
+  });
 
-    const confirm = screen.getByRole("button", { name: "Confirm workout" });
-    expect(confirm).toBeDisabled();
-    expect(confirm).toHaveAccessibleDescription(
-      "Every part needs a stimulus before you can confirm.",
-    );
+  describe("with an edited workout", () => {
+    const [part] = toWodState(fran).parts;
+    const edited = { parts: [{ ...part, movements: part.movements.slice(1) }] };
 
-    await user.type(within(partB).getByRole("textbox", { name: "Stimulus" }), "Sprint.");
-    expect(confirm).toBeEnabled();
+    async function breakDownNew() {
+      const user = renderPage({ text: "Fran", wod: edited });
+      respond(200, { wod: strengthAndMetcon });
+      await user.type(screen.getByRole("textbox", { name: "Workout" }), "!");
+      await user.click(screen.getByRole("button", { name: "Break it down" }));
+      return user;
+    }
+
+    it("asks before replacing it, and keeps it on Keep my changes", async () => {
+      const user = await breakDownNew();
+      const dialog = screen.getByRole("dialog", { name: "Break down the new workout?" });
+      expect(dialog).toHaveTextContent("your changes are lost");
+
+      await user.click(within(dialog).getByRole("button", { name: "Keep my changes" }));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(
+        JSON.parse(sessionStorage.getItem(WOD_STORAGE_KEY)!).wod.parts[0].movements,
+      ).toHaveLength(1);
+    });
+
+    it("breaks down the new workout once it's confirmed", async () => {
+      const user = await breakDownNew();
+      const dialog = screen.getByRole("dialog");
+      await user.click(within(dialog).getByRole("button", { name: "Break it down" }));
+
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ text: "Fran!" });
+      await vi.waitFor(() => expect(push).toHaveBeenCalledWith("/review"));
+    });
   });
 });

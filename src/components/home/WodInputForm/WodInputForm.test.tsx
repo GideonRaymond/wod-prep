@@ -103,4 +103,17 @@ describe("WodInputForm", () => {
       expect(submitButton()).toBeDisabled();
     });
   });
+
+  it("offers to carry on with the current workout while its text is unchanged", async () => {
+    const user = userEvent.setup();
+    render(
+      <WodInputForm loading={false} parsedText="Fran" continueTo="/review" onSubmit={vi.fn()} />,
+    );
+    expect(screen.getByRole("link", { name: "Continue checking" })).toHaveAttribute(
+      "href",
+      "/review",
+    );
+    await user.type(textbox(), "!");
+    expect(screen.queryByRole("link", { name: "Continue checking" })).not.toBeInTheDocument();
+  });
 });

@@ -13,7 +13,7 @@ const NO_PROGRESS: ParseProgress = { outline: null, read: new Set() };
  * Parses WOD text through the API into the shared WOD state, with loading and error state.
  * `progress` follows the streamed parse: the parts as soon as they're found, then each one as
  * it's read. `parsedText` is the text of the current WOD (kept across refreshes), so the form can
- * show it and skip re-parsing it.
+ * show it and skip re-parsing it. `parse` resolves to whether it worked.
  */
 export function useParseWod() {
   const { wod, setWod, loadWod, sourceText, restored } = useWod();
@@ -22,7 +22,7 @@ export function useParseWod() {
   const [progress, setProgress] = useState<ParseProgress>(NO_PROGRESS);
 
   const parse = useCallback(
-    async (text: string) => {
+    async (text: string): Promise<boolean> => {
       setLoading(true);
       setError(null);
       setProgress(NO_PROGRESS);
@@ -34,8 +34,10 @@ export function useParseWod() {
             setProgress((prev) => ({ ...prev, read: new Set(prev.read).add(index) })),
         });
         loadWod(text, toWodState(parsed));
+        return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong.");
+        return false;
       } finally {
         setLoading(false);
       }

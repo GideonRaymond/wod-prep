@@ -1,15 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import {
-  ArrowLeft,
-  ClipboardList,
-  Flame,
-  Lightbulb,
-  Snowflake,
-  Target,
-  type LucideIcon,
-} from "lucide-react";
+import { ClipboardList, Flame, Lightbulb, Snowflake, Target, type LucideIcon } from "lucide-react";
 import { BeforeClass, beforeClassCounts } from "@/components/workout/BeforeClass";
 import { ClassStage, StageMarker } from "@/components/workout/ClassStage";
 import { EquipmentLine, EquipmentList } from "@/components/workout/EquipmentList";
@@ -19,13 +11,17 @@ import { classChecklist, LoadingScreen } from "@/components/workout/LoadingScree
 import { SkillPractice } from "@/components/workout/SkillPractice";
 import { StretchList } from "@/components/workout/StretchList";
 import { WarmupPlan } from "@/components/workout/WarmupPlan";
-import { Whiteboard } from "@/components/workout/Whiteboard";
+import { Briefing } from "@/components/workout/Briefing";
 import { ButtonLink } from "@/components/shared/ButtonLink";
 import { Card } from "@/components/shared/Card";
 import { CategoryBadge } from "@/components/shared/CategoryBadge";
+import { Stepper } from "@/components/shared/Stepper";
+import { WodBoard } from "@/components/shared/WodBoard";
 import { MOCK_LOAD } from "@/constants/dev";
+import { STEP, WOD_STEPS } from "@/constants/flow";
 import { FORMAT_LABELS } from "@/constants/wod";
 import { useArticles } from "@/hooks/useArticles";
+import { useBoardRedraw } from "@/hooks/useBoardRedraw";
 import { useClassPrep } from "@/hooks/useClassPrep";
 import { useCurrentStage } from "@/hooks/useCurrentStage";
 import { useHandOver } from "@/hooks/useHandOver";
@@ -44,6 +40,7 @@ import {
   type PlannedPart,
   type PlannedPrep,
 } from "@/utils/classPlan";
+import { boardExtras } from "@/utils/boardExtras";
 import { describeIntensity } from "@/utils/describeIntensity";
 import { classStretches } from "@/utils/suggestStretches";
 
@@ -62,24 +59,27 @@ type Stage = {
 };
 
 const minute = (at: number | null) => (at === null ? null : `${at}′`);
-/** Before class and the whiteboard start open; the warm-up, parts and cool-down start folded. */
-const INITIALLY_OPEN = { pre: true, board: true };
+/** Before class and the briefing start open; the warm-up, parts and cool-down start folded. */
+const INITIALLY_OPEN = { pre: true, briefing: true };
 
 /**
- * The class page on one rail: Before class, Whiteboard, the warm-up (programmed or planned),
- * skill practice when the workout needs it, each part and the cool-down, with suggested stretches
- * if time allows. While the class is still being built when the page opens, the loading screen
- * shows instead, then hands over and the stages settle in one by one.
+ * The last step: the whiteboard as confirmed (edited parts redrawn, with the planned warm-up and
+ * stretches), then the class on one rail: Before class, Briefing, the warm-up (programmed or
+ * planned), skill practice when the workout needs it, each part and the cool-down, with suggested
+ * stretches if time allows. While the class is still being built when the page opens, the loading
+ * screen shows instead, then hands over and the stages settle in one by one.
  */
 export function WorkoutPage() {
   const { wod, restored } = useWod();
   const videos = useMovementVideos();
   const articles = useArticles();
   const prep = useClassPrep();
+  const board = useBoardRedraw();
   const finding = [videos.loading && "videos", articles.loading && "reading"].filter(Boolean);
   const busy = [
     finding.length > 0 && `Finding ${finding.join(" and ")}`,
     prep.loading && "Planning the warm-up",
+    board.loading && "Redrawing the whiteboard",
   ]
     .filter(Boolean)
     .join(" · ");
@@ -88,7 +88,7 @@ export function WorkoutPage() {
   const workoutKey = wod ? `${wod.parts.map((p) => p.id).join(",")}|${prepKey(wod)}` : null;
   const { phase, open: openClass } = useHandOver({
     workout: workoutKey,
-    building: videos.loading || articles.loading || prep.loading,
+    building: videos.loading || articles.loading || prep.loading || board.loading,
   });
   const heading = useRef<HTMLHeadingElement>(null);
   // After the hand-over, start keyboard and screen reader users at the top of the class.
@@ -114,34 +114,36 @@ export function WorkoutPage() {
 
   if (wod && (phase === "loading" || phase === "leaving")) {
     return (
-      <main className="mx-auto w-full max-w-2xl px-4 py-12">
+      <main className="mx-auto w-full max-w-5xl px-4 py-8">
+        <Stepper steps={WOD_STEPS} current={STEP.class} />
         <LoadingScreen
           key={workoutKey}
           wod={wod}
+          prep={prep.plan}
           checklist={classChecklist({
             wod,
             prep: prep.plan,
             prepLoading: prep.loading,
+            boardLoading: board.loading,
             articlesLoading: articles.loading,
             videosPending: videos.pending,
           })}
           onOpen={openClass}
           leaving={phase === "leaving"}
           autoOpen={!MOCK_LOAD}
+          className="mt-8"
         />
       </main>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-12">
-      <ButtonLink href="/" variant="secondary" size="xs" icon={ArrowLeft} className="-ml-2">
-        Back to edit
-      </ButtonLink>
+    <main className="mx-auto w-full max-w-2xl px-4 py-8">
+      <Stepper steps={WOD_STEPS} current={STEP.class} />
       <h1
         ref={heading}
         tabIndex={-1}
-        className="mt-2 text-3xl font-bold tracking-tight focus:outline-none"
+        className="mt-8 text-3xl font-bold tracking-tight focus:outline-none"
       >
         Your workout
       </h1>
@@ -153,9 +155,13 @@ export function WorkoutPage() {
       {videos.error && <p className="text-subtle mt-1 text-sm">{videos.error}</p>}
       {prep.error && <p className="text-subtle mt-1 text-sm">{prep.error}</p>}
       {articles.error && <p className="text-subtle mt-1 text-sm">{articles.error}</p>}
+      {board.error && <p className="text-subtle mt-1 text-sm">{board.error}</p>}
 
       {wod ? (
         <>
+          <div className="mt-6">
+            <WodBoard parts={wod.parts} {...boardExtras(wod.parts, prep.plan)} />
+          </div>
           <div className="mt-8">
             {stages.map((stage, i) => (
               <ClassStage
@@ -235,14 +241,14 @@ function classStages(wod: WodState, prep: ClassPrep | null): Stage[] {
       body: <BeforeClass parts={wod.parts} />,
     },
     {
-      key: "board",
-      title: "Whiteboard",
-      label: "Whiteboard",
+      key: "briefing",
+      title: "Briefing",
+      label: "Briefing",
       icon: ClipboardList,
       when: minute(0),
       subtitle: "The stimulus and what to know",
       body: (
-        <Whiteboard
+        <Briefing
           parts={workoutParts}
           notes={wod.parts.flatMap((part) =>
             part.notes ? [{ part: part.title, text: part.notes }] : [],

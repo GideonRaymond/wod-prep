@@ -1,4 +1,4 @@
-import { BookOpen, ClipboardList, Dumbbell, Flame, Snowflake } from "lucide-react";
+import { BookOpen, ClipboardList, Dumbbell, Flame, PenLine, Snowflake } from "lucide-react";
 import type { ChecklistItem, ChecklistState } from "@/components/shared/Checklist";
 import { beforeClassReferences } from "@/components/workout/BeforeClass";
 import { videoSearchKey } from "@/hooks/useMovementVideos";
@@ -19,6 +19,8 @@ export type ClassProgress = {
   wod: WodState;
   prep: ClassPrep | null;
   prepLoading: boolean;
+  /** Edited parts are having their whiteboard redrawn. */
+  boardLoading?: boolean;
   articlesLoading: boolean;
   /** Video searches still waiting (see videoSearchKey). */
   videosPending: ReadonlySet<string>;
@@ -34,7 +36,7 @@ const stateOf = (working: boolean): ChecklistState => (working ? "working" : "do
 
 /**
  * The loading screen's checklist: the structure every class has (reading the workout, Before
- * class, Warm-up, Workout, Cool-down), with the Workout row grown into this workout's own parts
+ * class, Warm-up, Workout, Cool-down), a Whiteboard step when edits are being redrawn, with the Workout row grown into this workout's own parts
  * and skills in class order, and a last "Timing the class" step once everything else is done.
  * `ready` is true once that last step is.
  */
@@ -42,7 +44,7 @@ export function classChecklist(progress: ClassProgress): {
   items: ChecklistItem[];
   ready: boolean;
 } {
-  const { wod, prep, prepLoading, articlesLoading, videosPending } = progress;
+  const { wod, prep, prepLoading, boardLoading = false, articlesLoading, videosPending } = progress;
   const plan = planClass(wod, prep);
   const partsOf = (kind: ReturnType<typeof stageKind>) =>
     wod.parts.filter((part) => stageKind(part) === kind);
@@ -55,6 +57,21 @@ export function classChecklist(progress: ClassProgress): {
     state: "done",
     meta: `${plural(wod.parts.length, "block")} found`,
   };
+
+  // Shown while edited parts are redrawn, and after, once any part's board was.
+  const redrawn = wod.parts.some((part) => part.parsedKey && part.boardKey !== part.parsedKey);
+  const board: ChecklistItem[] =
+    boardLoading || redrawn
+      ? [
+          {
+            id: "board",
+            name: "Whiteboard",
+            icon: PenLine,
+            state: stateOf(boardLoading),
+            meta: boardLoading ? "Redrawing it with your changes" : "Redrawn with your changes",
+          },
+        ]
+      : [];
 
   const namedVideosPending = wod.parts.some(
     (part) => part.named && videosPending.has(videoSearchKey(part.title, "workout")),
@@ -145,7 +162,7 @@ export function classChecklist(progress: ClassProgress): {
         : "If time allows",
   };
 
-  const items = [reading, pre, warmup, workout, cooldown];
+  const items = [reading, ...board, pre, warmup, workout, cooldown];
   if (items.some((item) => item.state !== "done")) return { items, ready: false };
 
   const timing: ChecklistItem = {

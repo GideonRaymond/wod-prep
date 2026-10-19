@@ -1,1 +1,0 @@
-export { WodBoard } from "./WodBoard";

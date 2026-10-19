@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { Plus } from "lucide-react";
-import { MergeMovementDialog } from "@/components/home/MergeMovementDialog";
+import { MergeMovementDialog } from "@/components/review/MergeMovementDialog";
 import { Button } from "@/components/shared/Button";
 import { Card } from "@/components/shared/Card";
 import { Select } from "@/components/shared/Select";

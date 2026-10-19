@@ -7,6 +7,7 @@ export const MOCK_DELAYS_MS = {
   videos: [1000, 3500],
   points: [500, 1500],
   prep: [4000, 7000],
+  board: [1500, 3000],
   articles: [8000, 14000],
 } satisfies Record<string, [number, number]>;
 

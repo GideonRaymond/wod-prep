@@ -75,9 +75,12 @@ describe("useParseWod", () => {
     mockRequest.mockResolvedValueOnce(fran).mockRejectedValueOnce(new Error("Too long."));
     const { result } = renderHook(() => useParseWod(), { wrapper: WodProvider });
 
-    await act(() => result.current.parse("Fran"));
-    await act(() => result.current.parse("x"));
+    let worked: boolean[] = [];
+    await act(async () => {
+      worked = [await result.current.parse("Fran"), await result.current.parse("x")];
+    });
 
+    expect(worked).toEqual([true, false]);
     await waitFor(() => expect(result.current.error).toBe("Too long."));
     expect(result.current.wod).toBeNull();
   });
