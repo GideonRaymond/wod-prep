@@ -26,8 +26,6 @@ export type BoardNav = {
   current?: string;
   /** Its name, for the folded board on phones. */
   currentLabel?: string;
-  /** Sections that aren't on the board (Before class, Briefing), linked above it. */
-  links?: { key: string; label: string }[];
   onJump: (key: string) => void;
   onExpandAll?: () => void;
   onCollapseAll?: () => void;
@@ -119,27 +117,8 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
             </Button>
           )}
         </div>
-        {nav?.links && nav.links.length > 0 && (
-          <ul aria-label="Before the board" className="mb-3 flex flex-wrap gap-x-4 gap-y-1">
-            {nav.links.map((link) => (
-              <li key={link.key}>
-                <button
-                  type="button"
-                  onClick={() => jump(link.key)}
-                  aria-current={nav.current === link.key ? "location" : undefined}
-                  className={cn(
-                    "rounded text-sm text-zinc-600 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-purple-600",
-                    nav.current === link.key && "font-medium text-zinc-900 underline",
-                  )}
-                >
-                  {link.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
         {nav ? (
-          <ul aria-label="Whiteboard" className="space-y-1.5">
+          <ul aria-label="Whiteboard" className="space-y-0.5">
             {inked.map(({ item, ink }) => (
               <li key={item.key}>
                 <button
@@ -147,7 +126,7 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
                   onClick={() => jump(item.key)}
                   aria-current={nav.current === item.key ? "location" : undefined}
                   className={cn(
-                    "-mx-2 block w-[calc(100%+1rem)] rounded-md px-2 py-1 text-left hover:bg-purple-50 focus-visible:outline-2 focus-visible:outline-purple-600",
+                    "-mx-2 block w-[calc(100%+1rem)] rounded-md px-2 py-0.5 text-left hover:bg-purple-50 focus-visible:outline-2 focus-visible:outline-purple-600",
                     nav.current === item.key && "outline-2 outline-purple-300",
                   )}
                 >

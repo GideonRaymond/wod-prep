@@ -54,6 +54,15 @@ describe("classBoard", () => {
     expect(items.map((item) => item.added ?? false)).toEqual([true, true, false, true]);
   });
 
+  it("heads it with Before class and the briefing when it's the table of contents", () => {
+    const { items } = classBoard(franParts, null, { sections: true });
+    expect(items.slice(0, 2)).toEqual([
+      { key: "pre", heading: "Before class", lines: [], added: true },
+      { key: "briefing", heading: "Briefing", lines: [], added: true },
+    ]);
+    expect(classBoard(franParts, null).items[0].key).toBe(franParts[0].id);
+  });
+
   it("has just the parts and stretches before the warm-up is planned", () => {
     expect(headings(classBoard(franParts, null).items)).toEqual([
       "Fran",

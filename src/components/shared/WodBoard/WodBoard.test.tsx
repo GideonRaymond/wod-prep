@@ -96,10 +96,6 @@ describe("WodBoard", () => {
           nav={{
             current: fran.key,
             currentLabel: "B · Fran",
-            links: [
-              { key: "pre", label: "Before class" },
-              { key: "briefing", label: "Briefing" },
-            ],
             onJump,
             ...nav,
           }}
@@ -116,13 +112,6 @@ describe("WodBoard", () => {
       expect(onJump).toHaveBeenCalledWith("planned-warmup");
       await user.click(block(/^A\. Back Squat/));
       expect(onJump).toHaveBeenLastCalledWith(squats.key);
-    });
-
-    it("links the sections that aren't on the board above it", async () => {
-      const { onJump, user } = renderNav();
-      const links = within(screen.getByRole("list", { name: "Before the board" }));
-      await user.click(links.getByRole("button", { name: "Briefing" }));
-      expect(onJump).toHaveBeenCalledWith("briefing");
     });
 
     it("outlines the block on screen", () => {
