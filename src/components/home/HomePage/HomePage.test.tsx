@@ -14,8 +14,8 @@ import type { ParseEvent } from "@/types/parse";
 import type { WodState } from "@/types/wod";
 import { toWodState } from "@/utils/toWodState";
 
-const { push } = vi.hoisted(() => ({ push: vi.fn() }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+const { push, prefetch } = vi.hoisted(() => ({ push: vi.fn(), prefetch: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, prefetch }) }));
 
 const fetchMock = vi.fn();
 
@@ -103,6 +103,17 @@ describe("HomePage", () => {
       end();
     });
     expect(push).toHaveBeenCalledWith("/review");
+    // Still the written-up board, not the text box, until the review page takes over.
+    expect(screen.getByRole("heading", { level: 1, name: "Breaking it down" })).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Workout" })).not.toBeInTheDocument();
+    expect(screen.getByText("B. Fran")).toBeInTheDocument();
+  });
+
+  it("gets the review page ready as soon as it starts reading", async () => {
+    fetchMock.mockReturnValue(new Promise(() => {}));
+    await submit("Fran");
+    expect(prefetch).toHaveBeenCalledWith("/review");
+    expect(push).not.toHaveBeenCalled();
   });
 
   it("sends the text and moves on to checking it once it's read", async () => {
