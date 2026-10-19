@@ -9,7 +9,7 @@ export type StageMarkerProps = {
   size?: "md" | "sm";
 };
 
-/** The round marker for a class stage, on the rail and in the Jump to menu. */
+/** The round marker for a class stage, on the rail and in the briefing. */
 export function StageMarker({ icon: Icon, label, size = "md" }: StageMarkerProps) {
   const box = size === "md" ? "h-8 min-w-8" : "h-6 min-w-6";
   if (Icon) {

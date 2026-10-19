@@ -12,6 +12,7 @@ import { FlowPage } from "@/components/shared/FlowPage";
 import { WodBoard } from "@/components/shared/WodBoard";
 import { STEP, WOD_STEPS } from "@/constants/flow";
 import { useParseWod } from "@/hooks/useParseWod";
+import { partsBoard } from "@/utils/boardItems";
 import { wodEdited } from "@/utils/partKey";
 
 /**
@@ -42,7 +43,9 @@ export function HomePage() {
       reachable={wod ? STEP.review : undefined}
       board={
         <>
-          {loading && <WodBoard parts={progress.outline ?? []} writing={!progress.outline} />}
+          {loading && (
+            <WodBoard {...partsBoard(progress.outline ?? [])} writing={!progress.outline} />
+          )}
           {/* Hidden, not unmounted, while parsing, so the text is still there if it fails. A
               hidden Activity (unlike the hidden attribute) also stops its board counting as a
               second board for the page transition. */}

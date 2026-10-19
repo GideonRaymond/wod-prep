@@ -10,6 +10,7 @@ import { OvertimeNote } from "@/components/shared/OvertimeNote";
 import { WodBoard } from "@/components/shared/WodBoard";
 import { STEP, WOD_STEPS } from "@/constants/flow";
 import { useWod } from "@/providers/WodProvider";
+import { partsBoard } from "@/utils/boardItems";
 import { minimumOvertime } from "@/utils/classPlan";
 import { boardOutdated } from "@/utils/partKey";
 
@@ -30,7 +31,7 @@ export function ReviewPage() {
       board={
         wod && (
           <>
-            <WodBoard parts={wod.parts} />
+            <WodBoard {...partsBoard(wod.parts)} />
             {outdated && (
               <p className="text-subtle mt-2 text-sm">
                 Your changes go on the board when you confirm.
