@@ -452,6 +452,18 @@ describe("WorkoutPage", () => {
     expect(screen.getByText("Warm-up – 10 min")).toBeInTheDocument();
   });
 
+  it("waits for the plan before warning, since only then is the class's length known", async () => {
+    let plan: (prep: ClassPrep) => void = () => {};
+    mockPrep.mockReturnValue(new Promise((resolve) => (plan = resolve)));
+    const [part] = toWodState(fran).parts;
+    renderPage({ parts: [{ ...part, minutes: 70 }] });
+    await screen.findByRole("heading", { level: 1, name: "Building your class" });
+    expect(screen.queryByText(/over the 60-minute class/)).not.toBeInTheDocument();
+
+    await act(async () => plan(classPrep));
+    expect((await screen.findAllByText(/This class runs 41 min over/)).length).toBeGreaterThan(0);
+  });
+
   it("has no warning for a class that fits", () => {
     renderPage(built(toWodState(fran), classPrep));
     expect(screen.queryByText(/over the 60-minute class/)).not.toBeInTheDocument();
