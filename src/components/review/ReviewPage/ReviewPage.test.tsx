@@ -72,17 +72,10 @@ describe("ReviewPage", () => {
     expect(screen.getByText("Your changes go on the board when you confirm.")).toBeInTheDocument();
   });
 
-  it("warns under the board when the workout leaves no time for a warm-up", () => {
-    renderPage(toWodState(fran));
-    expect(screen.queryByText(/over the 60-minute class/)).not.toBeInTheDocument();
-    cleanup();
-
+  it("doesn't warn about the class's length before it's confirmed and planned", () => {
     const [part] = toWodState(fran).parts;
     renderPage({ parts: [{ ...part, minutes: 70 }] });
-    // 5 whiteboard + 8 warm-up + 70 + 5 wrap-up = 88
-    expect(
-      screen.getByText(/With a warm-up, this class runs at least 28 min over the 60-minute class/),
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/over the 60-minute class/)).not.toBeInTheDocument();
   });
 
   it("doesn't let the user resize any text box", async () => {

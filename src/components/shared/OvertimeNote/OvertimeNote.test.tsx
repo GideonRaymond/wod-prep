@@ -15,15 +15,6 @@ describe("OvertimeNote", () => {
     );
   });
 
-  it("says at least, before the warm-up is planned", () => {
-    render(<OvertimeNote minutes={28} estimate="minimum" />);
-    expect(
-      screen.getByText(
-        /With a warm-up, this class runs at least 28 min over the 60-minute class\./,
-      ),
-    ).toBeInTheDocument();
-  });
-
   it.each([0, null])("shows nothing for %s", (minutes) => {
     const { container } = render(<OvertimeNote minutes={minutes} />);
     expect(container).toBeEmptyDOMElement();

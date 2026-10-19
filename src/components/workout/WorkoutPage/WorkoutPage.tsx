@@ -42,7 +42,6 @@ import {
   classEnd,
   classOvertime,
   isPlannedPart,
-  minimumOvertime,
   planClass,
   skillMinutes,
   type PlannedPart,
@@ -129,13 +128,9 @@ export function WorkoutPage() {
 
   const building = wod !== null && (phase === "loading" || phase === "leaving");
   const leaving = phase === "leaving";
-  const overtime =
-    wod &&
-    (prep.plan ? (
-      <OvertimeNote minutes={classOvertime(wod, prep.plan)} />
-    ) : (
-      <OvertimeNote minutes={minimumOvertime(wod.parts)} estimate="minimum" />
-    ));
+  // How long the class runs is only known once it's planned (and, later, once the coach's own
+  // choices for it are in), so the warning waits for the plan.
+  const overtime = wod && prep.plan && <OvertimeNote minutes={classOvertime(wod, prep.plan)} />;
   // Once the class shows, the board is its table of contents, with Before class and the
   // briefing written on above the workout.
   const nav: BoardNav | undefined =
