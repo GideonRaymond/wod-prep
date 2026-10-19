@@ -1,8 +1,8 @@
-import { Play } from "lucide-react";
 import { CategoryBadge } from "@/components/shared/CategoryBadge";
 import { MovementDetails } from "@/components/shared/MovementDetails";
+import { WatchLink } from "@/components/shared/WatchLink";
 import { PointsOfPerformance } from "@/components/workout/PointsOfPerformance";
-import type { MovementItem, ReferenceVideo } from "@/types/wod";
+import type { MovementItem } from "@/types/wod";
 
 export type ExerciseListProps = {
   movements: MovementItem[];
@@ -24,33 +24,12 @@ export function ExerciseList({ movements, detailed = false }: ExerciseListProps)
               <h3 className="font-medium">{movement.name}</h3>
               {detailed && <CategoryBadge category={movement.category} />}
             </div>
-            {movement.videos?.[0] && (
-              <WatchLink movement={movement.name} video={movement.videos[0]} />
-            )}
+            {movement.videos?.[0] && <WatchLink name={movement.name} video={movement.videos[0]} />}
           </div>
           <MovementDetails movement={movement} />
           {detailed && <PointsOfPerformance name={movement.name} />}
         </li>
       ))}
     </ul>
-  );
-}
-
-function WatchLink({ movement, video }: { movement: string; video: ReferenceVideo }) {
-  return (
-    <a
-      href={video.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={`Watch ${movement}: ${video.title}${video.duration ? ` (${video.duration})` : ""}`}
-      title={video.title}
-      className="bg-accent-faint inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium whitespace-nowrap text-purple-700 underline-offset-2 hover:underline dark:text-purple-300"
-    >
-      <Play size={14} aria-hidden />
-      Watch
-      {video.duration && (
-        <span className="text-subtle font-normal tabular-nums">{video.duration}</span>
-      )}
-    </a>
   );
 }

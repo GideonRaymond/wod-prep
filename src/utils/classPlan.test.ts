@@ -4,6 +4,7 @@ import {
   WHITEBOARD_MINUTES,
   WRAP_UP_MINUTES,
   allEquipment,
+  classEnd,
   fitPrep,
   isPlannedPart,
   partForSkill,
@@ -218,6 +219,19 @@ describe("fitPrep", () => {
   it("keeps the plan as it is when the time is unknown", () => {
     const plan = prep(skill("Rope Climb", 3, 20, 20));
     expect(fitPrep(plan, null, { programmedWarmup: false })).toEqual(plan);
+  });
+});
+
+describe("classEnd", () => {
+  it("is when the last stage ends", () => {
+    // 15 + 12 + 5 minutes of parts after the whiteboard.
+    expect(classEnd(planClass(wod))).toBe(WHITEBOARD_MINUTES + 32);
+    expect(classEnd(planClass(wod, classPrep))).toBe(WHITEBOARD_MINUTES + 32 + 21);
+  });
+
+  it("is unknown when a length along the way is", () => {
+    const parts = [{ ...wod.parts[0], minutes: null }, wod.parts[1]];
+    expect(classEnd(planClass({ parts }))).toBeNull();
   });
 });
 

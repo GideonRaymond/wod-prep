@@ -85,6 +85,16 @@ The workout page plans the start of class with one Claude call per workout, size
 - **Saving:** the plan is stored with the workout and remembers what it was planned for, so editing the workout plans again.
 - **Caching:** plans are cached in `.cache/class-prep.json` for 30 days. Bump `PREP_CACHE_VERSION` in `src/server/classPrep.ts` when the prompt changes.
 
+## Cool-down stretches
+
+Every class ends with **suggested stretches, if time allows**. No time is set aside for them. They're added under a programmed cool-down, or get a **Cool-down** stage of their own at the end.
+
+- **Library:** about 40 stretches in `src/data/stretches.ts`. Each has the body areas it targets, a dose, any equipment (band, box) and a short hand-picked YouTube demo shown as a **Watch** link. Swap a video by editing its entry.
+- **Which areas:** movement names are mapped to the areas they work (`MOVEMENT_AREAS`, e.g. thrusters → quads, glutes, shoulders, hip flexors), falling back on the movement's category.
+- **Which stretches** (`suggestStretches`): up to 5, one per area, starting with the areas the workout works most. Areas an earlier pick already covers are skipped.
+- **Variation:** the pick is random but seeded by the workout's text, so a workout keeps its stretches across refreshes, while next week's squat day gets different ones (not always the couch stretch). Stretches aimed at that area, and stretches covering more of what the workout works, are favored.
+- A test checks every area has at least 3 stretches to choose from (2 for triceps and forearms).
+
 ## Checks
 
 ```bash

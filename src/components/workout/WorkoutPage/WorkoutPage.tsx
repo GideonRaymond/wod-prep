@@ -16,6 +16,7 @@ import { EquipmentLine, EquipmentList } from "@/components/workout/EquipmentList
 import { ExerciseList } from "@/components/workout/ExerciseList";
 import { JumpTo } from "@/components/workout/JumpTo";
 import { SkillPractice } from "@/components/workout/SkillPractice";
+import { StretchList } from "@/components/workout/StretchList";
 import { WarmupPlan } from "@/components/workout/WarmupPlan";
 import { Whiteboard } from "@/components/workout/Whiteboard";
 import { ButtonLink } from "@/components/shared/ButtonLink";
@@ -27,10 +28,12 @@ import { useClassPrep } from "@/hooks/useClassPrep";
 import { useCurrentStage } from "@/hooks/useCurrentStage";
 import { useMovementVideos } from "@/hooks/useMovementVideos";
 import { useWod } from "@/providers/WodProvider";
+import type { Stretch } from "@/data/stretches";
 import type { ClassPrep } from "@/schemas/classPrep";
 import type { WodState, WorkoutPartState } from "@/types/wod";
 import {
   allEquipment,
+  classEnd,
   isPlannedPart,
   planClass,
   skillMinutes,
@@ -38,6 +41,7 @@ import {
   type PlannedPrep,
 } from "@/utils/classPlan";
 import { describeIntensity } from "@/utils/describeIntensity";
+import { suggestStretches } from "@/utils/suggestStretches";
 
 type Stage = {
   key: string;
@@ -59,7 +63,8 @@ const INITIALLY_OPEN = { pre: true, board: true };
 
 /**
  * The class page on one rail: Before class, Whiteboard, the warm-up (programmed or planned),
- * skill practice when the workout needs it, each part and the cool-down.
+ * skill practice when the workout needs it, each part and the cool-down, with suggested stretches
+ * if time allows.
  */
 export function WorkoutPage() {
   const { wod, restored } = useWod();
@@ -169,6 +174,12 @@ function classStages(wod: WodState, prep: ClassPrep | null): Stage[] {
   // A single-part workout is marked "WOD"; otherwise each part keeps its label.
   const markerFor = (part: WorkoutPartState) => (wod.parts.length === 1 ? "WOD" : part.label);
   const preCounts = beforeClassCounts(wod.parts);
+  const stretches = suggestStretches(
+    workoutParts.flatMap((part) => part.movements),
+    workoutParts.map((part) => part.sourceText).join("\n"),
+  );
+  // Stretches go with the (last) programmed cool-down, or get a cool-down of their own.
+  const cooldownId = partsOf("cooldown").at(-1)?.id;
 
   return [
     {
@@ -200,9 +211,44 @@ function classStages(wod: WodState, prep: ClassPrep | null): Stage[] {
       ),
     },
     ...plan.map((planned) =>
-      isPlannedPart(planned) ? partStage(planned, markerFor) : prepStage(planned),
+      isPlannedPart(planned)
+        ? partStage(planned, markerFor, planned.part.id === cooldownId ? stretches : [])
+        : prepStage(planned),
     ),
+    ...(!cooldownId && stretches.length > 0 ? [stretchStage(stretches, classEnd(plan))] : []),
   ];
+}
+
+/** Stretches if time allows, with no time set aside, for a class without a programmed cool-down. */
+function stretchStage(stretches: Stretch[], startsAt: number | null): Stage {
+  return {
+    key: "stretches",
+    title: "Cool-down",
+    label: "Cool-down",
+    icon: Snowflake,
+    when: minute(startsAt),
+    subtitle: "If time allows · suggested stretches",
+    summary: (
+      <span className="text-subtle text-xs">{stretches.map((s) => s.name).join(" · ")}</span>
+    ),
+    body: (
+      <Card>
+        <StretchList stretches={stretches} />
+      </Card>
+    ),
+  };
+}
+
+/** The suggested stretches under a programmed cool-down. */
+function ExtraStretches({ stretches }: { stretches: Stretch[] }) {
+  return (
+    <Card>
+      <h3 className="mb-3 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+        Stretches if time allows
+      </h3>
+      <StretchList stretches={stretches} />
+    </Card>
+  );
 }
 
 /** The planned warm-up, or practice for one skill. */
@@ -270,6 +316,7 @@ const startsAndLasts = (startsAt: number | null, minutes: number) =>
 function partStage(
   { part, kind, startsAt }: PlannedPart,
   markerFor: (part: WorkoutPartState) => string | null,
+  stretches: Stretch[] = [],
 ): Stage {
   const meta = [
     !part.duration && part.minutes ? `${part.minutes} min` : null,
@@ -305,6 +352,7 @@ function partStage(
           <Card>
             <ExerciseList movements={part.movements} />
           </Card>
+          {stretches.length > 0 && <ExtraStretches stretches={stretches} />}
         </>
       ),
     };
