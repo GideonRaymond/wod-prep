@@ -3,7 +3,8 @@ import type { SkillBlock } from "@/schemas/classPrep";
 
 /**
  * Practice for one skill: why it's practiced today, then its progressions as numbered steps, each
- * with its time, dose, coaching point and when to move on.
+ * with its time, dose, coaching point and when to move on. On phones each step's number sits above
+ * it rather than beside it.
  */
 export function SkillPractice({ skill }: { skill: SkillBlock }) {
   return (
@@ -14,7 +15,8 @@ export function SkillPractice({ skill }: { skill: SkillBlock }) {
       )}
       <ol className="mt-3 divide-y divide-zinc-100 dark:divide-zinc-800">
         {skill.progressions.map((step, i) => (
-          <li key={i} className="flex gap-3 py-3 last:pb-0">
+          // On phones the number sits above the step, so its text can use the full width.
+          <li key={i} className="flex flex-col gap-1.5 py-3 last:pb-0 sm:flex-row sm:gap-3">
             <span
               aria-hidden
               className="bg-accent-faint flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-purple-700 dark:text-purple-300"
