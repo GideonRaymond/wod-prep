@@ -16,4 +16,16 @@ describe("BoardLayout", () => {
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
   });
+
+  it("can keep the board stuck to the top on phones too", () => {
+    render(<BoardLayout board={<p>Board</p>}>Side</BoardLayout>);
+    expect(screen.getByText("Board").parentElement).not.toHaveClass("max-md:sticky");
+    cleanup();
+    render(
+      <BoardLayout board={<p>Board</p>} stickyOnPhones>
+        Side
+      </BoardLayout>,
+    );
+    expect(screen.getByText("Board").parentElement).toHaveClass("max-md:sticky", "max-md:top-0");
+  });
 });

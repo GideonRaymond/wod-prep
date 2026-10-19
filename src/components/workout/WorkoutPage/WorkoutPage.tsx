@@ -6,7 +6,6 @@ import { BeforeClass, beforeClassCounts } from "@/components/workout/BeforeClass
 import { ClassStage, StageMarker } from "@/components/workout/ClassStage";
 import { EquipmentLine, EquipmentList } from "@/components/workout/EquipmentList";
 import { ExerciseList } from "@/components/workout/ExerciseList";
-import { JumpTo } from "@/components/workout/JumpTo";
 import {
   classChecklist,
   LoadingScreen,
@@ -22,7 +21,7 @@ import { Card } from "@/components/shared/Card";
 import { CategoryBadge } from "@/components/shared/CategoryBadge";
 import { FlowPage } from "@/components/shared/FlowPage";
 import { OvertimeNote } from "@/components/shared/OvertimeNote";
-import { WodBoard } from "@/components/shared/WodBoard";
+import { WodBoard, type BoardNav } from "@/components/shared/WodBoard";
 import { MOCK_LOAD } from "@/constants/dev";
 import { STEP } from "@/constants/flow";
 import { FORMAT_LABELS } from "@/constants/wod";
@@ -48,7 +47,7 @@ import {
   type PlannedPart,
   type PlannedPrep,
 } from "@/utils/classPlan";
-import { boardExtras } from "@/utils/boardExtras";
+import { classBoard } from "@/utils/boardItems";
 import { cn } from "@/utils/cn";
 import { describeIntensity } from "@/utils/describeIntensity";
 import { classStretches } from "@/utils/suggestStretches";
@@ -56,7 +55,7 @@ import { classStretches } from "@/utils/suggestStretches";
 type Stage = {
   key: string;
   title: string;
-  /** Shorter name for the Jump to menu. */
+  /** Shorter name, for the whiteboard folded into a bar on phones. */
   label: string;
   icon?: LucideIcon;
   markerLabel?: string | null;
@@ -129,23 +128,39 @@ export function WorkoutPage() {
 
   const building = wod !== null && (phase === "loading" || phase === "leaving");
   const leaving = phase === "leaving";
+  const overtime =
+    wod &&
+    (prep.plan ? (
+      <OvertimeNote minutes={classOvertime(wod, prep.plan)} />
+    ) : (
+      <OvertimeNote minutes={minimumOvertime(wod.parts)} estimate="minimum" />
+    ));
+  // Once the class shows, the board is its table of contents; Before class and the briefing
+  // aren't on it, so they're linked above it.
+  const nav: BoardNav | undefined =
+    wod && !building
+      ? {
+          current,
+          currentLabel: stages.find((s) => s.key === current)?.label,
+          links: stages
+            .filter((s) => s.key === "pre" || s.key === "briefing")
+            .map((s) => ({ key: s.key, label: s.label })),
+          onJump: jump,
+          onExpandAll: () => setAll(true),
+          onCollapseAll: () => setAll(false),
+        }
+      : undefined;
 
   return (
     <FlowPage
       step={STEP.class}
+      stickyBoardOnPhones={nav !== undefined}
       board={
         wod && (
           <>
-            <WodBoard parts={wod.parts} {...boardExtras(wod.parts, prep.plan)} />
-            {prep.plan ? (
-              <OvertimeNote minutes={classOvertime(wod, prep.plan)} className="mt-3" />
-            ) : (
-              <OvertimeNote
-                minutes={minimumOvertime(wod.parts)}
-                estimate="minimum"
-                className="mt-3"
-              />
-            )}
+            <WodBoard {...classBoard(wod.parts, prep.plan)} nav={nav} />
+            {/* On phones the board sticks to the top as a bar, so the note goes beside it. */}
+            <div className={cn("mt-3", nav && "max-md:hidden")}>{overtime}</div>
             {building && (
               <div className={cn(FADE, leaving && FADED)}>
                 <WhileYouWait references={waitingReferences(wod)} onReading={setReading} />
@@ -189,6 +204,7 @@ export function WorkoutPage() {
           {prep.error && <p className="text-subtle mt-1 text-sm">{prep.error}</p>}
           {articles.error && <p className="text-subtle mt-1 text-sm">{articles.error}</p>}
           {board.error && <p className="text-subtle mt-1 text-sm">{board.error}</p>}
+          <div className="mt-3 md:hidden">{overtime}</div>
 
           {wod ? (
             <>
@@ -212,17 +228,6 @@ export function WorkoutPage() {
                   </ClassStage>
                 ))}
               </div>
-              <JumpTo
-                stages={stages.map((s) => ({
-                  key: s.key,
-                  label: s.label,
-                  marker: <StageMarker icon={s.icon} label={s.markerLabel} size="sm" />,
-                }))}
-                current={current}
-                onJump={jump}
-                onExpandAll={() => setAll(true)}
-                onCollapseAll={() => setAll(false)}
-              />
             </>
           ) : (
             restored && (

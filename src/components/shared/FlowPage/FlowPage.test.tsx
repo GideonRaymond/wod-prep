@@ -30,4 +30,13 @@ describe("FlowPage", () => {
     expect(screen.getByText("Side").parentElement).toHaveClass("max-w-2xl");
     expect(document.querySelector(".md\\:sticky")).toBeNull();
   });
+
+  it("passes on keeping the board stuck to the top on phones", () => {
+    render(
+      <FlowPage step={2} board={<p>Board</p>} stickyBoardOnPhones>
+        <p>Side</p>
+      </FlowPage>,
+    );
+    expect(screen.getByText("Board").parentElement).toHaveClass("max-md:sticky");
+  });
 });
