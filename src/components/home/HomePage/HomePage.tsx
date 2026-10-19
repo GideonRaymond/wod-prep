@@ -6,10 +6,9 @@ import { ParseProgress } from "@/components/home/ParseProgress";
 import { Welcome } from "@/components/home/Welcome";
 import { WodInputForm } from "@/components/home/WodInputForm";
 import { Alert } from "@/components/shared/Alert";
-import { BoardLayout } from "@/components/shared/BoardLayout";
 import { Button } from "@/components/shared/Button";
 import { Dialog } from "@/components/shared/Dialog";
-import { Stepper } from "@/components/shared/Stepper";
+import { FlowPage } from "@/components/shared/FlowPage";
 import { WodBoard } from "@/components/shared/WodBoard";
 import { STEP, WOD_STEPS } from "@/constants/flow";
 import { useParseWod } from "@/hooks/useParseWod";
@@ -38,32 +37,28 @@ export function HomePage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8">
-      <Stepper steps={WOD_STEPS} current={STEP.workout} reachable={wod ? STEP.review : undefined} />
-
-      <BoardLayout
-        className="mt-8"
-        sideFirstOnPhones={!loading}
-        board={
-          <>
-            {loading && <WodBoard parts={progress.outline ?? []} writing={!progress.outline} />}
-            {/* Hidden, not unmounted, while parsing, so the text is still there if it fails. */}
-            <div hidden={loading}>
-              {/* Remount once the saved workout is read, so the text box starts with its text. */}
-              <WodInputForm
-                key={restored ? "restored" : "server"}
-                loading={loading}
-                parsedText={parsedText}
-                continueTo={wod ? WOD_STEPS[STEP.review].href : undefined}
-                onSubmit={submit}
-              />
-              {error && <Alert className="mt-4">{error}</Alert>}
-            </div>
-          </>
-        }
-      >
-        {loading ? <ParseProgress progress={progress} /> : <Welcome />}
-      </BoardLayout>
+    <FlowPage
+      step={STEP.workout}
+      reachable={wod ? STEP.review : undefined}
+      board={
+        <>
+          {loading && <WodBoard parts={progress.outline ?? []} writing={!progress.outline} />}
+          {/* Hidden, not unmounted, while parsing, so the text is still there if it fails. */}
+          <div hidden={loading}>
+            {/* Remount once the saved workout is read, so the text box starts with its text. */}
+            <WodInputForm
+              key={restored ? "restored" : "server"}
+              loading={loading}
+              parsedText={parsedText}
+              continueTo={wod ? WOD_STEPS[STEP.review].href : undefined}
+              onSubmit={submit}
+            />
+            {error && <Alert className="mt-4">{error}</Alert>}
+          </div>
+        </>
+      }
+    >
+      {loading ? <ParseProgress progress={progress} /> : <Welcome />}
 
       <Dialog
         open={pending !== null}
@@ -83,6 +78,6 @@ export function HomePage() {
           and your changes are lost.
         </p>
       </Dialog>
-    </main>
+    </FlowPage>
   );
 }

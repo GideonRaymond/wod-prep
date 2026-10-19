@@ -38,4 +38,9 @@ describe("Stepper", () => {
     expect(screen.getByRole("link", { name: "Check" })).toHaveAttribute("href", "/review");
     expect(screen.queryByRole("link", { name: /Class/ })).not.toBeInTheDocument();
   });
+
+  it("is centered", () => {
+    render(<Stepper steps={steps} current={0} />);
+    expect(within(screen.getByRole("navigation")).getByRole("list")).toHaveClass("justify-center");
+  });
 });

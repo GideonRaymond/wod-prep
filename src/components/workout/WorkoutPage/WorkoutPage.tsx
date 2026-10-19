@@ -7,18 +7,23 @@ import { ClassStage, StageMarker } from "@/components/workout/ClassStage";
 import { EquipmentLine, EquipmentList } from "@/components/workout/EquipmentList";
 import { ExerciseList } from "@/components/workout/ExerciseList";
 import { JumpTo } from "@/components/workout/JumpTo";
-import { classChecklist, LoadingScreen } from "@/components/workout/LoadingScreen";
+import {
+  classChecklist,
+  LoadingScreen,
+  waitingReferences,
+} from "@/components/workout/LoadingScreen";
 import { SkillPractice } from "@/components/workout/SkillPractice";
 import { StretchList } from "@/components/workout/StretchList";
 import { WarmupPlan } from "@/components/workout/WarmupPlan";
+import { WhileYouWait } from "@/components/workout/WhileYouWait";
 import { Briefing } from "@/components/workout/Briefing";
 import { ButtonLink } from "@/components/shared/ButtonLink";
 import { Card } from "@/components/shared/Card";
 import { CategoryBadge } from "@/components/shared/CategoryBadge";
-import { Stepper } from "@/components/shared/Stepper";
+import { FlowPage } from "@/components/shared/FlowPage";
 import { WodBoard } from "@/components/shared/WodBoard";
 import { MOCK_LOAD } from "@/constants/dev";
-import { STEP, WOD_STEPS } from "@/constants/flow";
+import { STEP } from "@/constants/flow";
 import { FORMAT_LABELS } from "@/constants/wod";
 import { useArticles } from "@/hooks/useArticles";
 import { useBoardRedraw } from "@/hooks/useBoardRedraw";
@@ -41,6 +46,7 @@ import {
   type PlannedPrep,
 } from "@/utils/classPlan";
 import { boardExtras } from "@/utils/boardExtras";
+import { cn } from "@/utils/cn";
 import { describeIntensity } from "@/utils/describeIntensity";
 import { classStretches } from "@/utils/suggestStretches";
 
@@ -57,6 +63,10 @@ type Stage = {
   summary?: ReactNode;
   body: ReactNode;
 };
+
+/** The links under the board fade out with the loading screen. */
+const FADE = "motion-safe:transition motion-safe:duration-400";
+const FADED = "pointer-events-none -translate-y-2 opacity-0";
 
 const minute = (at: number | null) => (at === null ? null : `${at}′`);
 /** Before class and the briefing start open; the warm-up, parts and cool-down start folded. */
@@ -90,6 +100,8 @@ export function WorkoutPage() {
     workout: workoutKey,
     building: videos.loading || articles.loading || prep.loading || board.loading,
   });
+  // Someone is reading the links under the board: hold the countdown to the class.
+  const [reading, setReading] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   // After the hand-over, start keyboard and screen reader users at the top of the class.
   useEffect(() => {
@@ -112,14 +124,28 @@ export function WorkoutPage() {
     });
   }
 
-  if (wod && (phase === "loading" || phase === "leaving")) {
-    return (
-      <main className="mx-auto w-full max-w-5xl px-4 py-8">
-        <Stepper steps={WOD_STEPS} current={STEP.class} />
+  const building = wod !== null && (phase === "loading" || phase === "leaving");
+  const leaving = phase === "leaving";
+
+  return (
+    <FlowPage
+      step={STEP.class}
+      board={
+        wod && (
+          <>
+            <WodBoard parts={wod.parts} {...boardExtras(wod.parts, prep.plan)} />
+            {building && (
+              <div className={cn(FADE, leaving && FADED)}>
+                <WhileYouWait references={waitingReferences(wod)} onReading={setReading} />
+              </div>
+            )}
+          </>
+        )
+      }
+    >
+      {building ? (
         <LoadingScreen
           key={workoutKey}
-          wod={wod}
-          prep={prep.plan}
           checklist={classChecklist({
             wod,
             prep: prep.plan,
@@ -129,82 +155,78 @@ export function WorkoutPage() {
             videosPending: videos.pending,
           })}
           onOpen={openClass}
-          leaving={phase === "leaving"}
+          paused={reading}
+          leaving={leaving}
           autoOpen={!MOCK_LOAD}
-          className="mt-8"
         />
-      </main>
-    );
-  }
-
-  return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-8">
-      <Stepper steps={WOD_STEPS} current={STEP.class} />
-      <h1
-        ref={heading}
-        tabIndex={-1}
-        className="mt-8 text-3xl font-bold tracking-tight focus:outline-none"
-      >
-        Your workout
-      </h1>
-      {wod && busy && (
-        <p role="status" className="text-subtle mt-1 text-sm">
-          {busy}…
-        </p>
-      )}
-      {videos.error && <p className="text-subtle mt-1 text-sm">{videos.error}</p>}
-      {prep.error && <p className="text-subtle mt-1 text-sm">{prep.error}</p>}
-      {articles.error && <p className="text-subtle mt-1 text-sm">{articles.error}</p>}
-      {board.error && <p className="text-subtle mt-1 text-sm">{board.error}</p>}
-
-      {wod ? (
-        <>
-          <div className="mt-6">
-            <WodBoard parts={wod.parts} {...boardExtras(wod.parts, prep.plan)} />
-          </div>
-          <div className="mt-8">
-            {stages.map((stage, i) => (
-              <ClassStage
-                key={stage.key}
-                id={stage.key}
-                marker={<StageMarker icon={stage.icon} label={stage.markerLabel} />}
-                when={stage.when}
-                title={stage.title}
-                subtitle={stage.subtitle}
-                aside={stage.aside}
-                summary={stage.summary}
-                open={isOpen(stage.key)}
-                onToggle={() => setOpen((prev) => ({ ...prev, [stage.key]: !prev[stage.key] }))}
-                last={i === stages.length - 1}
-                settleIndex={phase === "opened" ? i : undefined}
-              >
-                {stage.body}
-              </ClassStage>
-            ))}
-          </div>
-          <JumpTo
-            stages={stages.map((s) => ({
-              key: s.key,
-              label: s.label,
-              marker: <StageMarker icon={s.icon} label={s.markerLabel} size="sm" />,
-            }))}
-            current={current}
-            onJump={jump}
-            onExpandAll={() => setAll(true)}
-            onCollapseAll={() => setAll(false)}
-          />
-        </>
       ) : (
-        restored && (
-          <Card className="mt-8">
-            <p className="text-zinc-600 dark:text-zinc-400">There&apos;s no workout to show yet.</p>
-            <ButtonLink href="/" size="sm" className="mt-3">
-              Paste a workout
-            </ButtonLink>
-          </Card>
-        )
+        <>
+          <h1
+            ref={heading}
+            tabIndex={-1}
+            className="text-3xl font-bold tracking-tight focus:outline-none"
+          >
+            Your workout
+          </h1>
+          {wod && busy && (
+            <p role="status" className="text-subtle mt-1 text-sm">
+              {busy}…
+            </p>
+          )}
+          {videos.error && <p className="text-subtle mt-1 text-sm">{videos.error}</p>}
+          {prep.error && <p className="text-subtle mt-1 text-sm">{prep.error}</p>}
+          {articles.error && <p className="text-subtle mt-1 text-sm">{articles.error}</p>}
+          {board.error && <p className="text-subtle mt-1 text-sm">{board.error}</p>}
+
+          {wod ? (
+            <>
+              <div className="mt-8">
+                {stages.map((stage, i) => (
+                  <ClassStage
+                    key={stage.key}
+                    id={stage.key}
+                    marker={<StageMarker icon={stage.icon} label={stage.markerLabel} />}
+                    when={stage.when}
+                    title={stage.title}
+                    subtitle={stage.subtitle}
+                    aside={stage.aside}
+                    summary={stage.summary}
+                    open={isOpen(stage.key)}
+                    onToggle={() => setOpen((prev) => ({ ...prev, [stage.key]: !prev[stage.key] }))}
+                    last={i === stages.length - 1}
+                    settleIndex={phase === "opened" ? i : undefined}
+                  >
+                    {stage.body}
+                  </ClassStage>
+                ))}
+              </div>
+              <JumpTo
+                stages={stages.map((s) => ({
+                  key: s.key,
+                  label: s.label,
+                  marker: <StageMarker icon={s.icon} label={s.markerLabel} size="sm" />,
+                }))}
+                current={current}
+                onJump={jump}
+                onExpandAll={() => setAll(true)}
+                onCollapseAll={() => setAll(false)}
+              />
+            </>
+          ) : (
+            restored && (
+              <Card className="mt-8">
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  There&apos;s no workout to show yet.
+                </p>
+                <ButtonLink href="/" size="sm" className="mt-3">
+                  Paste a workout
+                </ButtonLink>
+              </Card>
+            )
+          )}
+        </>
       )}
-    </main>
+    </FlowPage>
   );
 }
 
