@@ -2,7 +2,16 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { flushSync } from "react-dom";
-import { ClipboardList, Flame, Lightbulb, Snowflake, Target, type LucideIcon } from "lucide-react";
+import {
+  ChevronsDownUp,
+  ChevronsUpDown,
+  ClipboardList,
+  Flame,
+  Lightbulb,
+  Snowflake,
+  Target,
+  type LucideIcon,
+} from "lucide-react";
 import { BeforeClass, beforeClassCounts } from "@/components/workout/BeforeClass";
 import { ClassStage, StageMarker } from "@/components/workout/ClassStage";
 import { EquipmentLine, EquipmentList } from "@/components/workout/EquipmentList";
@@ -17,6 +26,7 @@ import { StretchList } from "@/components/workout/StretchList";
 import { WarmupPlan } from "@/components/workout/WarmupPlan";
 import { WhileYouWait } from "@/components/workout/WhileYouWait";
 import { Briefing } from "@/components/workout/Briefing";
+import { Button } from "@/components/shared/Button";
 import { ButtonLink } from "@/components/shared/ButtonLink";
 import { Card } from "@/components/shared/Card";
 import { CategoryBadge } from "@/components/shared/CategoryBadge";
@@ -115,6 +125,7 @@ export function WorkoutPage() {
   const { current, pin } = useCurrentStage(stages.map((s) => s.key));
 
   const isOpen = (key: string) => open[key] ?? false;
+  const allOpen = stages.length > 0 && stages.every((s) => isOpen(s.key));
   const setAll = (value: boolean) => setOpen(Object.fromEntries(stages.map((s) => [s.key, value])));
   /** Opens a stage, makes it the current one and scrolls to it, focusing its header. */
   function jump(key: string) {
@@ -139,8 +150,6 @@ export function WorkoutPage() {
           current,
           currentLabel: stages.find((s) => s.key === current)?.label,
           onJump: jump,
-          onExpandAll: () => setAll(true),
-          onCollapseAll: () => setAll(false),
         }
       : undefined;
 
@@ -184,13 +193,27 @@ export function WorkoutPage() {
         />
       ) : (
         <>
-          <h1
-            ref={heading}
-            tabIndex={-1}
-            className="text-3xl font-bold tracking-tight focus:outline-none"
-          >
-            Your workout
-          </h1>
+          <div className="flex items-center justify-between gap-3">
+            <h1
+              ref={heading}
+              tabIndex={-1}
+              className="text-3xl font-bold tracking-tight focus:outline-none"
+            >
+              Your workout
+            </h1>
+            {wod && (
+              // Expands every stage while any is folded, and folds them all once they're open.
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={allOpen ? ChevronsDownUp : ChevronsUpDown}
+                onClick={() => setAll(!allOpen)}
+                className="shrink-0"
+              >
+                {allOpen ? "Collapse all" : "Expand all"}
+              </Button>
+            )}
+          </div>
           {wod && busy && (
             <p role="status" className="text-subtle mt-1 text-sm">
               {busy}…

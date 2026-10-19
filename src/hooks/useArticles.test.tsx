@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { strengthAndMetcon } from "@/test/fixtures";
@@ -7,9 +7,13 @@ import type { WodState, WorkoutPartState } from "@/types/wod";
 import { toWodState } from "@/utils/toWodState";
 
 const { mockRequest } = vi.hoisted(() => ({ mockRequest: vi.fn() }));
-vi.mock("@/services/articlesApi", () => ({ requestArticles: mockRequest }));
+vi.mock("@/services/articlesApi", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/articlesApi")>()),
+  requestArticles: mockRequest,
+}));
 
 import { useArticles } from "./useArticles";
+import { articlesKey } from "@/services/articlesApi";
 import { useWod, WodProvider } from "@/providers/WodProvider";
 
 const article = (title: string) => ({ title, url: `https://example.com/${title}` });
@@ -62,6 +66,36 @@ describe("useArticles", () => {
   it("does nothing without a workout", () => {
     const { result } = renderWithWod(null);
     expect(result.current.articles).toEqual({ loading: false, error: null });
+    expect(mockRequest).not.toHaveBeenCalled();
+  });
+
+  it("searches again once a part's stimulus or intensity is edited", async () => {
+    mockRequest.mockImplementation(async (part: WorkoutPartState) => [
+      article(`${part.title} ${part.stimulus.intensity}`),
+    ]);
+    const { result } = renderWithWod(toWodState(strengthAndMetcon));
+    await waitFor(() => expect(result.current.articles.loading).toBe(false));
+    const [, fran] = result.current.wod!.parts;
+    expect(fran.articlesKey).toBe(articlesKey(fran));
+
+    act(() =>
+      result.current.setWod((current) => ({
+        parts: current!.parts.map((p) =>
+          p.id === fran.id ? { ...p, stimulus: { ...p.stimulus, intensity: 4 } } : p,
+        ),
+      })),
+    );
+    expect(result.current.articles.loading).toBe(true);
+    await waitFor(() => expect(result.current.articles.loading).toBe(false));
+    expect(result.current.wod!.parts[1].articles).toEqual([article("Fran 4")]);
+    expect(mockRequest).toHaveBeenCalledTimes(strengthAndMetcon.parts.length + 1);
+  });
+
+  it("keeps the articles of a part saved before what they were found for was kept", async () => {
+    const wod = toWodState(strengthAndMetcon);
+    wod.parts = wod.parts.map((p) => ({ ...p, articles: [article("old")] }));
+    renderWithWod(wod);
+    await new Promise((resolve) => setTimeout(resolve));
     expect(mockRequest).not.toHaveBeenCalled();
   });
 });

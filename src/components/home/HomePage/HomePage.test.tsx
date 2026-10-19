@@ -150,6 +150,7 @@ describe("HomePage", () => {
       "/review",
     );
     expect(screen.getByRole("link", { name: "Check" })).toHaveAttribute("href", "/review");
+    expect(screen.getByRole("link", { name: "Class" })).toHaveAttribute("href", "/workout");
 
     await user.type(screen.getByRole("textbox", { name: "Workout" }), " and Grace");
     expect(screen.getByRole("button", { name: "Break it down" })).toBeEnabled();

@@ -48,6 +48,7 @@ export const ArticleRequestSchema = z.object({
     .min(1)
     .max(30),
   stimulus: text(1000),
+  intensity: z.number().int().min(1).max(10),
 });
 
 export type ArticleRequest = z.infer<typeof ArticleRequestSchema>;

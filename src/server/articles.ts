@@ -14,7 +14,7 @@ import { createFileCache } from "./fileCache";
 import { normalizeWodText } from "./wodCache";
 
 /** Bump when the prompt or output changes, so old reading lists are searched again. */
-export const ARTICLES_CACHE_VERSION = 1;
+export const ARTICLES_CACHE_VERSION = 2;
 
 /** Reading for a workout rarely changes, so a search is reused for a month like videos. */
 export const ARTICLES_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -29,8 +29,8 @@ const cache = createFileCache("articles", CacheEntrySchema);
 
 /**
  * Named workouts get the same reading whatever their notes say; other parts share reading when
- * they have the same format, scheme and movements. The stimulus is left out because it's written
- * fresh for every parse.
+ * they have the same format, scheme and movements. Both also need the same intensity, which steers
+ * the pick. The stimulus text is left out because it's written fresh for every parse.
  */
 export function articlesCacheKey(part: ArticleRequest) {
   const about = part.named
@@ -43,7 +43,7 @@ export function articlesCacheKey(part: ArticleRequest) {
       ]
         .filter(Boolean)
         .join(" ");
-  return `v${ARTICLES_CACHE_VERSION}:${normalizeWodText(about)}`;
+  return `v${ARTICLES_CACHE_VERSION}:${normalizeWodText(`${about} intensity ${part.intensity}`)}`;
 }
 
 /** Cached articles for a workout part, or null when there are none or they're over a month old. */
@@ -77,6 +77,8 @@ Aim for a mix of angles, at most one of each:
 - mechanics: why we do one of its movements, or the mechanics at work in it. Not a generic "how to" or cue list.
 - energy: the energy system, pacing, recovery or fuel this workout depends on, e.g. VO2 max for a 2k row, zone 2 for long aerobic work, eating and recovering around a long grind.
 - tie-in: something surprising but genuinely connected to this workout: its history, the idea behind it, or a related piece of science.
+
+The stimulus and intensity (1 to 10) are the coach's, so take them as right, even where you'd read the workout differently: they decide what the workout is about. If they contradict each other, go by the harder of the two.
 
 Before searching, think about what this workout is really about: its time domain, what will limit athletes, and which movement matters most. Search for that, not for the movement names alone.
 

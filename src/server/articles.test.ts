@@ -31,6 +31,7 @@ const fran: ArticleRequest = {
     { name: "Pull-up", reps: "21-15-9", load: null },
   ],
   stimulus: "Short and all-out.",
+  intensity: 9,
 };
 
 const FREE_PDF = "https://library.crossfit.com/free/pdf/31_05_fooling_with_fran.pdf";
@@ -91,6 +92,7 @@ describe("findArticles", () => {
       "web_fetch_20260209",
     ]);
     expect(params.system).toContain("library.crossfit.com/free/pdf/");
+    expect(params.system).toContain("The stimulus and intensity (1 to 10) are the coach's");
     expect(JSON.parse(params.messages[0].content)).toEqual(fran);
   });
 
@@ -178,6 +180,11 @@ describe("articlesCacheKey", () => {
     expect(articlesCacheKey({ ...amrap, movements: amrap.movements.slice(1) })).not.toBe(
       articlesCacheKey(amrap),
     );
+  });
+
+  it("needs the same intensity too, which steers the pick", () => {
+    expect(articlesCacheKey({ ...fran, intensity: 3 })).not.toBe(articlesCacheKey(fran));
+    expect(articlesCacheKey({ ...amrap, intensity: 3 })).not.toBe(articlesCacheKey(amrap));
   });
 });
 

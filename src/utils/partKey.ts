@@ -28,5 +28,6 @@ export const wodEdited = (parts: WorkoutPartState[]) =>
   parts.some(
     (part) =>
       (part.parsedKey !== undefined && part.parsedKey !== partKey(part)) ||
-      part.stimulus.description !== part.originalStimulus,
+      part.stimulus.description !== part.originalStimulus ||
+      (part.originalIntensity !== undefined && part.stimulus.intensity !== part.originalIntensity),
   );

@@ -20,7 +20,7 @@ import { createFileCache } from "./fileCache";
 import { normalizeWodText } from "./wodCache";
 
 /** Bump when the prompt or schema changes, so old plans are made again. */
-export const PREP_CACHE_VERSION = 2;
+export const PREP_CACHE_VERSION = 3;
 
 /** A plan for the same workout is reused for a month, like videos and articles. */
 export const PREP_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -64,6 +64,8 @@ const SYSTEM = `You're an experienced CrossFit coach planning the start of a ${C
    Use simple drills a class can follow together without much explaining. Give its focus (what it prepares and why), a round scheme if it has one, each drill with its dose, and the equipment.
 
 2. skills: practice for skill movements only. These are gymnastics skills like rope climbs, toes-to-bar, muscle-ups, handstand push-ups and walks, double-unders, pistols and kipping or butterfly pull-ups, and technical lifts like the snatch or the clean and jerk. Simple movements (air squats, push-ups, running, rowing, burpees, box jumps, wall balls, kettlebell swings, deadlifts) never get skill practice. Return an empty list when there are none. At most two skills, the one that matters most for today first. For each, give progressions from the simplest step to the full movement: everyone starts at the first and moves on when they meet its advanceWhen, so the steps double as scaling options for the workout.
+
+Each part's stimulus and intensity (1 to 10) are the coach's, so take them as right, even where you'd read the workout differently, and plan for them: how heavy the build-up goes, how much the heart rate is raised, which skills matter. If a part's stimulus and intensity contradict each other (say "all-out sprint" at intensity 2), plan the warm-up for the harder of the two, since an athlete who's under-prepared is the one who gets hurt.
 
 Mind the equipment for 12 athletes at once. A typical gym has a barbell, a box and a jump rope for everyone, but only a few of the rest: about 4-6 rowers or bikes, 3-4 ropes, 4-6 sets of rings and limited rig space. When there isn't one each, plan for it: mix machines with a jog or jump rope, or rotate small groups and count the extra time. Only list equipment the plan really uses.
 

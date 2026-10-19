@@ -1,17 +1,21 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { StimulusCard } from "./StimulusCard";
 import { useUndoableText } from "@/hooks/useUndoableText";
 import { franPart } from "@/test/fixtures";
 
-function Harness() {
-  const stimulus = useUndoableText(franPart.stimulus.description);
+function Harness({ description = franPart.stimulus.description }: { description?: string }) {
+  const stimulus = useUndoableText(description);
+  const [intensity, setIntensity] = useState(franPart.stimulus.intensity);
   return (
     <StimulusCard
-      original={franPart.stimulus.description}
-      intensity={franPart.stimulus.intensity}
+      original={description}
+      intensity={intensity}
+      originalIntensity={franPart.stimulus.intensity}
+      onIntensityChange={setIntensity}
       stimulus={stimulus}
     />
   );
@@ -159,5 +163,81 @@ describe("StimulusCard", () => {
 
     await user.type(stimulusBox(), "{Enter}Line two{Enter}Line three");
     expect(stimulusBox().style.height).toBe("60px");
+  });
+
+  describe("intensity", () => {
+    const field = () => screen.getByRole("spinbutton", { name: "Intensity" });
+    const gauge = () => screen.getByRole("meter", { name: "Intensity" });
+
+    it("is a 1-10 field beside the gauge while editing", async () => {
+      const user = setup();
+      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+      await user.click(button("Edit stimulus"));
+      expect(field()).toHaveValue(9);
+      expect(field()).toHaveAttribute("min", "1");
+      expect(field()).toHaveAttribute("max", "10");
+      expect(field()).toHaveAttribute("step", "1");
+      expect(field()).toHaveClass("[appearance:textfield]");
+    });
+
+    it("moves the gauge as it's changed, and counts as an edit", async () => {
+      const user = setup();
+      await user.click(button("Edit stimulus"));
+      await user.clear(field());
+      await user.type(field(), "6");
+      expect(gauge()).toHaveAttribute("aria-valuenow", "6");
+      await user.click(button("Done"));
+      expect(screen.getByText("edited")).toBeInTheDocument();
+    });
+
+    it("only takes a whole number from 1 to 10", async () => {
+      const user = setup();
+      await user.click(button("Edit stimulus"));
+      for (const typed of ["11", "0", "2.5"]) {
+        await user.clear(field());
+        await user.type(field(), typed);
+        expect(screen.getByText("Use a whole number from 1 to 10.")).toBeInTheDocument();
+        expect(button("Done")).toBeDisabled();
+        // The gauge keeps the last whole number from 1 to 10 typed on the way.
+        expect(["11", "0", "2.5"]).not.toContain(gauge().getAttribute("aria-valuenow"));
+      }
+      await user.clear(field());
+      await user.type(field(), "10");
+      expect(button("Done")).toBeEnabled();
+      expect(gauge()).toHaveAttribute("aria-valuenow", "10");
+    });
+
+    it("goes back to how it was on Cancel, and to the parsed one on Revert", async () => {
+      const user = setup();
+      await user.click(button("Edit stimulus"));
+      await user.clear(field());
+      await user.type(field(), "4");
+      await user.click(button("Cancel"));
+      expect(gauge()).toHaveAttribute("aria-valuenow", "9");
+
+      await user.click(button("Edit stimulus"));
+      await user.clear(field());
+      await user.type(field(), "4");
+      await user.click(button("Done"));
+      await user.click(revert());
+      expect(gauge()).toHaveAttribute("aria-valuenow", "9");
+      expect(screen.queryByText("edited")).not.toBeInTheDocument();
+    });
+
+    it("asks which is right when the words and the number clearly disagree", async () => {
+      render(<Harness description="Super hard, all-out sprint." />);
+      const user = userEvent.setup();
+      expect(screen.queryByText(/Which is right/)).not.toBeInTheDocument();
+      await user.click(button("Edit stimulus"));
+      await user.clear(field());
+      await user.type(field(), "1");
+      expect(
+        screen.getByText(
+          /This stimulus sounds hard, but its intensity is 1 \(easy\)\. Which is right\?/,
+        ),
+      ).toBeInTheDocument();
+      // A hint, not a block.
+      expect(button("Done")).toBeEnabled();
+    });
   });
 });

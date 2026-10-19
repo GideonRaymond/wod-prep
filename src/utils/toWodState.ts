@@ -14,6 +14,7 @@ export function toWodState(wod: Wod): WodState {
       return withId({
         ...part,
         originalStimulus: part.stimulus.description,
+        originalIntensity: part.stimulus.intensity,
         parsedKey: key,
         boardKey: key,
         movements: part.movements.map(withId),

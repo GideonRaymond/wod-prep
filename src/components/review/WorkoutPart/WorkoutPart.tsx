@@ -53,6 +53,10 @@ export function WorkoutPart({ part, onChange }: WorkoutPartProps) {
       <StimulusCard
         original={part.originalStimulus}
         intensity={part.stimulus.intensity}
+        originalIntensity={part.originalIntensity}
+        onIntensityChange={(intensity) =>
+          onChange({ ...part, stimulus: { ...part.stimulus, intensity } })
+        }
         stimulus={stimulus}
       />
 
