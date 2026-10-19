@@ -26,6 +26,9 @@ export function ReviewPage() {
   return (
     <FlowPage
       step={STEP.review}
+      // The class step does what Confirm does, so it's open whenever Confirm is: back to the class
+      // as it was when nothing changed, or built afresh when something did.
+      reachable={wod && !missingStimulus ? STEP.class : undefined}
       board={
         wod && (
           <>

@@ -103,6 +103,26 @@ describe("ReviewPage", () => {
     expect(saved.wod.parts[0].stimulus.description).toBe(`${franPart.stimulus.description} Go!`);
   });
 
+  it("links on to the class from the stepper whenever it can be confirmed", async () => {
+    const user = renderPage(toWodState(strengthAndMetcon));
+    const progress = () => screen.getByRole("navigation", { name: "Progress" });
+    expect(within(progress()).getByRole("link", { name: "Class" })).toHaveAttribute(
+      "href",
+      "/workout",
+    );
+
+    const partB = screen.getByRole("region", { name: "Fran" });
+    await user.click(within(partB).getByRole("button", { name: "Edit stimulus" }));
+    await user.clear(within(partB).getByRole("textbox", { name: "Stimulus" }));
+    expect(within(progress()).queryByRole("link", { name: "Class" })).not.toBeInTheDocument();
+  });
+
+  it("has no class to link to without a workout", () => {
+    renderPage(null);
+    const progress = screen.getByRole("navigation", { name: "Progress" });
+    expect(within(progress).queryByRole("link", { name: "Class" })).not.toBeInTheDocument();
+  });
+
   it("goes to the class on Confirm", async () => {
     const user = renderPage();
     await user.click(screen.getByRole("button", { name: "Confirm workout" }));
