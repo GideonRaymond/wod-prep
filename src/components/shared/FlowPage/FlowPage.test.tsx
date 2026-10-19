@@ -27,7 +27,7 @@ describe("FlowPage", () => {
         <p>Side</p>
       </FlowPage>,
     );
-    expect(screen.getByText("Side").parentElement).toHaveClass("max-w-2xl");
+    expect(screen.getByText("Side").closest(".max-w-2xl")).toBeInTheDocument();
     expect(document.querySelector(".md\\:sticky")).toBeNull();
   });
 

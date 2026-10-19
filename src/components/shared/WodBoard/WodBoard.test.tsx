@@ -64,6 +64,18 @@ describe("WodBoard", () => {
     );
   });
 
+  it("writes a block on again when its text changes, like a redrawn part", () => {
+    const { rerender } = render(<WodBoard items={[squats, fran]} />);
+    const rewritten = { ...fran, lines: ["15-12-9 for time", "Thrusters 75/55 lb"] };
+    rerender(<WodBoard items={[squats, rewritten]} />);
+    expect(screen.getByText("15-12-9 for time").parentElement).toHaveClass(
+      "motion-safe:animate-rise-in",
+    );
+    expect(screen.getByText("A. Back Squat").parentElement).not.toHaveClass(
+      "motion-safe:animate-rise-in",
+    );
+  });
+
   it("draws a line where the next part goes while it's being written", () => {
     const { container, rerender } = render(<WodBoard items={[]} writing />);
     expect(screen.getByTestId("board-writing")).toHaveAttribute("aria-hidden");

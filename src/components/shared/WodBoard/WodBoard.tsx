@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState, type CSSProperties } from "react";
+import { useId, useRef, useState, ViewTransition, type CSSProperties } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { BoardFrame } from "@/components/shared/BoardFrame";
 import { Button } from "@/components/shared/Button";
@@ -59,8 +59,10 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
   const content = useRef<HTMLDivElement>(null);
   // The content's height, for the board to ease to (height: auto can't be animated).
   const height = useMeasuredHeight(content);
-  // Blocks already there when the board first shows don't animate; later ones are written on.
-  const [initial] = useState(() => new Set(items.map((item) => item.key)));
+  // What each block said when the board first showed: those don't animate, while blocks added or
+  // rewritten since are written on.
+  const [initial] = useState(() => new Map(items.map((item) => [item.key, textOf(item)])));
+  const writtenOn = (item: BoardItem) => initial.get(item.key) !== textOf(item);
   let part = 0;
   const inked = items.map((item) => ({
     item,
@@ -140,7 +142,7 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
                       nav.current === item.key && "outline-2 outline-purple-300",
                     )}
                   >
-                    <Block item={item} ink={ink} arriving={!initial.has(item.key)} />
+                    <Block item={item} ink={ink} writtenOn={writtenOn(item)} />
                   </button>
                 </li>
               ))}
@@ -148,7 +150,7 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
           ) : (
             <div className="space-y-3">
               {inked.map(({ item, ink }) => (
-                <Block key={item.key} item={item} ink={ink} arriving={!initial.has(item.key)} />
+                <Block key={item.key} item={item} ink={ink} writtenOn={writtenOn(item)} />
               ))}
               {writing && <WritingLine first={items.length === 0} />}
             </div>
@@ -182,25 +184,44 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
   );
 }
 
-function Block({ item, ink, arriving }: { item: BoardItem; ink: string; arriving: boolean }) {
+const textOf = (item: BoardItem) => [item.heading, ...item.lines].join("\n");
+
+/**
+ * One block: written on (rising in) when it's new or its text changed since the board showed.
+ * Between steps it's its own view transition, so it glides, appears or fades on its own while the
+ * board stays still.
+ */
+function Block({ item, ink, writtenOn }: { item: BoardItem; ink: string; writtenOn: boolean }) {
   return (
-    <div className={cn(item.added && ink, arriving && "motion-safe:animate-rise-in")}>
-      <p
-        className={cn(
-          markerFont.className,
-          "text-xl leading-[26px] tracking-[.01em]",
-          item.added && "text-lg",
-          ink,
-        )}
+    <ViewTransition
+      name={`board-${item.key.replace(/[^\w-]/g, "-")}`}
+      share="board-block"
+      enter="board-in"
+      exit="board-out"
+      default="none"
+    >
+      {/* Keyed by its text, so a rewrite plays the rise-in again. */}
+      <div
+        key={textOf(item)}
+        className={cn(item.added && ink, writtenOn && "motion-safe:animate-rise-in")}
       >
-        {item.heading}
-      </p>
-      {item.lines.map((line, i) => (
-        <p key={i} className={cn(handFont.className, "text-[17px] leading-[23px]")}>
-          {line}
+        <p
+          className={cn(
+            markerFont.className,
+            "text-xl leading-[26px] tracking-[.01em]",
+            item.added && "text-lg",
+            ink,
+          )}
+        >
+          {item.heading}
         </p>
-      ))}
-    </div>
+        {item.lines.map((line, i) => (
+          <p key={i} className={cn(handFont.className, "text-[17px] leading-[23px]")}>
+            {line}
+          </p>
+        ))}
+      </div>
+    </ViewTransition>
   );
 }
 

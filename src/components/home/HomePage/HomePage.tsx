@@ -10,7 +10,7 @@ import { Button } from "@/components/shared/Button";
 import { Dialog } from "@/components/shared/Dialog";
 import { FlowPage } from "@/components/shared/FlowPage";
 import { WodBoard } from "@/components/shared/WodBoard";
-import { STEP, WOD_STEPS } from "@/constants/flow";
+import { STEP, WOD_STEPS, stepTransition } from "@/constants/flow";
 import { useParseWod } from "@/hooks/useParseWod";
 import { partsBoard } from "@/utils/boardItems";
 import { wodEdited } from "@/utils/partKey";
@@ -42,7 +42,7 @@ export function HomePage() {
     router.prefetch(review);
     if (await parse(text)) {
       setOpening(true);
-      router.push(review);
+      router.push(review, { transitionTypes: stepTransition(STEP.workout, STEP.review) });
     }
   }
 
@@ -60,9 +60,7 @@ export function HomePage() {
           {reading && (
             <WodBoard {...partsBoard(progress.outline ?? [])} writing={!progress.outline} />
           )}
-          {/* Hidden, not unmounted, while parsing, so the text is still there if it fails. A
-              hidden Activity (unlike the hidden attribute) also stops its board counting as a
-              second board for the page transition. */}
+          {/* Hidden, not unmounted, while parsing, so the text is still there if it fails. */}
           <Activity mode={reading ? "hidden" : "visible"}>
             {/* Remount once the saved workout is read, so the text box starts with its text. */}
             <WodInputForm

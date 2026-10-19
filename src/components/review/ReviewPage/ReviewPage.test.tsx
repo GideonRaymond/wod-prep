@@ -113,7 +113,7 @@ describe("ReviewPage", () => {
   it("goes to the class on Confirm", async () => {
     const user = renderPage();
     await user.click(screen.getByRole("button", { name: "Confirm workout" }));
-    expect(push).toHaveBeenCalledWith("/workout");
+    expect(push).toHaveBeenCalledWith("/workout", { transitionTypes: ["nav-forward"] });
   });
 
   it("can't confirm while a stimulus is empty", async () => {

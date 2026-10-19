@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
+import { stepTransition } from "@/constants/flow";
 import { cn } from "@/utils/cn";
 
 export type Step = { label: string; href: string };
@@ -58,6 +59,7 @@ export function Stepper({ steps, current, reachable = current }: StepperProps) {
               {i !== current && i <= reachable ? (
                 <Link
                   href={step.href}
+                  transitionTypes={stepTransition(current, i)}
                   aria-label={state === "done" ? `${step.label} (done)` : undefined}
                   className="-m-1 flex items-center gap-2 rounded-md p-1 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-purple-600 dark:hover:bg-zinc-900"
                 >
