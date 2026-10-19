@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { ClipboardList, Flame, Lightbulb, Snowflake, Target, type LucideIcon } from "lucide-react";
 import { BeforeClass, beforeClassCounts } from "@/components/workout/BeforeClass";
 import { ClassStage, StageMarker } from "@/components/workout/ClassStage";
@@ -112,18 +113,18 @@ export function WorkoutPage() {
 
   const stages = wod ? classStages(wod, prep.plan) : [];
   const [open, setOpen] = useState<Record<string, boolean>>(INITIALLY_OPEN);
-  const current = useCurrentStage(stages.map((s) => s.key));
+  const { current, pin } = useCurrentStage(stages.map((s) => s.key));
 
   const isOpen = (key: string) => open[key] ?? false;
   const setAll = (value: boolean) => setOpen(Object.fromEntries(stages.map((s) => [s.key, value])));
+  /** Opens a stage, makes it the current one and scrolls to it, focusing its header. */
   function jump(key: string) {
-    setOpen((prev) => ({ ...prev, [key]: true }));
-    // Wait for the stage to open before scrolling to it and moving focus to its header.
-    requestAnimationFrame(() => {
-      const section = document.getElementById(`stage-${key}`);
-      section?.scrollIntoView?.({ behavior: "smooth", block: "start" });
-      section?.querySelector("button")?.focus({ preventScroll: true });
-    });
+    // Render it open first, so the scroll lands where the open stage is.
+    flushSync(() => setOpen((prev) => ({ ...prev, [key]: true })));
+    pin(key);
+    const section = document.getElementById(`stage-${key}`);
+    section?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    section?.querySelector("button")?.focus({ preventScroll: true });
   }
 
   const building = wod !== null && (phase === "loading" || phase === "leaving");
@@ -135,16 +136,13 @@ export function WorkoutPage() {
     ) : (
       <OvertimeNote minutes={minimumOvertime(wod.parts)} estimate="minimum" />
     ));
-  // Once the class shows, the board is its table of contents; Before class and the briefing
-  // aren't on it, so they're linked above it.
+  // Once the class shows, the board is its table of contents, with Before class and the
+  // briefing written on above the workout.
   const nav: BoardNav | undefined =
     wod && !building
       ? {
           current,
           currentLabel: stages.find((s) => s.key === current)?.label,
-          links: stages
-            .filter((s) => s.key === "pre" || s.key === "briefing")
-            .map((s) => ({ key: s.key, label: s.label })),
           onJump: jump,
           onExpandAll: () => setAll(true),
           onCollapseAll: () => setAll(false),
@@ -158,7 +156,10 @@ export function WorkoutPage() {
       board={
         wod && (
           <>
-            <WodBoard {...classBoard(wod.parts, prep.plan)} nav={nav} />
+            <WodBoard
+              {...classBoard(wod.parts, prep.plan, { sections: nav !== undefined })}
+              nav={nav}
+            />
             {/* On phones the board sticks to the top as a bar, so the note goes beside it. */}
             <div className={cn("mt-3", nav && "max-md:hidden")}>{overtime}</div>
             {building && (

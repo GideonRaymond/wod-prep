@@ -370,12 +370,22 @@ describe("WorkoutPage", () => {
     await user.click(boardLink(/^B\. Fran/));
     expect(stageToggle("Fran")).toHaveAttribute("aria-expanded", "true");
 
-    await user.click(
-      within(screen.getByRole("list", { name: "Before the board" })).getByRole("button", {
-        name: "Before class",
-      }),
-    );
+    // Before class and the briefing head the board, written on like the rest.
+    expect(boardLink(/^Before class/)).toHaveTextContent("Before class");
+    await user.click(stageToggle("Before class"));
+    expect(stageToggle("Before class")).toHaveAttribute("aria-expanded", "false");
+    await user.click(boardLink(/^Before class/));
     expect(stageToggle("Before class")).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("makes the picked block the current one, even one that can't scroll to the top", async () => {
+    const user = userEvent.setup();
+    renderPage(built(toWodState(strengthAndMetcon)));
+    expect(boardLink(/^Cool-down/)).not.toHaveAttribute("aria-current");
+    await user.click(boardLink(/^Cool-down/));
+    expect(boardLink(/^Cool-down/)).toHaveAttribute("aria-current", "location");
+    expect(stageToggle("Cool-down")).toHaveAttribute("aria-expanded", "true");
+    expect(stageToggle("Cool-down")).toHaveFocus();
   });
 
   it("has no Jump to button of its own; the whiteboard does that", () => {
@@ -416,6 +426,8 @@ describe("WorkoutPage", () => {
       .getAllByText(/./, { selector: ".font-permanent-marker" })
       .map((h) => h.textContent);
     expect(headings).toEqual([
+      "Before class",
+      "Briefing",
       "Warm-up – 10 min",
       "Skill: Pull-up – 11 min",
       "Fran",
