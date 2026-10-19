@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Activity, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ParseProgress } from "@/components/home/ParseProgress";
 import { Welcome } from "@/components/home/Welcome";
@@ -43,8 +43,10 @@ export function HomePage() {
       board={
         <>
           {loading && <WodBoard parts={progress.outline ?? []} writing={!progress.outline} />}
-          {/* Hidden, not unmounted, while parsing, so the text is still there if it fails. */}
-          <div hidden={loading}>
+          {/* Hidden, not unmounted, while parsing, so the text is still there if it fails. A
+              hidden Activity (unlike the hidden attribute) also stops its board counting as a
+              second board for the page transition. */}
+          <Activity mode={loading ? "hidden" : "visible"}>
             {/* Remount once the saved workout is read, so the text box starts with its text. */}
             <WodInputForm
               key={restored ? "restored" : "server"}
@@ -54,7 +56,7 @@ export function HomePage() {
               onSubmit={submit}
             />
             {error && <Alert className="mt-4">{error}</Alert>}
-          </div>
+          </Activity>
         </>
       }
     >
