@@ -31,20 +31,14 @@ const done: Omit<ClassProgress, "wod"> = {
 
 function renderScreen(wod: WodState, progress: Omit<ClassProgress, "wod">, onOpen = vi.fn()) {
   const view = render(
-    <LoadingScreen
-      wod={wod}
-      prep={progress.prep}
-      checklist={classChecklist({ wod, ...progress })}
-      onOpen={onOpen}
-    />,
+    <LoadingScreen checklist={classChecklist({ wod, ...progress })} onOpen={onOpen} />,
   );
-  const update = (next: Omit<ClassProgress, "wod">) =>
+  const update = (next: Omit<ClassProgress, "wod">, paused = false) =>
     view.rerender(
       <LoadingScreen
-        wod={wod}
-        prep={next.prep}
         checklist={classChecklist({ wod, ...next })}
         onOpen={onOpen}
+        paused={paused}
       />,
     );
   return { ...view, update };
@@ -57,32 +51,13 @@ describe("LoadingScreen", () => {
     cleanup();
   });
 
-  it("shows the workout on the board and the checklist beside it", () => {
+  it("shows the checklist under its heading", () => {
     renderScreen(withReading, building);
     expect(
       screen.getByRole("heading", { level: 1, name: "Building your class" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("A. Back Squat")).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Getting it ready" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Open your class" })).not.toBeInTheDocument();
-  });
-
-  it("adds the planned warm-up to the board once it's ready", () => {
-    const { update } = renderScreen(base, building);
-    expect(screen.queryByText("Warm-up", { selector: ".font-permanent-marker" })).toBeNull();
-    update(done);
-    expect(screen.getByText("Warm-up", { selector: ".font-permanent-marker" })).toBeInTheDocument();
-    expect(screen.getByText("Easy row – 2 min")).toBeInTheDocument();
-  });
-
-  it("shows a few videos and articles under the board as soon as they're found", () => {
-    renderScreen(base, building);
-    expect(screen.queryByRole("region", { name: "While you wait" })).not.toBeInTheDocument();
-    cleanup();
-
-    renderScreen(withReading, building);
-    expect(screen.getByRole("region", { name: "While you wait" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Pacing Fran/ })).toBeInTheDocument();
   });
 
   it("announces each step as it finishes, then that the class is ready", () => {
@@ -94,13 +69,13 @@ describe("LoadingScreen", () => {
     expect(live()).toHaveTextContent("Your class is ready");
   });
 
-  it("offers to open the class when it's ready, holding the countdown while reading", () => {
+  it("offers to open the class when it's ready, holding the countdown while paused", () => {
     const onOpen = vi.fn();
-    renderScreen(withReading, done, onOpen);
+    const { update } = renderScreen(withReading, done, onOpen);
     expect(screen.getByText("Your class is ready")).toBeInTheDocument();
     expect(screen.getByText("Opening in 7…")).toBeInTheDocument();
 
-    fireEvent.pointerEnter(screen.getByRole("region", { name: "While you wait" }));
+    update(done, true);
     expect(screen.getByText("Waiting for you")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Open your class" }));
@@ -110,7 +85,6 @@ describe("LoadingScreen", () => {
   it("leaves out the countdown when it shouldn't open on its own", () => {
     render(
       <LoadingScreen
-        wod={base}
         checklist={classChecklist({ wod: base, ...done })}
         onOpen={vi.fn()}
         autoOpen={false}
@@ -122,12 +96,7 @@ describe("LoadingScreen", () => {
 
   it("fades out on the way to the class", () => {
     const { container } = render(
-      <LoadingScreen
-        wod={base}
-        checklist={classChecklist({ wod: base, ...done })}
-        onOpen={vi.fn()}
-        leaving
-      />,
+      <LoadingScreen checklist={classChecklist({ wod: base, ...done })} onOpen={vi.fn()} leaving />,
     );
     expect(container.firstChild).toHaveClass("opacity-0");
   });
