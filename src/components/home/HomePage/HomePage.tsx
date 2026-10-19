@@ -14,6 +14,7 @@ import { STEP, WOD_STEPS, stepTransition } from "@/constants/flow";
 import { useParseWod } from "@/hooks/useParseWod";
 import { partsBoard } from "@/utils/boardItems";
 import { wodEdited } from "@/utils/partKey";
+import { reachableStep } from "@/utils/reachableStep";
 
 /**
  * The first step: write the workout on the whiteboard, beside a short welcome and the steps ahead.
@@ -54,7 +55,7 @@ export function HomePage() {
   return (
     <FlowPage
       step={STEP.workout}
-      reachable={wod ? STEP.review : undefined}
+      reachable={reachableStep(wod)}
       board={
         <>
           {reading && (

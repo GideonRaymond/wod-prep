@@ -11,6 +11,7 @@ import { STEP, WOD_STEPS, stepTransition } from "@/constants/flow";
 import { useWod } from "@/providers/WodProvider";
 import { partsBoard } from "@/utils/boardItems";
 import { boardOutdated } from "@/utils/partKey";
+import { reachableStep } from "@/utils/reachableStep";
 
 /**
  * The second step: check the parsed workout beside the whiteboard and fix anything that's off,
@@ -28,7 +29,7 @@ export function ReviewPage() {
       step={STEP.review}
       // The class step does what Confirm does, so it's open whenever Confirm is: back to the class
       // as it was when nothing changed, or built afresh when something did.
-      reachable={wod && !missingStimulus ? STEP.class : undefined}
+      reachable={reachableStep(wod)}
       board={
         wod && (
           <>
