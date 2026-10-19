@@ -77,6 +77,30 @@ describe("BeforeClass", () => {
     expect(screen.getByText("3 videos")).toBeInTheDocument();
   });
 
+  it("shows why a video was picked, when it says", () => {
+    render(
+      <BeforeClass
+        part={{
+          ...fran,
+          movements: [
+            {
+              ...fran.movements[0],
+              videos: [
+                {
+                  title: "Thruster cues",
+                  url: "https://example.com/t",
+                  reason: "Clear cues for the front rack and drive.",
+                },
+              ],
+            },
+            fran.movements[1],
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText("Clear cues for the front rack and drive.")).toBeInTheDocument();
+  });
+
   it("folds away and back", async () => {
     const user = userEvent.setup();
     render(<BeforeClass part={withReferences} />);

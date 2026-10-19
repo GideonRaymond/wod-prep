@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  searchMovementVideos: vi.fn(),
+  findVideos: vi.fn(),
   getCachedVideos: vi.fn(),
   cacheVideos: vi.fn(),
 }));
@@ -26,7 +26,7 @@ function post(body: unknown) {
 describe("POST /api/videos", () => {
   beforeEach(() => {
     vi.stubEnv("YOUTUBE_API_KEY", "yt-key");
-    mocks.searchMovementVideos.mockReset();
+    mocks.findVideos.mockReset();
     mocks.getCachedVideos.mockReset().mockResolvedValue(null);
     mocks.cacheVideos.mockReset().mockResolvedValue(undefined);
     vi.spyOn(console, "error").mockImplementation(() => {});
@@ -37,21 +37,21 @@ describe("POST /api/videos", () => {
   });
 
   it("searches, caches and returns the videos", async () => {
-    mocks.searchMovementVideos.mockResolvedValue(videos);
-    const res = await post({ name: " Thruster " });
+    mocks.findVideos.mockResolvedValue(videos);
+    const res = await post({ name: " Ring Muscle-up " });
 
     expect(res.status).toBe(200);
     expect(res.headers.get("X-Cache")).toBe("MISS");
     await expect(res.json()).resolves.toEqual({ videos });
-    expect(mocks.searchMovementVideos).toHaveBeenCalledWith("Thruster", "movement");
-    expect(mocks.cacheVideos).toHaveBeenCalledWith("Thruster", videos, "movement");
+    expect(mocks.findVideos).toHaveBeenCalledWith("Ring Muscle-up", "movement");
+    expect(mocks.cacheVideos).toHaveBeenCalledWith("Ring Muscle-up", videos, "movement");
   });
 
   it("searches and caches videos about a named workout separately", async () => {
-    mocks.searchMovementVideos.mockResolvedValue(videos);
+    mocks.findVideos.mockResolvedValue(videos);
     await post({ name: "Fran", kind: "workout" });
     expect(mocks.getCachedVideos).toHaveBeenCalledWith("Fran", "workout");
-    expect(mocks.searchMovementVideos).toHaveBeenCalledWith("Fran", "workout");
+    expect(mocks.findVideos).toHaveBeenCalledWith("Fran", "workout");
     expect(mocks.cacheVideos).toHaveBeenCalledWith("Fran", videos, "workout");
   });
 
@@ -59,14 +59,31 @@ describe("POST /api/videos", () => {
     expect((await post({ name: "Fran", kind: "article" })).status).toBe(400);
   });
 
+  it("returns the hand-picked video for a standard movement without searching or a key", async () => {
+    vi.stubEnv("YOUTUBE_API_KEY", "");
+    const res = await post({ name: "Thrusters" });
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.videos).toEqual([expect.objectContaining({ title: "The Thruster" })]);
+    expect(mocks.getCachedVideos).not.toHaveBeenCalled();
+    expect(mocks.findVideos).not.toHaveBeenCalled();
+  });
+
+  it("searches for a named workout even if it shares a movement's name", async () => {
+    mocks.findVideos.mockResolvedValue(videos);
+    await post({ name: "Ring Muscle-up", kind: "workout" });
+    expect(mocks.findVideos).toHaveBeenCalledWith("Ring Muscle-up", "workout");
+  });
+
   it("returns cached videos without searching, even without an API key", async () => {
     vi.stubEnv("YOUTUBE_API_KEY", "");
     mocks.getCachedVideos.mockResolvedValue(videos);
-    const res = await post({ name: "Thruster" });
+    const res = await post({ name: "Ring Muscle-up" });
 
     expect(res.headers.get("X-Cache")).toBe("HIT");
     await expect(res.json()).resolves.toEqual({ videos });
-    expect(mocks.searchMovementVideos).not.toHaveBeenCalled();
+    expect(mocks.findVideos).not.toHaveBeenCalled();
   });
 
   it.each([{}, { name: "" }, { name: 5 }])("rejects a missing name: %j", async (body) => {
@@ -79,29 +96,29 @@ describe("POST /api/videos", () => {
 
   it("explains a missing API key", async () => {
     vi.stubEnv("YOUTUBE_API_KEY", "");
-    const res = await post({ name: "Thruster" });
+    const res = await post({ name: "Ring Muscle-up" });
     expect(res.status).toBe(500);
     expect((await res.json()).error).toMatch(/YOUTUBE_API_KEY/);
   });
 
   it("explains when the daily quota is used up", async () => {
-    mocks.searchMovementVideos.mockRejectedValue(new YouTubeError("Quota", 403, "quotaExceeded"));
-    const res = await post({ name: "Thruster" });
+    mocks.findVideos.mockRejectedValue(new YouTubeError("Quota", 403, "quotaExceeded"));
+    const res = await post({ name: "Ring Muscle-up" });
     expect(res.status).toBe(429);
     expect((await res.json()).error).toMatch(/daily search limit/);
     expect(mocks.cacheVideos).not.toHaveBeenCalled();
   });
 
   it("explains a rejected API key", async () => {
-    mocks.searchMovementVideos.mockRejectedValue(new YouTubeError("Bad key", 400, "badRequest"));
-    const res = await post({ name: "Thruster" });
+    mocks.findVideos.mockRejectedValue(new YouTubeError("Bad key", 400, "badRequest"));
+    const res = await post({ name: "Ring Muscle-up" });
     expect(res.status).toBe(500);
     expect((await res.json()).error).toMatch(/rejected the API key/);
   });
 
   it("returns a generic error for anything else", async () => {
-    mocks.searchMovementVideos.mockRejectedValue(new Error("network down"));
-    const res = await post({ name: "Thruster" });
+    mocks.findVideos.mockRejectedValue(new Error("network down"));
+    const res = await post({ name: "Ring Muscle-up" });
     expect(res.status).toBe(502);
     expect((await res.json()).error).toBe("Something went wrong finding videos.");
   });

@@ -1,14 +1,19 @@
 import "server-only";
 import { z } from "zod";
+import { CURATED_VIDEOS } from "@/data/movementVideos";
 import { ReferenceVideosSchema, type ReferenceVideo, type VideoKind } from "@/schemas/videos";
 import { normalizeMovementName } from "@/utils/normalizeMovementName";
 import { createFileCache } from "./fileCache";
+import { rankVideos, type VideoCandidate } from "./rankVideos";
 
 /** Bump when the search or ranking changes, so old results are searched again. */
-export const VIDEOS_CACHE_VERSION = 2;
+export const VIDEOS_CACHE_VERSION = 3;
 
 /** How many videos to keep per search; the page shows fewer, but needs spares to avoid repeats. */
 export const VIDEOS_PER_SEARCH = 3;
+
+/** How many YouTube results to consider before picking. */
+const CANDIDATES_PER_SEARCH = 15;
 
 /** Longer videos are usually full workouts or livestreams, not movement demos. */
 const MAX_DURATION_SECONDS = 20 * 60;
@@ -27,6 +32,17 @@ const API = "https://www.googleapis.com/youtube/v3";
 export const VIDEOS_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 const CacheEntrySchema = z.object({ savedAt: z.number(), videos: ReferenceVideosSchema });
+
+const curated = new Map(
+  CURATED_VIDEOS.flatMap(({ names, video }) =>
+    names.map((name) => [normalizeMovementName(name), video] as const),
+  ),
+);
+
+/** The hand-picked video for a standard movement, if it has one. */
+export function findCuratedVideo(name: string): ReferenceVideo | null {
+  return curated.get(normalizeMovementName(name)) ?? null;
+}
 
 const cache = createFileCache("movement-videos", CacheEntrySchema);
 const cacheKey = (name: string, kind: VideoKind) =>
@@ -61,13 +77,23 @@ const SearchSchema = z.object({
   items: z.array(
     z.object({
       id: z.object({ videoId: z.string() }),
-      snippet: z.object({ title: z.string(), channelTitle: z.string() }),
+      snippet: z.object({
+        title: z.string(),
+        channelTitle: z.string(),
+        description: z.string().optional(),
+      }),
     }),
   ),
 });
 
 const DetailsSchema = z.object({
-  items: z.array(z.object({ id: z.string(), contentDetails: z.object({ duration: z.string() }) })),
+  items: z.array(
+    z.object({
+      id: z.string(),
+      contentDetails: z.object({ duration: z.string() }),
+      statistics: z.object({ viewCount: z.string().optional() }).optional(),
+    }),
+  ),
 });
 
 const ErrorSchema = z.object({
@@ -93,21 +119,48 @@ async function youtube<T>(endpoint: string, params: Record<string, string>, sche
 }
 
 /**
- * Searches YouTube for videos about a movement (or a named workout), best first: the official
- * CrossFit channel, then titles that name it, then YouTube's order. Livestreams and videos over
- * 20 minutes are skipped.
+ * Finds the best videos about a movement (or a named workout): YouTube's results, picked and
+ * explained by Claude. Without an Anthropic key, or if Claude fails, falls back to a simple
+ * ranking (official CrossFit channel, then titles naming the movement, then YouTube's order).
  */
-export async function searchMovementVideos(
+export async function findVideos(
   name: string,
   kind: VideoKind = "movement",
 ): Promise<ReferenceVideo[]> {
+  const candidates = await searchVideoCandidates(name, kind);
+  if (candidates.length === 0) return [];
+  const fallback = () => candidates.slice(0, VIDEOS_PER_SEARCH).map((c) => toReferenceVideo(c));
+  if (!process.env.ANTHROPIC_API_KEY) return fallback();
+
+  try {
+    const byId = new Map(candidates.map((candidate) => [candidate.id, candidate]));
+    const picked = new Set<string>();
+    return (await rankVideos(name, kind, candidates))
+      .filter(({ id }) => byId.has(id) && !picked.has(id) && picked.add(id))
+      .slice(0, VIDEOS_PER_SEARCH)
+      .map(({ id, reason }) => toReferenceVideo(byId.get(id)!, reason));
+  } catch (err) {
+    console.warn(`Ranking videos for "${name}" with Claude failed; using YouTube's order.`, err);
+    return fallback();
+  }
+}
+
+/**
+ * Searches YouTube for candidate videos, roughly best first (official CrossFit channel, then
+ * titles naming the movement, then YouTube's order). Livestreams and videos over 20 minutes are
+ * skipped.
+ */
+export async function searchVideoCandidates(
+  name: string,
+  kind: VideoKind = "movement",
+): Promise<VideoCandidate[]> {
   const search = await youtube(
     "search",
     {
       part: "snippet",
       type: "video",
       q: QUERIES[kind](name),
-      maxResults: "10",
+      maxResults: String(CANDIDATES_PER_SEARCH),
       safeSearch: "strict",
       relevanceLanguage: "en",
     },
@@ -118,37 +171,46 @@ export async function searchMovementVideos(
   const ids = search.items.map((item) => item.id.videoId);
   const details = await youtube(
     "videos",
-    { part: "contentDetails", id: ids.join(",") },
+    { part: "contentDetails,statistics", id: ids.join(",") },
     DetailsSchema,
   );
-  const seconds = new Map(
-    details.items.map((item) => [item.id, parseDuration(item.contentDetails.duration)]),
-  );
+  const detailsById = new Map(details.items.map((item) => [item.id, item]));
 
   return search.items
-    .filter((item) => {
-      const length = seconds.get(item.id.videoId);
-      return length !== undefined && length > 0 && length <= MAX_DURATION_SECONDS;
+    .flatMap((item): VideoCandidate[] => {
+      const detail = detailsById.get(item.id.videoId);
+      const seconds = detail ? parseDuration(detail.contentDetails.duration) : 0;
+      if (seconds <= 0 || seconds > MAX_DURATION_SECONDS) return [];
+      const views = detail?.statistics?.viewCount;
+      return [
+        {
+          id: item.id.videoId,
+          title: decodeEntities(item.snippet.title),
+          channel: item.snippet.channelTitle,
+          description: decodeEntities(item.snippet.description ?? ""),
+          seconds,
+          views: views === undefined ? null : Number(views),
+        },
+      ];
     })
-    .map((item, order) => ({ item, order, score: rankScore(item.snippet, name) }))
+    .map((candidate, order) => ({ candidate, order, score: rankScore(candidate, name) }))
     .sort((a, b) => b.score - a.score || a.order - b.order)
-    .map(({ item }) => item)
-    .slice(0, VIDEOS_PER_SEARCH)
-    .map((item) => ({
-      title: decodeEntities(item.snippet.title),
-      url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-      duration: formatDuration(seconds.get(item.id.videoId)!),
-    }));
+    .map(({ candidate }) => candidate);
+}
+
+function toReferenceVideo(candidate: VideoCandidate, reason?: string): ReferenceVideo {
+  return {
+    title: candidate.title,
+    url: `https://www.youtube.com/watch?v=${candidate.id}`,
+    duration: formatDuration(candidate.seconds),
+    ...(reason && { reason }),
+  };
 }
 
 /** Higher is better: the official channel counts most, then a title that names the movement. */
-export function rankScore(video: { title: string; channelTitle: string }, name: string) {
-  const official = video.channelTitle === PREFERRED_CHANNEL ? 2 : 0;
-  const named = normalizeMovementName(decodeEntities(video.title)).includes(
-    normalizeMovementName(name),
-  )
-    ? 1
-    : 0;
+export function rankScore(video: { title: string; channel: string }, name: string) {
+  const official = video.channel === PREFERRED_CHANNEL ? 2 : 0;
+  const named = normalizeMovementName(video.title).includes(normalizeMovementName(name)) ? 1 : 0;
   return official + named;
 }
 
