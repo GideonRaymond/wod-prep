@@ -398,16 +398,31 @@ describe("WorkoutPage", () => {
     expect(screen.getByRole("button", { name: /Jump to/ })).toHaveAttribute("aria-controls");
   });
 
-  it("expands and collapses every stage from the whiteboard", async () => {
+  it("expands every stage from beside the heading, then collapses them all", async () => {
     const user = userEvent.setup();
     renderPage(built(toWodState(strengthAndMetcon)));
-    await user.click(screen.getByRole("button", { name: /Jump to/ }));
-    await user.click(screen.getByRole("button", { name: "Expand all" }));
+    const heading = screen.getByRole("heading", { level: 1, name: "Your workout" });
+    const toggle = within(heading.parentElement!).getByRole("button", { name: "Expand all" });
+
+    await user.click(toggle);
     for (const name of ["Before class", "Briefing", "Heavy Back Squats", "Fran", "Cool-down"]) {
       expect(stageToggle(name)).toHaveAttribute("aria-expanded", "true");
     }
-    await user.click(screen.getByRole("button", { name: "Collapse all" }));
-    expect(stageToggle("Briefing")).toHaveAttribute("aria-expanded", "false");
+    expect(toggle).toHaveTextContent("Collapse all");
+
+    await user.click(toggle);
+    for (const name of ["Before class", "Briefing", "Fran"]) {
+      expect(stageToggle(name)).toHaveAttribute("aria-expanded", "false");
+    }
+    expect(toggle).toHaveTextContent("Expand all");
+  });
+
+  it("offers to expand all again once any stage is folded", async () => {
+    const user = userEvent.setup();
+    renderPage(built(toWodState(strengthAndMetcon)));
+    await user.click(screen.getByRole("button", { name: "Expand all" }));
+    await user.click(stageToggle("Fran"));
+    expect(screen.getByRole("button", { name: "Expand all" })).toBeInTheDocument();
   });
 
   it("is the last of three steps, with links back to the others", () => {

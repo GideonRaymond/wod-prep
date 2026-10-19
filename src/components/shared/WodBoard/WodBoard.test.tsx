@@ -190,13 +190,6 @@ describe("WodBoard", () => {
       expect(screen.getByRole("button", { name: /^Whiteboard/ })).toBeInTheDocument();
     });
 
-    it("can expand or collapse every section from the open board on phones", async () => {
-      const onExpandAll = vi.fn();
-      const { user } = renderNav({ onExpandAll });
-      await user.click(screen.getByRole("button", { name: "Expand all" }));
-      expect(onExpandAll).toHaveBeenCalled();
-    });
-
     it("has no Show all preview", () => {
       renderNav();
       expect(screen.queryByRole("button", { name: "Show all" })).not.toBeInTheDocument();

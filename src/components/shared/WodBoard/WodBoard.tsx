@@ -28,8 +28,6 @@ export type BoardNav = {
   /** Its name, for the folded board on phones. */
   currentLabel?: string;
   onJump: (key: string) => void;
-  onExpandAll?: () => void;
-  onCollapseAll?: () => void;
 };
 
 export type WodBoardProps = {
@@ -155,20 +153,6 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
                 <Block key={item.key} item={item} ink={ink} writtenOn={writtenOn(item)} />
               ))}
               {writing && <WritingLine first={items.length === 0} />}
-            </div>
-          )}
-          {nav && (nav.onExpandAll || nav.onCollapseAll) && (
-            <div className="mt-3 flex justify-between border-t border-zinc-200 pt-2 md:hidden">
-              {nav.onExpandAll && (
-                <Button variant="secondary" size="xs" onClick={nav.onExpandAll}>
-                  Expand all
-                </Button>
-              )}
-              {nav.onCollapseAll && (
-                <Button variant="secondary" size="xs" onClick={nav.onCollapseAll}>
-                  Collapse all
-                </Button>
-              )}
             </div>
           )}
         </div>
