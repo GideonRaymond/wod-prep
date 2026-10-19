@@ -21,6 +21,7 @@ import { ButtonLink } from "@/components/shared/ButtonLink";
 import { Card } from "@/components/shared/Card";
 import { CategoryBadge } from "@/components/shared/CategoryBadge";
 import { FlowPage } from "@/components/shared/FlowPage";
+import { OvertimeNote } from "@/components/shared/OvertimeNote";
 import { WodBoard } from "@/components/shared/WodBoard";
 import { MOCK_LOAD } from "@/constants/dev";
 import { STEP } from "@/constants/flow";
@@ -39,7 +40,9 @@ import type { WodState, WorkoutPartState } from "@/types/wod";
 import {
   allEquipment,
   classEnd,
+  classOvertime,
   isPlannedPart,
+  minimumOvertime,
   planClass,
   skillMinutes,
   type PlannedPart,
@@ -134,6 +137,15 @@ export function WorkoutPage() {
         wod && (
           <>
             <WodBoard parts={wod.parts} {...boardExtras(wod.parts, prep.plan)} />
+            {prep.plan ? (
+              <OvertimeNote minutes={classOvertime(wod, prep.plan)} className="mt-3" />
+            ) : (
+              <OvertimeNote
+                minutes={minimumOvertime(wod.parts)}
+                estimate="minimum"
+                className="mt-3"
+              />
+            )}
             {building && (
               <div className={cn(FADE, leaving && FADED)}>
                 <WhileYouWait references={waitingReferences(wod)} onReading={setReading} />
