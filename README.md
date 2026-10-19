@@ -31,7 +31,7 @@ After **Confirm workout**, the workout page shows a loading screen while the cla
   - The Workout row grows into this workout's own parts and skills, in class order. A part ticks off once its videos are found, and skills appear once the plan arrives.
   - **Timing the class** comes last, with every stage's start minute.
 - **While you wait:** under the whiteboard, up to 3 videos or articles as soon as they're found. Videos come first, because articles take the longest.
-- **Opening the class:** "Your class is ready" appears with **Open your class** and a 3-second countdown. The countdown pauses while the pointer or focus is on the reading list. Then the screen fades out, the class page's stages settle in 60 ms apart, and focus moves to the page heading.
+- **Opening the class:** "Your class is ready" appears with **Open your class** and a 7-second countdown. The countdown pauses while the pointer or focus is on the reading list. Then the screen fades out, the class page's stages settle in 60 ms apart, and focus moves to the page heading.
 - **Accessibility:** a polite live region announces each step ("Warm-up ready") and when the class is ready. With `prefers-reduced-motion`, nothing slides or fades.
 - **When it's skipped:** if everything is already there when the page opens (say, after a refresh), the class shows straight away.
 

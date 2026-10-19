@@ -80,7 +80,7 @@ describe("LoadingScreen", () => {
     const onOpen = vi.fn();
     renderScreen(withReading, done, onOpen);
     expect(screen.getByText("Your class is ready")).toBeInTheDocument();
-    expect(screen.getByText("Opening in 3…")).toBeInTheDocument();
+    expect(screen.getByText("Opening in 7…")).toBeInTheDocument();
 
     fireEvent.pointerEnter(screen.getByRole("region", { name: "While you wait" }));
     expect(screen.getByText("Waiting for you")).toBeInTheDocument();
