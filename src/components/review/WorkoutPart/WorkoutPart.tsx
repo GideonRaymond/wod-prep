@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useEffectEvent, useId } from "react";
-import { AddMovementForm } from "@/components/home/AddMovementForm";
-import { MovementCard } from "@/components/home/MovementCard";
-import { StimulusCard } from "@/components/home/StimulusCard";
+import { AddMovementForm } from "@/components/review/AddMovementForm";
+import { MovementCard } from "@/components/review/MovementCard";
+import { StimulusCard } from "@/components/review/StimulusCard";
 import { Badge } from "@/components/shared/Badge";
 import { FORMAT_LABELS } from "@/constants/wod";
 import { useUndoableText } from "@/hooks/useUndoableText";

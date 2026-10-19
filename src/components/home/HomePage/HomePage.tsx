@@ -1,56 +1,83 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ParseProgress } from "@/components/home/ParseProgress";
 import { WodInputForm } from "@/components/home/WodInputForm";
-import { WodSummary } from "@/components/home/WodSummary";
 import { Alert } from "@/components/shared/Alert";
 import { Button } from "@/components/shared/Button";
+import { Dialog } from "@/components/shared/Dialog";
+import { Stepper } from "@/components/shared/Stepper";
+import { STEP, WOD_STEPS } from "@/constants/flow";
 import { useParseWod } from "@/hooks/useParseWod";
+import { wodEdited } from "@/utils/partKey";
 
+/**
+ * The first step: paste a workout and break it down. While it's read, the whiteboard is written
+ * up beside a checklist; once it's read, the review page opens. Breaking down a new workout
+ * replaces the current one, so it asks first if that one has been edited.
+ */
 export function HomePage() {
   const router = useRouter();
-  const { wod, setWod, error, loading, progress, parsedText, restored, parse } = useParseWod();
-  const missingStimulus = wod?.parts.some((part) => !part.stimulus.description.trim());
+  const { wod, error, loading, progress, parsedText, restored, parse } = useParseWod();
+  // New text waiting for the go-ahead to replace an edited workout.
+  const [pending, setPending] = useState<string | null>(null);
+
+  async function breakDown(text: string) {
+    setPending(null);
+    if (await parse(text)) router.push(WOD_STEPS[STEP.review].href);
+  }
+
+  function submit(text: string) {
+    if (wod && wodEdited(wod.parts)) setPending(text);
+    else void breakDown(text);
+  }
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-12">
-      <h1 className="text-3xl font-bold tracking-tight">WOD Prep</h1>
-      <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-        Paste today&apos;s workout, check that everything looks right, then confirm it.
-      </p>
+    <main className="mx-auto w-full max-w-5xl px-4 py-8">
+      <Stepper steps={WOD_STEPS} current={STEP.workout} reachable={wod ? STEP.review : undefined} />
 
-      {/* Remount once the saved workout is read, so the text box starts with its text. */}
-      <WodInputForm
-        key={restored ? "restored" : "server"}
-        loading={loading}
-        parsedText={parsedText}
-        onSubmit={parse}
-      />
-
-      {error && <Alert className="mt-6">{error}</Alert>}
+      <div className="mt-8 max-w-2xl">
+        <h1 className="text-3xl font-bold tracking-tight">WOD Prep</h1>
+        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+          {loading
+            ? "Writing it up on the board. This takes a few seconds."
+            : "Paste today's workout and we'll break it down."}
+        </p>
+      </div>
 
       {loading && <ParseProgress progress={progress} />}
+      {/* Hidden, not unmounted, while parsing, so the text is still there if it fails. */}
+      <div hidden={loading} className="max-w-2xl">
+        {/* Remount once the saved workout is read, so the text box starts with its text. */}
+        <WodInputForm
+          key={restored ? "restored" : "server"}
+          loading={loading}
+          parsedText={parsedText}
+          continueTo={wod ? WOD_STEPS[STEP.review].href : undefined}
+          onSubmit={submit}
+        />
+        {error && <Alert className="mt-6">{error}</Alert>}
+      </div>
 
-      {wod && (
-        <>
-          <WodSummary wod={wod} onChange={setWod} />
-          <div className="mt-10 flex flex-col items-end gap-2 border-t border-zinc-200 pt-6 dark:border-zinc-800">
-            <Button
-              onClick={() => router.push("/workout")}
-              disabled={missingStimulus}
-              aria-describedby={missingStimulus ? "confirm-hint" : undefined}
-            >
-              Confirm workout
+      <Dialog
+        open={pending !== null}
+        title="Break down the new workout?"
+        onClose={() => setPending(null)}
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setPending(null)} data-autofocus>
+              Keep my changes
             </Button>
-            {missingStimulus && (
-              <p id="confirm-hint" className="text-subtle text-sm">
-                Every part needs a stimulus before you can confirm.
-              </p>
-            )}
-          </div>
-        </>
-      )}
+            <Button onClick={() => void breakDown(pending!)}>Break it down</Button>
+          </>
+        }
+      >
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          You&apos;ve made changes to the current workout. Breaking down the new one replaces it,
+          and your changes are lost.
+        </p>
+      </Dialog>
     </main>
   );
 }

@@ -31,11 +31,21 @@ const done: Omit<ClassProgress, "wod"> = {
 
 function renderScreen(wod: WodState, progress: Omit<ClassProgress, "wod">, onOpen = vi.fn()) {
   const view = render(
-    <LoadingScreen wod={wod} checklist={classChecklist({ wod, ...progress })} onOpen={onOpen} />,
+    <LoadingScreen
+      wod={wod}
+      prep={progress.prep}
+      checklist={classChecklist({ wod, ...progress })}
+      onOpen={onOpen}
+    />,
   );
   const update = (next: Omit<ClassProgress, "wod">) =>
     view.rerender(
-      <LoadingScreen wod={wod} checklist={classChecklist({ wod, ...next })} onOpen={onOpen} />,
+      <LoadingScreen
+        wod={wod}
+        prep={next.prep}
+        checklist={classChecklist({ wod, ...next })}
+        onOpen={onOpen}
+      />,
     );
   return { ...view, update };
 }
@@ -52,9 +62,17 @@ describe("LoadingScreen", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Building your class" }),
     ).toBeInTheDocument();
-    expect(screen.getByText(base.parts[0].sourceText.split("\n")[0])).toBeInTheDocument();
+    expect(screen.getByText("A. Back Squat")).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Getting it ready" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Open your class" })).not.toBeInTheDocument();
+  });
+
+  it("adds the planned warm-up to the board once it's ready", () => {
+    const { update } = renderScreen(base, building);
+    expect(screen.queryByText("Warm-up", { selector: ".font-permanent-marker" })).toBeNull();
+    update(done);
+    expect(screen.getByText("Warm-up", { selector: ".font-permanent-marker" })).toBeInTheDocument();
+    expect(screen.getByText("Easy row – 2 min")).toBeInTheDocument();
   });
 
   it("shows a few videos and articles under the board as soon as they're found", () => {

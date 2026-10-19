@@ -3,16 +3,21 @@ import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const { mockVideos, mockArticles, mockPrep } = vi.hoisted(() => ({
+const { mockVideos, mockArticles, mockPrep, mockBoards } = vi.hoisted(() => ({
   mockVideos: vi.fn(),
   mockArticles: vi.fn(),
   mockPrep: vi.fn(),
+  mockBoards: vi.fn(),
 }));
 vi.mock("@/services/videosApi", () => ({ requestMovementVideos: mockVideos }));
 vi.mock("@/services/articlesApi", () => ({ requestArticles: mockArticles }));
 vi.mock("@/services/classPrepApi", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/services/classPrepApi")>()),
   requestClassPrep: mockPrep,
+}));
+vi.mock("@/services/boardApi", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/boardApi")>()),
+  requestBoards: mockBoards,
 }));
 
 import { WorkoutPage } from "./WorkoutPage";
@@ -60,6 +65,7 @@ describe("WorkoutPage", () => {
     mockVideos.mockReset().mockResolvedValue([]);
     mockArticles.mockReset().mockResolvedValue([]);
     mockPrep.mockReset().mockResolvedValue({ warmup: null, skills: [] });
+    mockBoards.mockReset();
     // Hand over to the class at once instead of fading out.
     vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") }));
   });
@@ -68,14 +74,14 @@ describe("WorkoutPage", () => {
     vi.unstubAllGlobals();
   });
 
-  it("runs the class in order: Before class, Whiteboard, the parts, then Cool-down", () => {
+  it("runs the class in order: Before class, Briefing, the parts, then Cool-down", () => {
     renderPage(built(toWodState(strengthAndMetcon)));
     expect(screen.getByRole("heading", { level: 1, name: "Your workout" })).toBeInTheDocument();
     expect(screen.getAllByRole("region").map((r) => r.getAttribute("id"))).toHaveLength(5);
     const names = screen
       .getAllByRole("heading", { level: 2 })
       .map((h) => h.querySelector("[id]")?.textContent);
-    expect(names).toEqual(["Before class", "Whiteboard", "Heavy Back Squats", "Fran", "Cool-down"]);
+    expect(names).toEqual(["Before class", "Briefing", "Heavy Back Squats", "Fran", "Cool-down"]);
   });
 
   it("builds the class on the loading screen, then hands over to it", async () => {
@@ -87,7 +93,7 @@ describe("WorkoutPage", () => {
     const checklist = screen.getByRole("list", { name: "Getting it ready" });
     expect(within(checklist).getByText("Warm-up")).toBeInTheDocument();
     expect(within(checklist).getByText("Heavy Back Squats")).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Whiteboard" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Briefing" })).not.toBeInTheDocument();
 
     act(() => finishPrep(classPrep));
     expect(await screen.findByRole("button", { name: "Open your class" })).toBeVisible();
@@ -97,7 +103,7 @@ describe("WorkoutPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Open your class" }));
     const heading = await screen.findByRole("heading", { level: 1, name: "Your workout" });
     expect(heading).toHaveFocus();
-    expect(screen.getByRole("region", { name: "Whiteboard" })).toHaveClass(
+    expect(screen.getByRole("region", { name: "Briefing" })).toHaveClass(
       "motion-safe:animate-settle",
     );
   });
@@ -125,7 +131,7 @@ describe("WorkoutPage", () => {
   it("skips the loading screen when the class is already built", () => {
     renderPage(built(toWodState(strengthAndMetcon)));
     expect(screen.queryByText("Building your class")).not.toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Whiteboard" })).not.toHaveClass(
+    expect(screen.getByRole("region", { name: "Briefing" })).not.toHaveClass(
       "motion-safe:animate-settle",
     );
   });
@@ -139,7 +145,7 @@ describe("WorkoutPage", () => {
   it("opens Before class and the whiteboard, and folds the rest", () => {
     renderPage(built(toWodState(strengthAndMetcon)));
     expect(stageToggle("Before class")).toHaveAttribute("aria-expanded", "true");
-    expect(stageToggle("Whiteboard")).toHaveAttribute("aria-expanded", "true");
+    expect(stageToggle("Briefing")).toHaveAttribute("aria-expanded", "true");
     expect(stageToggle("Heavy Back Squats")).toHaveAttribute("aria-expanded", "false");
     expect(stageToggle("Fran")).toHaveAttribute("aria-expanded", "false");
     expect(stageToggle("Cool-down")).toHaveAttribute("aria-expanded", "false");
@@ -155,7 +161,7 @@ describe("WorkoutPage", () => {
 
   it("briefs the stimulus and lists the day's equipment on the whiteboard", () => {
     renderPage(built(toWodState(strengthAndMetcon)));
-    const board = screen.getByRole("region", { name: "Whiteboard" });
+    const board = screen.getByRole("region", { name: "Briefing" });
     expect(within(board).getAllByRole("meter", { name: "Intensity" })).toHaveLength(2);
     expect(within(board).getByRole("list", { name: "Equipment today" })).toHaveTextContent(
       "BarbellSquat rackPlatesPull-up barRower",
@@ -172,7 +178,7 @@ describe("WorkoutPage", () => {
       .map((h) => h.querySelector("[id]")?.textContent);
     expect(names).toEqual([
       "Before class",
-      "Whiteboard",
+      "Briefing",
       "Warm-up",
       "Heavy Back Squats",
       "Skill: Pull-up",
@@ -207,7 +213,7 @@ describe("WorkoutPage", () => {
     mockPrep.mockResolvedValue(classPrep);
     await renderAndOpen(toWodState(strengthAndMetcon));
     await screen.findByRole("region", { name: "Skill: Pull-up" });
-    const board = screen.getByRole("region", { name: "Whiteboard" });
+    const board = screen.getByRole("region", { name: "Briefing" });
     expect(within(board).getByRole("list", { name: "Equipment today" })).toHaveTextContent(
       "RowerBarbellPull-up barResistance bandSquat rackPlates",
     );
@@ -253,9 +259,7 @@ describe("WorkoutPage", () => {
     const wod = toWodState(strengthAndMetcon);
     wod.parts[1] = { ...wod.parts[1], stimulus: { ...wod.parts[1].stimulus, description: "Go!" } };
     renderPage(built(wod));
-    expect(
-      within(screen.getByRole("region", { name: "Whiteboard" })).getByText("Go!"),
-    ).toBeVisible();
+    expect(within(screen.getByRole("region", { name: "Briefing" })).getByText("Go!")).toBeVisible();
   });
 
   it("opens a part to show what you need and each movement", async () => {
@@ -369,16 +373,51 @@ describe("WorkoutPage", () => {
     renderPage(built(toWodState(strengthAndMetcon)));
     await user.click(screen.getByRole("button", { name: /Jump to/ }));
     await user.click(screen.getByRole("button", { name: "Expand all" }));
-    for (const name of ["Before class", "Whiteboard", "Heavy Back Squats", "Fran", "Cool-down"]) {
+    for (const name of ["Before class", "Briefing", "Heavy Back Squats", "Fran", "Cool-down"]) {
       expect(stageToggle(name)).toHaveAttribute("aria-expanded", "true");
     }
     await user.click(screen.getByRole("button", { name: "Collapse all" }));
-    expect(stageToggle("Whiteboard")).toHaveAttribute("aria-expanded", "false");
+    expect(stageToggle("Briefing")).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("links back to the review page", () => {
+  it("is the last of three steps, with links back to the others", () => {
     renderPage(built(toWodState(strengthAndMetcon)));
-    expect(screen.getByRole("link", { name: "Back to edit" })).toHaveAttribute("href", "/");
+    const progress = screen.getByRole("navigation", { name: "Progress" });
+    expect(within(progress).getByRole("link", { name: "Workout (done)" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+    expect(within(progress).getByRole("link", { name: "Check (done)" })).toHaveAttribute(
+      "href",
+      "/review",
+    );
+  });
+
+  it("shows the whiteboard above the class, with the planned warm-up and stretches", () => {
+    renderPage(built(toWodState(fran), classPrep));
+    const headings = screen
+      .getAllByText(/./, { selector: ".font-permanent-marker" })
+      .map((h) => h.textContent);
+    expect(headings).toEqual(["Warm-up", "Fran", "Cool-down"]);
+    expect(
+      screen
+        .getByText("Fran", { selector: ".font-permanent-marker" })
+        .compareDocumentPosition(screen.getByRole("region", { name: "Before class" })),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("redraws edited parts on the loading screen before the class opens", async () => {
+    let resolve: (boards: string[][]) => void = () => {};
+    mockBoards.mockReturnValue(new Promise((r) => (resolve = r)));
+    const [part] = built(toWodState(fran)).parts;
+    const edited = built({ parts: [{ ...part, rounds: "15-12-9" }] });
+    renderPage(edited);
+
+    expect(await screen.findByText("Redrawing it with your changes")).toBeInTheDocument();
+    expect(mockBoards.mock.calls[0][0].map((p: { id: string }) => p.id)).toEqual([part.id]);
+    await act(async () => resolve([["Fran", "15-12-9 for time"]]));
+    expect(await screen.findByText("Redrawn with your changes")).toBeInTheDocument();
+    expect(screen.getByText("15-12-9 for time")).toBeInTheDocument();
   });
 
   it("explains when there's no workout yet", () => {

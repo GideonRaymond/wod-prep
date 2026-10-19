@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/shared/Button";
+import { ButtonLink } from "@/components/shared/ButtonLink";
 import { CharacterCount } from "@/components/shared/CharacterCount";
 import { TextArea } from "@/components/shared/TextArea";
 import { EXAMPLE_WOD, MAX_WOD_LENGTH } from "@/constants/wod";
@@ -13,10 +14,12 @@ export type WodInputFormProps = {
    * until the text changes.
    */
   parsedText?: string | null;
+  /** Where to carry on with the current workout, offered while the text is unchanged. */
+  continueTo?: string;
   onSubmit: (text: string) => void;
 };
 
-export function WodInputForm({ loading, parsedText, onSubmit }: WodInputFormProps) {
+export function WodInputForm({ loading, parsedText, continueTo, onSubmit }: WodInputFormProps) {
   const [text, setText] = useState(parsedText ?? "");
   const tooLong = text.trim().length > MAX_WOD_LENGTH;
   const unchanged = parsedText != null && text.trim() === parsedText.trim();
@@ -51,6 +54,11 @@ export function WodInputForm({ loading, parsedText, onSubmit }: WodInputFormProp
           <Button variant="secondary" onClick={() => setText(EXAMPLE_WOD)}>
             Use example
           </Button>
+        )}
+        {unchanged && !loading && continueTo && (
+          <ButtonLink href={continueTo} variant="secondary">
+            Continue checking
+          </ButtonLink>
         )}
         {unchanged && !loading && (
           <p id="wod-unchanged" className="text-subtle text-sm">

@@ -46,6 +46,11 @@ export const WorkoutPartSchema = z.object({
   sourceText: z
     .string()
     .describe("The lines of the original text that belong to this part, copied exactly"),
+  board: z
+    .array(z.string())
+    .describe(
+      'The part as a coach writes it on the whiteboard, one short line each: a heading first (its label and name, e.g. "A. Back Squat", "Murph"), then the format or scheme and every movement with its reps and load, in order. Write a named workout out in full ("Murph" becomes "Murph", "For time", "1 mile run", "100 pull-ups", "200 push-ups", "300 air squats", "1 mile run"). Drop filler like "just" or "today we do"; keep reps and loads as written',
+    ),
   format: z.enum(["for_time", "amrap", "emom", "rounds", "intervals", "strength", "other"]),
   duration: z
     .string()
@@ -84,6 +89,7 @@ export const PartOutlineSchema = WorkoutPartSchema.pick({
   title: true,
   named: true,
   sourceText: true,
+  board: true,
 }).extend({
   kind: z
     .enum(PART_KINDS)
@@ -99,6 +105,7 @@ export const PartDetailsSchema = WorkoutPartSchema.omit({
   title: true,
   named: true,
   sourceText: true,
+  board: true,
 });
 
 export type Movement = z.infer<typeof MovementSchema>;

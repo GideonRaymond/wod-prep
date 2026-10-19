@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { partKey } from "./partKey";
 import { toWodState } from "./toWodState";
 import { strengthAndMetcon } from "@/test/fixtures";
 
@@ -15,5 +16,13 @@ describe("toWodState", () => {
     expect(parts.map((p) => p.originalStimulus)).toEqual(
       strengthAndMetcon.parts.map((p) => p.stimulus.description),
     );
+  });
+
+  it("remembers what each part was when parsed, which is also what its board shows", () => {
+    const { parts } = toWodState(strengthAndMetcon);
+    for (const part of parts) {
+      expect(part.parsedKey).toBe(partKey(part));
+      expect(part.boardKey).toBe(part.parsedKey);
+    }
   });
 });

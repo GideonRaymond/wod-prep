@@ -13,11 +13,19 @@ export type MovementItem = Movement & {
 };
 
 /** One part of a parsed WOD as held in UI state. */
-export type WorkoutPartState = Omit<WorkoutPart, "movements" | "minutes" | "equipment"> & {
+export type WorkoutPartState = Omit<
+  WorkoutPart,
+  "movements" | "minutes" | "equipment" | "board"
+> & {
   /** How long the part takes in class; missing on workouts saved before it was parsed. */
   minutes?: number | null;
   /** What members need for the part; missing on workouts saved before it was parsed. */
   equipment?: string[];
+  /** The whiteboard lines; missing on workouts saved before they were written (see WodBoard). */
+  board?: string[];
+  /** What the part was when parsed and when its board was drawn (see partKey). */
+  parsedKey?: string;
+  boardKey?: string;
   id: string;
   /** The stimulus description as parsed, to revert edits to. */
   originalStimulus: string;
@@ -37,3 +45,6 @@ export type WodState = {
 
 /** The current WOD and the text it was parsed from, as kept across refreshes. */
 export type SavedWod = { text: string; wod: WodState };
+
+/** A block the app writes on the whiteboard itself, like the planned warm-up. */
+export type BoardBlock = { heading: string; lines: string[] };

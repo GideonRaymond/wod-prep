@@ -19,6 +19,7 @@ const outlineOf = (part: WorkoutPart, kind: PartOutline["kind"] = "part"): PartO
   title: part.title,
   named: part.named,
   sourceText: part.sourceText,
+  board: part.board,
   kind,
 });
 

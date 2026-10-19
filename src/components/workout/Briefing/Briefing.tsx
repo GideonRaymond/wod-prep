@@ -5,7 +5,7 @@ import { EquipmentList } from "@/components/workout/EquipmentList";
 import { StageMarker } from "@/components/workout/ClassStage";
 import type { WorkoutPartState } from "@/types/wod";
 
-export type WhiteboardProps = {
+export type BriefingProps = {
   /** The workout parts, whose stimulus is briefed (not the warm-up or cool-down). */
   parts: WorkoutPartState[];
   /** Notes members should know, from any part. */
@@ -17,7 +17,7 @@ export type WhiteboardProps = {
 };
 
 /** The coach's briefing: the stimulus for each part, notes for members and the day's equipment. */
-export function Whiteboard({ parts, notes, equipment, markerFor }: WhiteboardProps) {
+export function Briefing({ parts, notes, equipment, markerFor }: BriefingProps) {
   return (
     <>
       <Card className="divide-y divide-zinc-100 py-0 dark:divide-zinc-800">
