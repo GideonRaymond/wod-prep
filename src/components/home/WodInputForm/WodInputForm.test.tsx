@@ -2,8 +2,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { WodInputForm } from "./WodInputForm";
-import { MAX_WOD_LENGTH } from "@/constants/wod";
+import { BOARD_PLACEHOLDER, WodInputForm } from "./WodInputForm";
+import { EXAMPLE_WOD, MAX_WOD_LENGTH } from "@/constants/wod";
 
 const textbox = () => screen.getByRole("textbox", { name: "Workout" });
 const submitButton = () => screen.getByRole("button", { name: "Break it down" });
@@ -119,7 +119,14 @@ describe("WodInputForm", () => {
 
   it("is written on the whiteboard, in handwriting", () => {
     setup();
-    expect(textbox()).toHaveClass("font-kalam");
+    expect(textbox()).toHaveClass("font-kalam", "placeholder:text-purple-300");
     expect(textbox().parentElement).toHaveClass("bg-[#fdfdfb]");
+  });
+
+  it("asks for the workout, with an example, while the board is empty", () => {
+    setup();
+    expect(textbox()).toHaveAttribute("placeholder", BOARD_PLACEHOLDER);
+    expect(BOARD_PLACEHOLDER).toMatch(/^Write your whiteboard, or paste it, here\. For example:/);
+    expect(BOARD_PLACEHOLDER).toContain(EXAMPLE_WOD);
   });
 });
