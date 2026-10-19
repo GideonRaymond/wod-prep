@@ -14,6 +14,15 @@ describe("useCurrentStage", () => {
     expect(result.current.current).toBe("pre");
   });
 
+  it("starts at the first stage when the stages only arrive later", () => {
+    const { result, rerender } = renderHook(({ keys }) => useCurrentStage(keys), {
+      initialProps: { keys: [] as string[] },
+    });
+    expect(result.current.current).toBeUndefined();
+    rerender({ keys: ["pre", "board"] });
+    expect(result.current.current).toBe("pre");
+  });
+
   it("follows the stage that scrolls into the top of the screen", () => {
     let report: IntersectionObserverCallback = () => {};
     const observe = vi.fn();
