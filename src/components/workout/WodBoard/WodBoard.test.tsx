@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { WodBoard } from "./WodBoard";
@@ -7,6 +7,7 @@ import { fran, strengthAndMetcon } from "@/test/fixtures";
 import { toWodState } from "@/utils/toWodState";
 
 const parts = toWodState(strengthAndMetcon).parts;
+const unnamed = parts.map((part) => ({ ...part, named: false }));
 
 describe("WodBoard", () => {
   afterEach(() => {
@@ -31,17 +32,23 @@ describe("WodBoard", () => {
     ]);
   });
 
-  it("circles every part once it's up, with its marker", async () => {
-    const { container } = render(<WodBoard parts={parts} />);
-    await waitFor(() => expect(container.querySelectorAll("[data-circled]")).toHaveLength(3));
-    expect(screen.getByText("A")).toBeInTheDocument();
-    expect(screen.getByText("B")).toBeInTheDocument();
-    expect(container.querySelector("svg.lucide-snowflake")).toBeInTheDocument();
+  it("heads the board with WOD when no part has a real name", () => {
+    render(<WodBoard parts={unnamed} />);
+    expect(screen.getByText("WOD")).toHaveClass("font-permanent-marker");
   });
 
-  it("marks a single-part workout WOD", () => {
+  it("leaves the heading to the workout's own text when it has a name", () => {
     render(<WodBoard parts={toWodState(fran).parts} />);
-    expect(screen.getByText("WOD")).toBeInTheDocument();
+    expect(screen.queryByText("WOD")).not.toBeInTheDocument();
+    render(<WodBoard parts={parts} />);
+    expect(screen.queryByText("WOD")).not.toBeInTheDocument();
+  });
+
+  it("has no label, markers or circles of its own", () => {
+    const { container } = render(<WodBoard parts={parts} />);
+    expect(screen.queryByText("Your workout")).not.toBeInTheDocument();
+    expect(screen.queryByText("A")).not.toBeInTheDocument();
+    expect(container.querySelector("svg")).not.toBeInTheDocument();
   });
 
   it("can show the whole board on phones", async () => {
