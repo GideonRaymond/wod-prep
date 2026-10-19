@@ -6,9 +6,11 @@ import { Button } from "@/components/shared/Button";
 import { ButtonLink } from "@/components/shared/ButtonLink";
 import { Card } from "@/components/shared/Card";
 import { FlowPage } from "@/components/shared/FlowPage";
+import { OvertimeNote } from "@/components/shared/OvertimeNote";
 import { WodBoard } from "@/components/shared/WodBoard";
 import { STEP, WOD_STEPS } from "@/constants/flow";
 import { useWod } from "@/providers/WodProvider";
+import { minimumOvertime } from "@/utils/classPlan";
 import { boardOutdated } from "@/utils/partKey";
 
 /**
@@ -34,6 +36,11 @@ export function ReviewPage() {
                 Your changes go on the board when you confirm.
               </p>
             )}
+            <OvertimeNote
+              minutes={minimumOvertime(wod.parts)}
+              estimate="minimum"
+              className="mt-3"
+            />
           </>
         )
       }

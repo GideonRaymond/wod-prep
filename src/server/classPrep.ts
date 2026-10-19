@@ -1,7 +1,12 @@
 import "server-only";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import { ClassPrepSchema, type ClassPrep, type PrepRequest } from "@/schemas/classPrep";
+import {
+  ClassPrepSchema,
+  WarmupPlanSchema,
+  type ClassPrep,
+  type PrepRequest,
+} from "@/schemas/classPrep";
 import {
   CLASS_MINUTES,
   MIN_WARMUP_MINUTES,
@@ -15,7 +20,7 @@ import { createFileCache } from "./fileCache";
 import { normalizeWodText } from "./wodCache";
 
 /** Bump when the prompt or schema changes, so old plans are made again. */
-export const PREP_CACHE_VERSION = 1;
+export const PREP_CACHE_VERSION = 2;
 
 /** A plan for the same workout is reused for a month, like videos and articles. */
 export const PREP_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -52,7 +57,7 @@ export function cachePrep(request: PrepRequest, prep: ClassPrep) {
 
 const SYSTEM = `You're an experienced CrossFit coach planning the start of a ${CLASS_MINUTES}-minute group class for about 12 athletes of mixed ability, with one coach. You get the day's parts, which of them are a programmed warm-up or cool-down, and how many minutes are left for your warm-up and skill practice. Plan:
 
-1. warmup (null when a warm-up is already programmed): general to specific, for today's movements and stimulus, in this order:
+1. warmup (null only when a warm-up is already programmed; otherwise always plan one, however full the class is): general to specific, for today's movements and stimulus, in this order:
    a. If time allows, about 2 minutes of easy cardio to warm the body up and get it ready to move (rower, bike, ski erg, an easy jog or jump rope).
    b. Dynamic stretching for the joints and muscles today's movements use (e.g. leg swings, inchworms, world's greatest stretch, arm circles). This has priority over the cardio: when time is short, drop the cardio, never the stretching.
    c. Today's movements at low intensity, building toward working intensity or loads.
@@ -67,7 +72,8 @@ Be realistic about time:
 - Then 12 athletes need enough reps with feedback from one coach. Allow at least 3 minutes per progression in total, more when equipment is shared: with 3-4 ropes or rings, athletes rotate in groups and each attempt takes 30-60 seconds.
 - Setting up and putting away equipment (ropes, rings, boxes, barbells, mats) takes 2-3 minutes whenever it changes; count that in setupMinutes.
 - A warm-up takes at least ${MIN_WARMUP_MINUTES} minutes; 10-12 is typical. A warm-up that also covers barbell work up to working loads takes longer.
-- Stay within the minutes available: the warm-up's minutes plus each skill's setupMinutes and progression minutes must add up to no more. When time is short, keep the warm-up and use fewer progressions or one skill. If there's no room for skill practice at all, return no skills and put one or two of its simplest drills in the warm-up instead. When the minutes available are unknown, assume about 15.
+- Stay within the minutes available when you can: the warm-up's minutes plus each skill's setupMinutes and progression minutes should add up to no more. When time is short, keep the warm-up and use fewer progressions or one skill. When the minutes available are unknown, assume about 15.
+- Safety comes before the clock. When there's little or no time (0 minutes means the workout alone fills the class), the class runs over and the coach is warned about it, so still plan what a safe and healthy class needs, as short as that allows: a warm-up of at least the minimum that builds to working loads for any loaded movement, and, for a skill movement not everyone can do safely, its essential progressions (the first steps double as the scaling options). Leave out everything else.
 
 Write plainly and briefly, like a coach's plan, with doses like "3 × 5 reps", "2 × 30 s" or "3 attempts".`;
 
@@ -79,10 +85,15 @@ export async function planPrep(request: PrepRequest): Promise<ClassPrep> {
   const programmedWarmup = request.parts.some((part) => stageKind(part) === "warmup");
   const budget = prepBudget(request.parts);
 
+  // Without a programmed warm-up, the plan must have one, however full the class is.
+  const schema = programmedWarmup
+    ? ClassPrepSchema
+    : ClassPrepSchema.extend({ warmup: WarmupPlanSchema });
+
   const response = await anthropic.beta.messages.parse({
     model: MODEL,
     max_tokens: 16000,
-    output_config: { effort: "medium", format: betaZodOutputFormat(ClassPrepSchema) },
+    output_config: { effort: "medium", format: betaZodOutputFormat(schema) },
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",
     system: SYSTEM,

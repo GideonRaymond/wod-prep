@@ -5,8 +5,10 @@ import {
   WRAP_UP_MINUTES,
   allEquipment,
   classEnd,
+  classOvertime,
   fitPrep,
   isPlannedPart,
+  minimumOvertime,
   partForSkill,
   planClass,
   prepBudget,
@@ -15,7 +17,8 @@ import {
   type PlannedStage,
 } from "./classPlan";
 import type { ClassPrep, SkillBlock } from "@/schemas/classPrep";
-import { classPrep, strengthAndMetcon } from "@/test/fixtures";
+import { classPrep, fran, strengthAndMetcon } from "@/test/fixtures";
+import type { WodState } from "@/types/wod";
 import { toWodState } from "./toWodState";
 
 const wod = toWodState(strengthAndMetcon);
@@ -192,22 +195,32 @@ describe("fitPrep", () => {
     expect(steps(fitted)).toEqual([["Rope Climb 1", "Rope Climb 2"]]);
   });
 
-  it("drops a skill that doesn't fit at all, and any after it", () => {
-    const plan = prep(skill("Rope Climb", 3, 4, 5), skill("Toes-to-Bar", 1, 3, 4));
+  it("drops a later skill that doesn't fit at all, and any after it", () => {
+    const plan = prep(
+      skill("Rope Climb", 3, 4, 5),
+      skill("Toes-to-Bar", 1, 3, 4),
+      skill("Double-Under", 1, 3),
+    );
+    // 10 + 12 leaves 2: too little for Toes-to-Bar, so Double-Unders don't get a turn either.
     expect(steps(fitPrep(plan, 24, { programmedWarmup: false }))).toEqual([
       ["Rope Climb 1", "Rope Climb 2"],
     ]);
-    expect(steps(fitPrep(plan, 12, { programmedWarmup: false }))).toEqual([]);
   });
 
-  it("drops practice too short to be worth setting up", () => {
-    const fitted = fitPrep(prep(skill("Rope Climb", 1, 3)), 30, { programmedWarmup: false });
-    expect(fitted.skills).toEqual([]);
+  it("drops a later skill too short to be worth setting up", () => {
+    const plan = prep(skill("Rope Climb", 3, 4), skill("Toes-to-Bar", 1, 3));
+    expect(steps(fitPrep(plan, 30, { programmedWarmup: false }))).toEqual([["Rope Climb 1"]]);
   });
 
-  it("keeps the warm-up even when the class is full", () => {
-    const fitted = fitPrep(prep(skill("Rope Climb", 3, 4)), -5, { programmedWarmup: false });
-    expect(fitted).toEqual({ warmup: classPrep.warmup, skills: [] });
+  it("keeps the most important skill's first steps when the class runs over", () => {
+    const plan = prep(skill("Rope Climb", 3, 4, 5), skill("Toes-to-Bar", 1, 3, 4));
+    expect(steps(fitPrep(plan, 12, { programmedWarmup: false }))).toEqual([["Rope Climb 1"]]);
+  });
+
+  it("keeps the warm-up and the first skill's first step even when the class is full", () => {
+    const fitted = fitPrep(prep(skill("Rope Climb", 3, 4, 5)), -5, { programmedWarmup: false });
+    expect(fitted.warmup).toEqual(classPrep.warmup);
+    expect(steps(fitted)).toEqual([["Rope Climb 1"]]);
   });
 
   it("drops the planned warm-up when one is programmed, giving its time to skills", () => {
@@ -244,5 +257,51 @@ describe("allEquipment", () => {
         {},
       ]),
     ).toEqual(["Barbell", "Plates", "Pull-up bar"]);
+  });
+});
+
+describe("classOvertime", () => {
+  const franParts = toWodState(fran).parts;
+  const lasting = (minutes: number): WodState => ({
+    parts: franParts.map((part) => ({ ...part, minutes })),
+  });
+
+  it("is 0 when the class fits, wrap-up included", () => {
+    // 5 whiteboard + 10 warm-up + 40 + 5 wrap-up = 60
+    expect(classOvertime(lasting(40), { warmup: classPrep.warmup, skills: [] })).toBe(0);
+  });
+
+  it("counts the minutes past the class, wrap-up included", () => {
+    // 5 + 10 + 70 + 5 = 90
+    expect(classOvertime(lasting(70), { warmup: classPrep.warmup, skills: [] })).toBe(
+      90 - CLASS_MINUTES,
+    );
+  });
+
+  it("is unknown when a length is", () => {
+    expect(classOvertime(lasting(0), null)).toBeNull();
+  });
+});
+
+describe("minimumOvertime", () => {
+  const part = { label: null, minutes: 70 };
+
+  it("is how far the workout and the shortest warm-up run past the class", () => {
+    // 5 + 8 + 70 + 5 = 88
+    expect(minimumOvertime([part])).toBe(88 - CLASS_MINUTES);
+    expect(minimumOvertime([{ ...part, minutes: 30 }])).toBe(0);
+  });
+
+  it("doesn't add a warm-up when one is programmed", () => {
+    expect(
+      minimumOvertime([
+        { label: "Warm-up", minutes: 10 },
+        { ...part, minutes: 40 },
+      ]),
+    ).toBe(0);
+  });
+
+  it("is unknown when a length is", () => {
+    expect(minimumOvertime([{ ...part, minutes: null }])).toBeNull();
   });
 });

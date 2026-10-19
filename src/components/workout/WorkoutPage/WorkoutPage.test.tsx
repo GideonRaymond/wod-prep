@@ -406,6 +406,19 @@ describe("WorkoutPage", () => {
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
+  it("warns under the board when the planned class runs over, keeping the warm-up", () => {
+    const [part] = toWodState(fran).parts;
+    renderPage(built({ parts: [{ ...part, minutes: 70 }] }, classPrep));
+    // 5 whiteboard + 10 warm-up + 11 pull-up practice + 70 + 5 wrap-up = 101
+    expect(screen.getByText(/This class runs 41 min over the 60-minute class/)).toBeInTheDocument();
+    expect(screen.getByText("Warm-up – 10 min")).toBeInTheDocument();
+  });
+
+  it("has no warning for a class that fits", () => {
+    renderPage(built(toWodState(fran), classPrep));
+    expect(screen.queryByText(/over the 60-minute class/)).not.toBeInTheDocument();
+  });
+
   it("keeps the same board in place from the loading screen into the class", async () => {
     renderPage(toWodState(fran));
     const board = screen.getByText("21-15-9 for time");

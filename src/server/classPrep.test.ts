@@ -76,11 +76,28 @@ describe("planPrep", () => {
     expect(prep.warmup).toBeNull();
   });
 
-  it("trims skill practice that doesn't fit the class", async () => {
+  it("trims skill practice that doesn't fit the class down to its first step", async () => {
     mockParse.mockResolvedValue(answer(classPrep));
-    // 60 - 5 - 36 - 5 = 14 left: the 10 min warm-up stays, the 11 min pull-up practice can't fit.
+    // 60 - 5 - 36 - 5 = 14 left: the 10 min warm-up stays, and the 11 min pull-up practice keeps
+    // only its first step, the scaling option, though that runs a little over.
     const prep = await planPrep({ parts: [{ ...ropeAmrap, minutes: 36 }] });
-    expect(prep).toEqual({ warmup: classPrep.warmup, skills: [] });
+    expect(prep.warmup).toEqual(classPrep.warmup);
+    expect(prep.skills.map((s) => s.progressions.map((p) => p.name))).toEqual([["Kip swing"]]);
+  });
+
+  it("requires a warm-up unless one is programmed, and puts safety before the clock", async () => {
+    mockParse.mockResolvedValue(answer(classPrep));
+    await planPrep({ parts: [{ ...ropeAmrap, minutes: 70 }] });
+    const params = mockParse.mock.calls[0][0];
+    expect(sent().minutesForWarmupAndSkills).toBe(0);
+    expect(params.system).toContain("Safety comes before the clock");
+    expect(params.output_config.format.schema.required).toContain("warmup");
+    expect(params.output_config.format.schema.properties.warmup.anyOf).toBeUndefined();
+
+    mockParse.mockClear();
+    await planPrep({ parts: [{ ...ropeAmrap, label: "Warm-up" }, ropeAmrap] });
+    const programmed = mockParse.mock.calls[0][0].output_config.format.schema;
+    expect(JSON.stringify(programmed.properties.warmup)).toContain("null");
   });
 
   it("throws a clear error when Claude declines or the plan can't be read", async () => {

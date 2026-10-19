@@ -2,7 +2,14 @@ import type { ClassPrep, SkillBlock, WarmupPlan } from "@/schemas/classPrep";
 import type { WodState, WorkoutPartState } from "@/types/wod";
 import { normalizeMovementName } from "./normalizeMovementName";
 
-/** How long a class runs. */
+/**
+ * How long a class runs.
+ *
+ * TODO(settings): make this a setting, so a box can set the time it gives a class (e.g. 45, 60 or
+ * 90 minutes). Everything that times the class reads it from here: the time left for the warm-up
+ * and skills, the cool-down's minutes on the board and the over-time warning (classOvertime),
+ * so the warning then shows whenever a class runs longer than the time set.
+ */
 export const CLASS_MINUTES = 60;
 
 /** Minutes the coach spends on the whiteboard before the first part starts. */
@@ -62,10 +69,12 @@ export function prepBudget(parts: Pick<WorkoutPartState, "label" | "minutes">[])
 }
 
 /**
- * Makes a planned start of class fit the time there is. The warm-up is kept (dropped when one is
- * programmed). Skills follow in order of importance: one that doesn't fit loses its last, hardest
- * progressions until it does, and is dropped when less than MIN_SKILL_MINUTES would be left.
- * With an unknown budget, the plan is kept as it is.
+ * Makes a planned start of class fit the time there is, without giving up what keeps it safe. The
+ * warm-up is always kept (dropped when one is programmed). Skills follow in order of importance:
+ * one that doesn't fit loses its last, hardest progressions until it does. The most important
+ * skill is kept even when the class runs over, down to its first progression, since its first
+ * steps are the scaling options; any other skill is dropped when it doesn't fit or less than
+ * MIN_SKILL_MINUTES would be left. With an unknown budget, the plan is kept as it is.
  */
 export function fitPrep(
   prep: ClassPrep,
@@ -77,13 +86,13 @@ export function fitPrep(
 
   let left = budget - (warmup?.minutes ?? 0);
   const skills: SkillBlock[] = [];
-  for (const skill of prep.skills) {
+  for (const [i, skill] of prep.skills.entries()) {
     let fitted = skill;
     while (skillMinutes(fitted) > left && fitted.progressions.length > 1) {
       fitted = { ...fitted, progressions: fitted.progressions.slice(0, -1) };
     }
     const minutes = skillMinutes(fitted);
-    if (minutes > left || minutes < MIN_SKILL_MINUTES) break;
+    if (i > 0 && (minutes > left || minutes < MIN_SKILL_MINUTES)) break;
     skills.push(fitted);
     left -= minutes;
   }
@@ -181,4 +190,29 @@ export function allEquipment(parts: Pick<WorkoutPartState, "equipment">[]): stri
     items.push(item.trim());
   }
   return items;
+}
+
+const hasStage = (parts: Pick<WorkoutPartState, "label">[], kind: StageKind) =>
+  parts.some((part) => stageKind(part) === kind);
+
+/**
+ * How many minutes the planned class runs past CLASS_MINUTES, counting the wrap-up a class without
+ * a cool-down needs: 0 when it fits, null when a length along the way is unknown.
+ */
+export function classOvertime(wod: WodState, prep?: ClassPrep | null): number | null {
+  const end = classEnd(planClass(wod, prep));
+  if (end === null) return null;
+  const wrapUp = hasStage(wod.parts, "cooldown") ? 0 : WRAP_UP_MINUTES;
+  return Math.max(end + wrapUp - CLASS_MINUTES, 0);
+}
+
+/**
+ * Before the warm-up is planned: the least the class will run past CLASS_MINUTES once it has one
+ * (a programmed one is already counted). 0 when there's room, null when a length is unknown.
+ */
+export function minimumOvertime(parts: Pick<WorkoutPartState, "label" | "minutes">[]) {
+  const budget = prepBudget(parts);
+  if (budget === null) return null;
+  const warmup = hasStage(parts, "warmup") ? 0 : MIN_WARMUP_MINUTES;
+  return Math.max(warmup - budget, 0);
 }
