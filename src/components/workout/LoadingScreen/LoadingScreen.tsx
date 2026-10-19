@@ -1,77 +1,51 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { BoardLayout } from "@/components/shared/BoardLayout";
+import { useEffect, useRef } from "react";
 import { Checklist, type ChecklistItem } from "@/components/shared/Checklist";
 import { ReadyToOpen } from "@/components/workout/ReadyToOpen";
-import { WhileYouWait } from "@/components/workout/WhileYouWait";
-import { WodBoard } from "@/components/shared/WodBoard";
-import type { ClassPrep } from "@/schemas/classPrep";
-import type { WodState } from "@/types/wod";
-import { boardExtras } from "@/utils/boardExtras";
 import { cn } from "@/utils/cn";
-import { waitingReferences } from "./waitingReferences";
 
 export type LoadingScreenProps = {
-  wod: WodState;
-  /** The planned warm-up and skills, once they're ready, so the warm-up goes on the board. */
-  prep?: ClassPrep | null;
   /** The checklist so far (see classChecklist); `ready` once everything is done. */
   checklist: { items: ChecklistItem[]; ready: boolean };
   onOpen: () => void;
+  /** Someone is reading the links under the board: hold the countdown. */
+  paused?: boolean;
   /** Fading out, on the way to the class page. */
   leaving?: boolean;
   /** Count down to the class once it's ready (off in mock mode, so it waits for the button). */
   autoOpen?: boolean;
-  className?: string;
 };
 
 /**
- * What members see while the class is built: the workout on the whiteboard (with the planned
- * warm-up and suggested stretches added as they're known), a checklist that grows from the fixed
- * structure into this workout's own parts and skills, a few videos and articles under the board as
- * soon as they're found, and, once everything is ready, a short countdown to the class.
- * A polite live region announces each step as it finishes.
+ * What members see beside the whiteboard while the class is built: a checklist that grows from
+ * the fixed structure into this workout's own parts and skills and, once everything is ready, a
+ * short countdown to the class. A polite live region announces each step as it finishes.
  */
 export function LoadingScreen({
-  wod,
-  prep = null,
   checklist,
   onOpen,
+  paused = false,
   leaving = false,
   autoOpen = true,
-  className,
 }: LoadingScreenProps) {
-  const [reading, setReading] = useState(false);
   const live = useAnnouncements(checklist);
 
   return (
     <div
       className={cn(
         "motion-safe:transition motion-safe:duration-400",
-        className,
         leaving && "pointer-events-none -translate-y-2 opacity-0",
       )}
     >
       <p ref={live} aria-live="polite" className="sr-only" />
       <h1 className="text-3xl font-bold tracking-tight">Building your class</h1>
-      <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mt-2 mb-6 text-zinc-600 dark:text-zinc-400">
         This takes about half a minute. Everything appears as soon as it&apos;s ready.
       </p>
-
-      <BoardLayout
-        className="mt-6"
-        board={
-          <>
-            <WodBoard parts={wod.parts} {...boardExtras(wod.parts, prep)} />
-            <WhileYouWait references={waitingReferences(wod)} onReading={setReading} />
-          </>
-        }
-      >
-        <h2 className="mb-2 text-sm font-semibold">Getting it ready</h2>
-        <Checklist items={checklist.items} label="Getting it ready" />
-        {checklist.ready && <ReadyToOpen onOpen={onOpen} paused={reading} autoOpen={autoOpen} />}
-      </BoardLayout>
+      <h2 className="mb-2 text-sm font-semibold">Getting it ready</h2>
+      <Checklist items={checklist.items} label="Getting it ready" />
+      {checklist.ready && <ReadyToOpen onOpen={onOpen} paused={paused} autoOpen={autoOpen} />}
     </div>
   );
 }

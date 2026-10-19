@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -393,17 +393,37 @@ describe("WorkoutPage", () => {
     );
   });
 
-  it("shows the whiteboard above the class, with the planned warm-up and stretches", () => {
+  it("shows the whiteboard beside the class, with the warm-up and cool-down on one line each", () => {
     renderPage(built(toWodState(fran), classPrep));
     const headings = screen
       .getAllByText(/./, { selector: ".font-permanent-marker" })
       .map((h) => h.textContent);
-    expect(headings).toEqual(["Warm-up", "Fran", "Cool-down"]);
+    expect(headings).toEqual(["Warm-up – 10 min", "Fran", expect.stringMatching(/^Cool-down/)]);
+    expect(screen.queryByText("Easy row – 2 min")).not.toBeInTheDocument();
+    const board = screen.getByText("Fran", { selector: ".font-permanent-marker" });
     expect(
-      screen
-        .getByText("Fran", { selector: ".font-permanent-marker" })
-        .compareDocumentPosition(screen.getByRole("region", { name: "Before class" })),
+      board.compareDocumentPosition(screen.getByRole("region", { name: "Before class" })),
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("keeps the same board in place from the loading screen into the class", async () => {
+    renderPage(toWodState(fran));
+    const board = screen.getByText("21-15-9 for time");
+    await userEvent.click(await screen.findByRole("button", { name: "Open your class" }));
+    await screen.findByRole("heading", { level: 1, name: "Your workout" });
+    expect(screen.getByText("21-15-9 for time")).toBe(board);
+  });
+
+  it("shows links under the board while it builds, holding the countdown while they're read", async () => {
+    mockArticles.mockResolvedValue([{ title: "Pacing Fran", url: "https://example.com/a" }]);
+    renderPage(toWodState(fran));
+    const links = await screen.findByRole("region", { name: "While you wait" });
+    expect(await screen.findByText(/Opening in/)).toBeInTheDocument();
+
+    fireEvent.pointerEnter(links);
+    expect(screen.getByText("Waiting for you")).toBeInTheDocument();
+    fireEvent.pointerLeave(links);
+    expect(screen.getByText(/Opening in/)).toBeInTheDocument();
   });
 
   it("redraws edited parts on the loading screen before the class opens", async () => {

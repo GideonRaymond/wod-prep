@@ -2,11 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { WodSummary } from "@/components/review/WodSummary";
-import { BoardLayout } from "@/components/shared/BoardLayout";
 import { Button } from "@/components/shared/Button";
 import { ButtonLink } from "@/components/shared/ButtonLink";
 import { Card } from "@/components/shared/Card";
-import { Stepper } from "@/components/shared/Stepper";
+import { FlowPage } from "@/components/shared/FlowPage";
 import { WodBoard } from "@/components/shared/WodBoard";
 import { STEP, WOD_STEPS } from "@/constants/flow";
 import { useWod } from "@/providers/WodProvider";
@@ -24,29 +23,29 @@ export function ReviewPage() {
   const outdated = wod?.parts.some(boardOutdated);
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8">
-      <Stepper steps={WOD_STEPS} current={STEP.review} />
-
-      <h1 className="mt-8 text-3xl font-bold tracking-tight">Check your workout</h1>
+    <FlowPage
+      step={STEP.review}
+      board={
+        wod && (
+          <>
+            <WodBoard parts={wod.parts} />
+            {outdated && (
+              <p className="text-subtle mt-2 text-sm">
+                Your changes go on the board when you confirm.
+              </p>
+            )}
+          </>
+        )
+      }
+    >
+      <h1 className="text-3xl font-bold tracking-tight">Check your workout</h1>
       <p className="mt-2 text-zinc-600 dark:text-zinc-400">
         Make sure everything looks right, then confirm it.
       </p>
 
       {wod ? (
-        <BoardLayout
-          className="mt-6"
-          board={
-            <>
-              <WodBoard parts={wod.parts} />
-              {outdated && (
-                <p className="text-subtle mt-2 text-sm">
-                  Your changes go on the board when you confirm.
-                </p>
-              )}
-            </>
-          }
-        >
-          <WodSummary wod={wod} onChange={setWod} className="mt-0" />
+        <>
+          <WodSummary wod={wod} onChange={setWod} className="mt-6" />
           <div className="mt-10 flex flex-col items-end gap-2 border-t border-zinc-200 pt-6 dark:border-zinc-800">
             <Button
               onClick={() => router.push(WOD_STEPS[STEP.class].href)}
@@ -61,10 +60,10 @@ export function ReviewPage() {
               </p>
             )}
           </div>
-        </BoardLayout>
+        </>
       ) : (
         restored && (
-          <Card className="mt-8 max-w-2xl">
+          <Card className="mt-6">
             <p className="text-zinc-600 dark:text-zinc-400">
               There&apos;s no workout to check yet.
             </p>
@@ -74,6 +73,6 @@ export function ReviewPage() {
           </Card>
         )
       )}
-    </main>
+    </FlowPage>
   );
 }

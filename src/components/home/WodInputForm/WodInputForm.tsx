@@ -44,12 +44,12 @@ export function WodInputForm({ loading, parsedText, continueTo, onSubmit }: WodI
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={EXAMPLE_WOD}
-          rows={12}
+          rows={8}
           maxLength={MAX_WOD_LENGTH}
           aria-describedby="wod-length"
           className={cn(
             handFont.className,
-            "rounded-none border-0 bg-transparent p-0 text-[17px] leading-[23px] text-purple-950 placeholder:text-zinc-400 dark:bg-transparent",
+            "flex-1 rounded-none border-0 bg-transparent p-0 text-[17px] leading-[23px] text-purple-950 placeholder:text-zinc-400 dark:bg-transparent",
           )}
         />
       </BoardFrame>

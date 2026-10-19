@@ -19,7 +19,7 @@ export type StepperProps = {
 export function Stepper({ steps, current, reachable = current }: StepperProps) {
   return (
     <nav aria-label="Progress">
-      <ol className="flex items-center gap-2 text-sm">
+      <ol className="flex items-center justify-center gap-2 text-sm">
         {steps.map((step, i) => {
           const state = i < current ? "done" : i === current ? "current" : "next";
           const content = (

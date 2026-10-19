@@ -11,18 +11,9 @@ describe("BoardLayout", () => {
   it("puts the board first, kept in view beside the page", () => {
     render(<BoardLayout board={<p>Board</p>}>Side</BoardLayout>);
     const board = screen.getByText("Board");
-    expect(board.parentElement).toHaveClass("md:sticky");
+    expect(board.parentElement).toHaveClass("md:sticky", "md:top-6", "md:overflow-y-auto");
     expect(board.compareDocumentPosition(screen.getByText("Side"))).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
-  });
-
-  it("can put the side above the board on phones", () => {
-    render(
-      <BoardLayout board={<p>Board</p>} sideFirstOnPhones>
-        <p>Side</p>
-      </BoardLayout>,
-    );
-    expect(screen.getByText("Side").parentElement).toHaveClass("max-md:order-first");
   });
 });

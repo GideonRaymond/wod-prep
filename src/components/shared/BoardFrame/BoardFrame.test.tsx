@@ -11,7 +11,7 @@ describe("BoardFrame", () => {
   it("is a white board in a frame, with whatever's written on it", () => {
     render(<BoardFrame aria-busy="true">Fran</BoardFrame>);
     const board = screen.getByText("Fran");
-    expect(board).toHaveClass("bg-[#fdfdfb]", "border-zinc-300");
+    expect(board).toHaveClass("bg-[#fdfdfb]", "border-zinc-300", "min-h-80");
     expect(board).toHaveAttribute("aria-busy", "true");
   });
 
