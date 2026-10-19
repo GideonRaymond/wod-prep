@@ -29,7 +29,9 @@ export function Checklist({ items, label }: { items: ChecklistItem[]; label?: st
         <li key={item.id}>
           <Row item={item} />
           {item.children && item.children.length > 0 && (
-            <ul className="ml-8 border-l-2 border-purple-200 pl-3 dark:border-purple-900">
+            // The 2px guide line runs down the middle of the parent's round marker: past the 20px
+            // state icon and 12px gap, half the 24px marker, less half the line (32 + 12 - 1).
+            <ul className="ml-[43px] border-l-2 border-purple-200 pl-3 dark:border-purple-900">
               {item.children.map((child) => (
                 <li key={child.id}>
                   <Row item={child} />
