@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/shared/Button";
 
 /** Seconds before the class opens on its own. */
-export const OPEN_COUNTDOWN_SECONDS = 3;
+export const OPEN_COUNTDOWN_SECONDS = 7;
 
 /**
  * "Your class is ready", with a button to open it and a short countdown that opens it anyway. The
