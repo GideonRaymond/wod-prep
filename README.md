@@ -1,6 +1,6 @@
 # WOD Prep
 
-Paste a CrossFit workout and get it broken down by movement — with videos, points of performance and (soon) articles and alternative movements for each.
+Paste a CrossFit workout and get it broken down by movement — with videos, points of performance, articles and (soon) alternative movements for each.
 
 ## Setup
 
@@ -50,6 +50,22 @@ Where they come from:
 - **Fallback ranking** (no `ANTHROPIC_API_KEY`, or Claude fails): the official CrossFit channel first, then titles that name the movement, then YouTube's order. Livestreams and videos over 20 minutes are always skipped. Three per search are kept, as spares for avoiding repeats.
 - Results are cached per movement in `.cache/movement-videos.json` for **30 days**, then searched again. Any spelling of a movement shares one entry ("Pull-ups" = "pull up"). Bump `VIDEOS_CACHE_VERSION` in `src/server/movementVideos.ts` when the search or ranking prompt changes.
 
+## Articles
+
+The workout page also finds up to three articles for each part (parts without movements are skipped) and lists them under **Read** in **Before class**, each with a one-line reason. Claude searches the web itself (`web_search` + `web_fetch`) and aims for a mix of angles, at most one each:
+
+- **Mechanics:** why we do a movement, or the mechanics at work. Not generic "how to" lists.
+- **Energy:** the energy system, pacing, recovery or fuel the workout depends on (VO2 max for a 2k row, zone 2, fueling a long grind).
+- **Tie-in:** something surprising but genuinely connected, like the workout's history.
+
+Where it looks:
+
+- **CrossFit's own writing first:** crossfit.com and the CrossFit Journal. Many Journal articles are free as PDFs at `library.crossfit.com/free/pdf/`, which Claude can read.
+- **journal.crossfit.com needs a login,** so Claude can't open those pages. It may still pick one from its search title and description, and the link shows **Login needed**. Unofficial copies of Journal articles are never used.
+- **Then established coaching and sports-science sources.**
+
+Only links that came back from Claude's own searches are kept, so a made-up URL never shows. Results are stored with the workout and cached in `.cache/articles.json` for **30 days**: named workouts by name, other parts by format, scheme and movements. A search takes about 30–40 seconds per part. Bump `ARTICLES_CACHE_VERSION` in `src/server/articles.ts` when the prompt changes.
+
 ## Checks
 
 ```bash
@@ -67,7 +83,7 @@ CI runs all of these plus `npm run build` on every pull request. `main` is prote
 src/
 ├── app/                  # Next.js routes only (pages, layouts, API route handlers)
 │   ├── page.tsx          #   renders <HomePage />
-│   └── api/              #   POST /api/parse, /api/points-of-performance, /api/videos
+│   └── api/              #   POST /api/parse, /api/points-of-performance, /api/videos, /api/articles
 ├── components/
 │   ├── shared/           # Reusable UI (Button, ButtonLink, TextArea, Card, Badge, Dialog, IntensityGauge, MovementDetails, …)
 │   ├── home/             # Review page: paste, check and edit the parsed workout (HomePage, WorkoutPart, …)
@@ -103,8 +119,8 @@ Middleware is called **proxy** in Next.js 16 and must live in a single `src/prox
 2. ~~Points of performance per movement~~
 3. ~~Videos per movement (YouTube)~~
 4. Alternative movements agent + friction toggles
-5. Articles agent
+5. ~~Articles agent~~
 6. Production caching (before going live)
    - Move the parse cache from the local file to a shared store (e.g. Upstash Redis / Vercel KV, or Postgres) so it works on serverless hosting
-   - Cache research per movement, so agent results for common movements are reused across workouts (videos: 30 days)
+   - Cache research per movement, so agent results for common movements are reused across workouts (videos and articles: 30 days)
    - Replace the "first version wins" name lookup, since in production the cache is shared by all users. Idea: only store a workout under its name when it's the standard version of a benchmark Girl or Hero WOD, so typing "Fran" or "Murph" always gives the official version and variants never take over the name. (A draft is in the local git stash "Benchmark-only name lookup…".)

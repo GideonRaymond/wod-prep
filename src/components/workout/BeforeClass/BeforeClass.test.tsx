@@ -101,6 +101,27 @@ describe("BeforeClass", () => {
     expect(screen.getByText("Clear cues for the front rack and drive.")).toBeInTheDocument();
   });
 
+  it("says why an article was picked and when it needs a login", () => {
+    render(
+      <BeforeClass
+        part={{
+          ...fran,
+          articles: [
+            {
+              title: "The Story of Fran",
+              url: "https://journal.crossfit.com/2009/12/the-story-of-fran.tpl",
+              source: "CrossFit Journal",
+              reason: "Where Fran came from.",
+              members: true,
+            },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText("Article · CrossFit Journal · Login needed")).toBeInTheDocument();
+    expect(screen.getByText("Where Fran came from.")).toBeInTheDocument();
+  });
+
   it("folds away and back", async () => {
     const user = userEvent.setup();
     render(<BeforeClass part={withReferences} />);

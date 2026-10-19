@@ -13,7 +13,7 @@ type Reference = {
   title: string;
   url: string;
   meta: string[];
-  /** Why it's worth watching, when Claude picked it. */
+  /** Why it's worth reading or watching, when Claude picked it. */
   note?: string;
 };
 
@@ -31,9 +31,13 @@ export function BeforeClass({ part }: { part: WorkoutPartState }) {
     icon: BookOpen,
     title: a.title,
     url: a.url,
-    meta: ["Article", a.source, a.minutes ? `${a.minutes} min read` : undefined].filter(
-      (x): x is string => Boolean(x),
-    ),
+    meta: [
+      "Article",
+      a.source,
+      a.minutes ? `${a.minutes} min read` : undefined,
+      a.members ? "Login needed" : undefined,
+    ].filter((x): x is string => Boolean(x)),
+    note: a.reason,
   }));
   const videos: Reference[] = pickVideos(part).map((v) => ({
     key: v.url,
