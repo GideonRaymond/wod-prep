@@ -54,4 +54,10 @@ describe("BeforeClass", () => {
     expect(container.firstChild).toHaveClass("sm:grid-cols-2");
     expect(container.firstChild).not.toHaveClass("grid-cols-2");
   });
+
+  it("shows why a video was picked, when it says", () => {
+    const reason = "Breaks down pacing for the thrusters.";
+    render(<BeforeClass parts={[{ ...fran, videos: [{ ...video(1), reason }] }]} />);
+    expect(screen.getByText(reason)).toBeInTheDocument();
+  });
 });

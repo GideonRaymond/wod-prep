@@ -5,6 +5,8 @@ export const ReferenceVideoSchema = z.object({
   title: z.string(),
   url: z.string(),
   duration: z.string().optional(),
+  /** Why it was picked, when Claude chose it from search results. */
+  reason: z.string().optional(),
 });
 
 export const ReferenceVideosSchema = z.array(ReferenceVideoSchema);

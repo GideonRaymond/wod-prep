@@ -2,7 +2,15 @@ import { BookOpen, ExternalLink, Play, type LucideIcon } from "lucide-react";
 import type { ReferenceArticle, ReferenceVideo, WorkoutPartState } from "@/types/wod";
 import { cn } from "@/utils/cn";
 
-type Reference = { key: string; icon: LucideIcon; title: string; url: string; meta: string[] };
+type Reference = {
+  key: string;
+  icon: LucideIcon;
+  title: string;
+  url: string;
+  meta: string[];
+  /** Why it's worth watching, when Claude picked it. */
+  note?: string;
+};
 
 const VIDEOS_PER_WORKOUT = 2;
 const present = (x: string | undefined | null): x is string => Boolean(x);
@@ -57,6 +65,7 @@ export function BeforeClass({ parts }: { parts: WorkoutPartState[] }) {
     title: v.title,
     url: v.url,
     meta: ["Video", v.duration, v.about].filter(present),
+    note: v.reason,
   }));
 
   if (articles.length === 0 && videos.length === 0) {
@@ -86,7 +95,7 @@ function ReferenceList({ title, items }: { title: string; items: Reference[] }) 
     <div>
       <h3 className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">{title}</h3>
       <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
-        {items.map(({ key, icon: Icon, title: itemTitle, url, meta }) => (
+        {items.map(({ key, icon: Icon, title: itemTitle, url, meta, note }) => (
           <li key={key} className="flex items-start gap-3 py-2">
             <Icon
               size={16}
@@ -104,6 +113,7 @@ function ReferenceList({ title, items }: { title: string; items: Reference[] }) 
                 <ExternalLink size={12} aria-hidden className="ml-1 inline align-[-1px]" />
               </a>
               <p className="text-subtle text-xs">{meta.join(" · ")}</p>
+              {note && <p className="text-xs text-zinc-600 dark:text-zinc-400">{note}</p>}
             </div>
           </li>
         ))}
