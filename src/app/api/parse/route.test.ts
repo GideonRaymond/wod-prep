@@ -22,6 +22,12 @@ vi.mock("@/server/wodCache", () => ({
   cacheWod: mockCacheWod,
 }));
 
+const { mockLoad, isMockLoad } = vi.hoisted(() => ({
+  mockLoad: vi.fn(async () => {}),
+  isMockLoad: vi.fn(() => false),
+}));
+vi.mock("@/server/mockLoad", () => ({ mockLoad, isMockLoad }));
+
 import { POST } from "./route";
 import { WodParseError } from "@/server/parseWod";
 
@@ -87,6 +93,17 @@ describe("POST /api/parse", () => {
     expect(await events(res)).toEqual(parseEvents(strengthAndMetcon));
     expect(mockParseWod).not.toHaveBeenCalled();
     expect(mockCacheWod).not.toHaveBeenCalled();
+  });
+
+  it("streams a cached workout like a fresh parse when MOCK_LOAD is on", async () => {
+    isMockLoad.mockReturnValue(true);
+    mockLoad.mockClear();
+    mockGetCachedWod.mockResolvedValue(strengthAndMetcon);
+    const res = await post({ text: "A) squats B) Fran" });
+
+    expect(await events(res)).toEqual(parseEvents(strengthAndMetcon));
+    expect(mockLoad.mock.calls).toEqual([["outline"], ["part"], ["part"], ["part"]]);
+    isMockLoad.mockReturnValue(false);
   });
 
   it("serves cached workouts even without an API key", async () => {

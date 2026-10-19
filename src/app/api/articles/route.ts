@@ -1,5 +1,6 @@
 import { ArticleRequestSchema } from "@/schemas/articles";
 import { claudeErrorResponse, missingApiKeyResponse } from "@/server/apiErrors";
+import { mockLoad } from "@/server/mockLoad";
 import { cacheArticles, findArticles, getCachedArticles } from "@/server/articles";
 
 export async function POST(request: Request) {
@@ -11,7 +12,10 @@ export async function POST(request: Request) {
   const part = parsed.data;
 
   const cached = await getCachedArticles(part);
-  if (cached) return Response.json({ articles: cached }, { headers: { "X-Cache": "HIT" } });
+  if (cached) {
+    await mockLoad("articles");
+    return Response.json({ articles: cached }, { headers: { "X-Cache": "HIT" } });
+  }
 
   if (!process.env.ANTHROPIC_API_KEY) return missingApiKeyResponse();
 

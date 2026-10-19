@@ -11,6 +11,12 @@ vi.mock("@/server/movementVideos", async (importOriginal) => ({
   ...mocks,
 }));
 
+const { mockLoad, isMockLoad } = vi.hoisted(() => ({
+  mockLoad: vi.fn(async () => {}),
+  isMockLoad: vi.fn(() => false),
+}));
+vi.mock("@/server/mockLoad", () => ({ mockLoad, isMockLoad }));
+
 import { POST } from "./route";
 import { YouTubeError } from "@/server/movementVideos";
 import { MAX_MOVEMENT_NAME_LENGTH } from "@/constants/wod";
@@ -68,6 +74,20 @@ describe("POST /api/videos", () => {
     expect(data.videos).toEqual([expect.objectContaining({ title: "The Thruster" })]);
     expect(mocks.getCachedVideos).not.toHaveBeenCalled();
     expect(mocks.findVideos).not.toHaveBeenCalled();
+  });
+
+  it("waits like a real search for hand-picked and cached videos when MOCK_LOAD is on", async () => {
+    mockLoad.mockClear();
+    await post({ name: "Thrusters" });
+    mocks.getCachedVideos.mockResolvedValue(videos);
+    await post({ name: "Ring Muscle-up" });
+    expect(mockLoad.mock.calls).toEqual([["videos"], ["videos"]]);
+
+    mockLoad.mockClear();
+    mocks.getCachedVideos.mockResolvedValue(null);
+    mocks.findVideos.mockResolvedValue(videos);
+    await post({ name: "Ring Muscle-up" });
+    expect(mockLoad).not.toHaveBeenCalled();
   });
 
   it("searches for a named workout even if it shares a movement's name", async () => {

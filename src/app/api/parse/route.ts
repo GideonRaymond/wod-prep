@@ -1,5 +1,6 @@
 import { MAX_WOD_LENGTH } from "@/constants/wod";
 import { claudeErrorResponse, missingApiKeyResponse } from "@/server/apiErrors";
+import { isMockLoad, mockLoad } from "@/server/mockLoad";
 import { parseWod } from "@/server/parseWod";
 import { cacheWod, getCachedWod } from "@/server/wodCache";
 import type { PartOutline, Wod } from "@/schemas/wod";
@@ -26,9 +27,8 @@ export async function POST(request: Request) {
 
   const cached = await getCachedWod(text);
   if (cached) {
-    return new Response(eventsFor(cached).map(line).join(""), {
-      headers: { ...NDJSON, "X-Cache": "HIT" },
-    });
+    const body = isMockLoad() ? mockStream(cached) : eventsFor(cached).map(line).join("");
+    return new Response(body, { headers: { ...NDJSON, "X-Cache": "HIT" } });
   }
 
   if (!process.env.ANTHROPIC_API_KEY) return missingApiKeyResponse();
@@ -56,6 +56,31 @@ export async function POST(request: Request) {
 }
 
 const line = (event: ParseEvent) => `${JSON.stringify(event)}\n`;
+
+/**
+ * With MOCK_LOAD=true, a cached workout streams like a fresh parse: the outline after a moment,
+ * then each part after its own delay (all at once, as they're read in parallel), then done.
+ */
+function mockStream(wod: Wod) {
+  const [outline, ...rest] = eventsFor(wod);
+  const parts = rest.filter((event) => event.type === "part");
+  const encoder = new TextEncoder();
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const send = (event: ParseEvent) => controller.enqueue(encoder.encode(line(event)));
+      await mockLoad("outline");
+      send(outline);
+      await Promise.all(
+        parts.map(async (event) => {
+          await mockLoad("part");
+          send(event);
+        }),
+      );
+      send({ type: "done", wod });
+      controller.close();
+    },
+  });
+}
 
 /** The same events a fresh parse sends, all at once, for a cached workout. */
 function eventsFor(wod: Wod): ParseEvent[] {

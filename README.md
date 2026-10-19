@@ -44,6 +44,10 @@ In development, every parsed WOD is saved to `.cache/parsed-wods.json` and every
 - **Named workouts** (and named parts) are also stored under their name, so after parsing Fran once, even as Part B of a longer class, typing just `Fran` is a cache hit. Made-up titles like "Intense Couplet" aren't.
 - **Different wording** (e.g. `21-15-9 pullups and thrusters`) is parsed once more, then cached too.
 - Responses carry an `X-Cache: HIT` or `MISS` header (visible in the browser's network tab).
+- **Test the loading screens with cached results:** set `MOCK_LOAD=true` in `.env.local` and restart the dev server. Cached and hand-picked results then arrive about as slowly as real ones (`MOCK_DELAYS_MS` in `src/server/mockLoad.ts`):
+  - A cached parse streams its outline after about 2s, then each part after 3–6s.
+  - Videos take 1–3.5s, the warm-up plan 4–7s, and articles 8–14s.
+  - Fresh results aren't slowed down.
 - **Clear the cache:** delete `.cache/`. **Turn it on or off:** set `WOD_CACHE=on|off`. It's off in production by default.
 - Bump `CACHE_VERSION` in `src/server/wodCache.ts` (or `POINTS_CACHE_VERSION` in `src/server/pointsOfPerformance.ts`) when that prompt or schema changes.
 
