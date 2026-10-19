@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WodBoard, type BoardNav } from "./WodBoard";
@@ -73,17 +73,42 @@ describe("WodBoard", () => {
     expect(container.firstChild).not.toHaveAttribute("aria-busy");
   });
 
+  it("eases to its content's height whenever that changes", () => {
+    let resized: () => void = () => {};
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: () => void) {
+          resized = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    render(<WodBoard {...board} />);
+    const content = screen.getByText("A. Back Squat").closest(".overflow-hidden") as HTMLElement;
+    expect(content).toHaveClass("motion-safe:transition-[max-height,visibility]");
+    expect(content).not.toHaveClass("max-h-(--board-h)");
+
+    Object.defineProperty(content.firstElementChild, "scrollHeight", { value: 260 });
+    act(() => resized());
+    expect(content).toHaveClass("max-h-(--board-h)");
+    expect(content.style.getPropertyValue("--board-h")).toBe("260px");
+    vi.unstubAllGlobals();
+  });
+
   it("is a short preview on phones until Show all", async () => {
     render(<WodBoard {...board} />);
     const toggle = screen.getByRole("button", { name: "Show all" });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
-    expect(toggle.closest(".min-h-80")).toHaveClass("max-sm:min-h-0");
+    const content = toggle.closest(".overflow-hidden");
+    expect(content).toHaveClass("max-sm:max-h-[142px]");
     await userEvent.click(toggle);
     expect(screen.getByRole("button", { name: "Show less" })).toHaveAttribute(
       "aria-expanded",
       "true",
     );
-    expect(toggle.closest(".min-h-80")).not.toHaveClass("max-sm:min-h-0");
+    expect(content).not.toHaveClass("max-sm:max-h-[142px]");
     expect(screen.queryByRole("button", { name: /^A\. Back Squat/ })).not.toBeInTheDocument();
   });
 
@@ -128,11 +153,13 @@ describe("WodBoard", () => {
       expect(bar).toHaveClass("md:hidden");
       expect(bar).toHaveAttribute("aria-expanded", "false");
       const content = document.getElementById(bar.getAttribute("aria-controls")!)!;
-      expect(content).toHaveClass("max-md:hidden");
+      // Folded: eased shut and out of sight (invisible, so it can't be tabbed to or read out).
+      expect(content).toHaveClass("max-md:max-h-0", "max-md:invisible");
 
       await user.click(bar);
       expect(bar).toHaveAttribute("aria-expanded", "true");
-      expect(content).not.toHaveClass("max-md:hidden");
+      expect(content).not.toHaveClass("max-md:max-h-0");
+      expect(content).not.toHaveClass("max-md:invisible");
 
       // Picking a section folds it again.
       await user.click(block(/^A\. Back Squat/));
