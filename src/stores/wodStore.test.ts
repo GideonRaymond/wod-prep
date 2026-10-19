@@ -31,6 +31,16 @@ describe("createWodStore", () => {
     expect(createWodStore().get()?.wod.parts[0].movements[0].videos).toEqual(videos);
   });
 
+  it("keeps the articles found for each part", () => {
+    const wod = toWodState(fran);
+    const articles = [
+      { title: "Fran", url: "https://example.com/fran", angle: "tie-in", members: true },
+    ] as const;
+    wod.parts[0] = { ...wod.parts[0], articles: [...articles] };
+    sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(withText(wod)));
+    expect(createWodStore().get()?.wod.parts[0].articles).toEqual(articles);
+  });
+
   it("returns the same object on every read, as useSyncExternalStore needs", () => {
     sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(withText(toWodState(fran))));
     const store = createWodStore();

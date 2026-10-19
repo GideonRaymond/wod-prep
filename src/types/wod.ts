@@ -1,10 +1,8 @@
+import type { ReferenceArticle } from "@/schemas/articles";
 import type { ReferenceVideo } from "@/schemas/videos";
 import type { Movement, WorkoutPart } from "@/schemas/wod";
 
-export type { ReferenceVideo };
-
-/** An article about a whole workout part, shown under "Read" in Before class. */
-export type ReferenceArticle = { title: string; url: string; source?: string; minutes?: number };
+export type { ReferenceArticle, ReferenceVideo };
 
 /** A movement in the UI, with a stable id for keys and edits. */
 export type MovementItem = Movement & {
