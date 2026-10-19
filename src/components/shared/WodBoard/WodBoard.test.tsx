@@ -155,6 +155,12 @@ describe("WodBoard", () => {
       renderNav();
       expect(block(/^B\. Fran/)).toHaveAttribute("aria-current", "location");
       expect(block(/^B\. Fran/)).toHaveClass("outline-2");
+      // Drawn just inside the link, within the board's clipped content, so no side is cut off.
+      const link = block(/^B\. Fran/);
+      expect(link).toHaveClass("-mx-2", "-outline-offset-2");
+      const clip = link.closest(".overflow-hidden")!;
+      expect(clip).toHaveClass("-mx-2");
+      expect(clip.firstElementChild).toHaveClass("px-2");
       expect(block(/^A\. Back Squat/)).not.toHaveAttribute("aria-current");
       expect(block(/^A\. Back Squat/)).not.toHaveClass("outline-2");
     });

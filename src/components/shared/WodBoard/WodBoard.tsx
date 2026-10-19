@@ -102,7 +102,9 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
         id={contentId}
         style={height === null ? undefined : ({ "--board-h": `${height}px` } as CSSProperties)}
         className={cn(
-          "overflow-hidden motion-safe:transition-[max-height,visibility] motion-safe:duration-300 motion-safe:ease-out",
+          // Clipped to ease its height, so it reaches 8px into the board's padding on each side,
+          // where the links' highlight sits.
+          "-mx-2 overflow-hidden motion-safe:transition-[max-height,visibility] motion-safe:duration-300 motion-safe:ease-out",
           height !== null && "max-h-(--board-h)",
           !nav && !showAll && "max-sm:max-h-[142px]",
           // Folded, it's out of sight for everyone (invisible, not just clipped) once it has eased shut.
@@ -110,7 +112,7 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
           nav && open && "max-md:max-h-[min(70vh,var(--board-h))] max-md:overflow-y-auto",
         )}
       >
-        <div ref={content} className={cn(nav && "max-md:pt-3")}>
+        <div ref={content} className={cn("px-2", nav && "max-md:pt-3")}>
           <div className="flex items-start justify-between gap-3">
             {title && (
               <p className={cn(markerFont.className, "mb-2 text-2xl leading-8 text-purple-800")}>
@@ -138,7 +140,7 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
                     onClick={() => jump(item.key)}
                     aria-current={nav.current === item.key ? "location" : undefined}
                     className={cn(
-                      "-mx-2 block w-[calc(100%+1rem)] rounded-md px-2 py-0.5 text-left hover:bg-purple-50 focus-visible:outline-2 focus-visible:outline-purple-600",
+                      "-mx-2 block w-[calc(100%+1rem)] rounded-md px-2 py-0.5 text-left -outline-offset-2 hover:bg-purple-50 focus-visible:outline-2 focus-visible:outline-purple-600",
                       nav.current === item.key && "outline-2 outline-purple-300",
                     )}
                   >
