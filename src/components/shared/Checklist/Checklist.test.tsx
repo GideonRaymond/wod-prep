@@ -38,6 +38,8 @@ describe("Checklist", () => {
     expect(within(nested).getByText("A")).toBeInTheDocument();
     expect(within(nested).getByText("Fran")).toBeInTheDocument();
     expect(within(nested).queryByText("Warm-up")).not.toBeInTheDocument();
+    // The guide line sits under the middle of the parent's 24px round marker.
+    expect(nested).toHaveClass("ml-[43px]", "border-l-2");
   });
 
   it("mutes the name of a step that hasn't started", () => {
