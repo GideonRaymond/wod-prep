@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useRef, useState, ViewTransition, type CSSProperties } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { BoardFrame } from "@/components/shared/BoardFrame";
 import { Button } from "@/components/shared/Button";
-import type { BoardBlock, WorkoutPartState } from "@/types/wod";
+import { useMeasuredHeight } from "@/hooks/useMeasuredHeight";
+import type { BoardItem } from "@/types/wod";
 import { cn } from "@/utils/cn";
 import { handFont, markerFont } from "./fonts";
 
-/** Marker inks for each block's heading, in turn: purples only, all at least 3:1 on the board. */
+/** Marker inks for each part's heading, in turn: purples only, all at least 3:1 on the board. */
 const INKS = [
   "text-purple-800",
   "text-purple-600",
@@ -16,114 +18,212 @@ const INKS = [
   "text-purple-500",
 ];
 
-/** The ink for what the app adds to the board itself (a planned warm-up, suggested stretches). */
+/** The ink for what the app adds to the board itself (a planned warm-up, skills, stretches). */
 const ADDED_INK = "text-sky-800";
 
-/** What the board needs from a part: its whiteboard lines, or else its own text. */
-export type BoardPart = Pick<WorkoutPartState, "named" | "sourceText" | "board">;
+/** Turns the board into the class's table of contents (see WodBoard). */
+export type BoardNav = {
+  /** The section on screen now, by stage key. */
+  current?: string;
+  /** Its name, for the folded board on phones. */
+  currentLabel?: string;
+  onJump: (key: string) => void;
+  onExpandAll?: () => void;
+  onCollapseAll?: () => void;
+};
 
 export type WodBoardProps = {
-  parts: BoardPart[];
-  /** A planned warm-up, written above the parts in its own ink. */
-  warmup?: BoardBlock | null;
-  /** Suggested stretches, written under the parts in the same ink. */
-  cooldown?: BoardBlock | null;
+  items: BoardItem[];
+  /** A heading for the whole board ("WOD" when no part has a real name; see boardTitle). */
+  title?: string | null;
   /** Still being written: a line is drawn where the next part will go. */
   writing?: boolean;
+  /** Make every block a link to its section. */
+  nav?: BoardNav;
 };
 
 /**
- * The workout written on a whiteboard: each part's heading in marker, the rest in handwriting.
- * Parts show their whiteboard lines (the workout written out cleanly, e.g. Murph in full), or
- * their own text when they have none. When no part has a real name (like "Fran"), "WOD" heads the
- * board. A planned warm-up and suggested stretches go on in a blue marker, and anything written
- * after the board first shows rises in. On phones it's capped with a fade and a Show all button.
+ * The workout written on a whiteboard: each block's heading in marker, the rest in handwriting,
+ * with the app's own blocks (the planned warm-up, skill practice, stretches) in a blue marker.
+ * Anything written after the board first shows rises in.
+ *
+ * With `nav`, it's the class's table of contents: every block jumps to its section, and the one
+ * on screen has a small outline. On phones it folds into a bar named after that section, which
+ * opens the board to pick another. Without it, phones get a short preview and a Show all button.
+ * Whenever its height changes (opening, showing all, a part written on), it eases to the new one.
  */
-export function WodBoard({ parts, warmup, cooldown, writing = false }: WodBoardProps) {
+export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) {
   const [showAll, setShowAll] = useState(false);
-  const named = parts.some((part) => part.named);
-  const blocks = [
-    ...(warmup ? [{ key: "warmup", block: warmup, ink: ADDED_INK }] : []),
-    ...parts.map((part, i) => ({
-      key: `part-${i}`,
-      block: blockOf(part),
-      ink: INKS[i % INKS.length],
-    })),
-    ...(cooldown ? [{ key: "cooldown", block: cooldown, ink: ADDED_INK }] : []),
-  ];
-  // Blocks already there when the board first shows don't animate; later ones are written on.
-  const [initial] = useState(() => new Set(blocks.map((b) => b.key)));
+  const [open, setOpen] = useState(false);
+  const contentId = useId();
+  const content = useRef<HTMLDivElement>(null);
+  // The content's height, for the board to ease to (height: auto can't be animated).
+  const height = useMeasuredHeight(content);
+  // What each block said when the board first showed: those don't animate, while blocks added or
+  // rewritten since are written on.
+  const [initial] = useState(() => new Map(items.map((item) => [item.key, textOf(item)])));
+  const writtenOn = (item: BoardItem) => initial.get(item.key) !== textOf(item);
+  let part = 0;
+  const inked = items.map((item) => ({
+    item,
+    ink: item.added ? ADDED_INK : INKS[part++ % INKS.length],
+  }));
+
+  function jump(key: string) {
+    setOpen(false);
+    nav?.onJump(key);
+  }
 
   return (
     <BoardFrame
       aria-busy={writing || undefined}
-      className={cn(!showAll && "max-sm:max-h-[190px] max-sm:min-h-0 max-sm:overflow-hidden")}
+      // On phones the board is only as tall as it shows, with the same padding open or folded, so
+      // nothing but the eased height changes.
+      className={cn("max-sm:min-h-0", nav && "max-md:min-h-0 max-md:py-2")}
     >
-      <div className="flex items-start justify-between gap-3">
-        {!named && (
-          <p className={cn(markerFont.className, "mb-2 text-2xl leading-8 text-purple-800")}>WOD</p>
-        )}
-        <Button
-          variant="secondary"
-          size="xs"
-          onClick={() => setShowAll(!showAll)}
-          aria-expanded={showAll}
-          className="ml-auto text-zinc-600 hover:bg-zinc-100 sm:hidden dark:text-zinc-600 dark:hover:bg-zinc-100"
+      {nav && (
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          aria-controls={contentId}
+          className="flex w-full items-center justify-between gap-3 text-left md:hidden"
         >
-          {showAll ? "Show less" : "Show all"}
-        </Button>
+          <span className={cn(markerFont.className, "truncate text-lg text-purple-800")}>
+            {nav.currentLabel ?? "Whiteboard"}
+          </span>
+          <span className="flex shrink-0 items-center gap-1 text-xs text-zinc-600">
+            {open ? "Close" : "Jump to"}
+            {open ? <ChevronUp size={16} aria-hidden /> : <ChevronDown size={16} aria-hidden />}
+          </span>
+        </button>
+      )}
+      <div
+        id={contentId}
+        style={height === null ? undefined : ({ "--board-h": `${height}px` } as CSSProperties)}
+        className={cn(
+          // Clipped to ease its height, so it reaches 8px into the board's padding on each side,
+          // where the links' highlight sits.
+          "-mx-2 overflow-hidden motion-safe:transition-[max-height,visibility] motion-safe:duration-300 motion-safe:ease-out",
+          height !== null && "max-h-(--board-h)",
+          !nav && !showAll && "max-sm:max-h-[142px]",
+          // Folded, it's out of sight for everyone (invisible, not just clipped) once it has eased shut.
+          nav && !open && "max-md:invisible max-md:max-h-0",
+          nav && open && "max-md:max-h-[min(70vh,var(--board-h))] max-md:overflow-y-auto",
+        )}
+      >
+        <div ref={content} className={cn("px-2", nav && "max-md:pt-3")}>
+          <div className="flex items-start justify-between gap-3">
+            {title && (
+              <p className={cn(markerFont.className, "mb-2 text-2xl leading-8 text-purple-800")}>
+                {title}
+              </p>
+            )}
+            {!nav && (
+              <Button
+                variant="secondary"
+                size="xs"
+                onClick={() => setShowAll(!showAll)}
+                aria-expanded={showAll}
+                className="ml-auto text-zinc-600 hover:bg-zinc-100 sm:hidden dark:text-zinc-600 dark:hover:bg-zinc-100"
+              >
+                {showAll ? "Show less" : "Show all"}
+              </Button>
+            )}
+          </div>
+          {nav ? (
+            <ul aria-label="Whiteboard" className="space-y-0.5">
+              {inked.map(({ item, ink }) => (
+                <li key={item.key}>
+                  <button
+                    type="button"
+                    onClick={() => jump(item.key)}
+                    aria-current={nav.current === item.key ? "location" : undefined}
+                    className={cn(
+                      "-mx-2 block w-[calc(100%+1rem)] rounded-md px-2 py-0.5 text-left -outline-offset-2 hover:bg-purple-50 focus-visible:outline-2 focus-visible:outline-purple-600",
+                      nav.current === item.key && "outline-2 outline-purple-300",
+                    )}
+                  >
+                    <Block item={item} ink={ink} writtenOn={writtenOn(item)} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="space-y-3">
+              {inked.map(({ item, ink }) => (
+                <Block key={item.key} item={item} ink={ink} writtenOn={writtenOn(item)} />
+              ))}
+              {writing && <WritingLine first={items.length === 0} />}
+            </div>
+          )}
+          {nav && (nav.onExpandAll || nav.onCollapseAll) && (
+            <div className="mt-3 flex justify-between border-t border-zinc-200 pt-2 md:hidden">
+              {nav.onExpandAll && (
+                <Button variant="secondary" size="xs" onClick={nav.onExpandAll}>
+                  Expand all
+                </Button>
+              )}
+              {nav.onCollapseAll && (
+                <Button variant="secondary" size="xs" onClick={nav.onCollapseAll}>
+                  Collapse all
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-      <div className="space-y-3">
-        {blocks.map(({ key, block, ink }) => (
-          <Block
-            key={key}
-            block={block}
-            ink={ink}
-            added={ink === ADDED_INK}
-            arriving={!initial.has(key)}
-          />
-        ))}
-        {writing && <WritingLine first={parts.length === 0} />}
-      </div>
-      {!showAll && (
+      {!nav && (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-linear-to-b from-[#fdfdfb]/0 to-[#fdfdfb] sm:hidden"
+          className={cn(
+            "pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-linear-to-b from-[#fdfdfb]/0 to-[#fdfdfb] motion-safe:transition-opacity motion-safe:duration-300 sm:hidden",
+            showAll && "opacity-0",
+          )}
         />
       )}
     </BoardFrame>
   );
 }
 
-/** A part's heading and lines: its whiteboard lines, or its own text for older saved workouts. */
-function blockOf(part: BoardPart): BoardBlock {
-  const lines = part.board?.length ? part.board : part.sourceText.split("\n");
-  const [heading = "", ...rest] = lines.map((line) => line.trim()).filter(Boolean);
-  return { heading, lines: rest };
-}
+const textOf = (item: BoardItem) => [item.heading, ...item.lines].join("\n");
 
-function Block({
-  block,
-  ink,
-  added,
-  arriving,
-}: {
-  block: BoardBlock;
-  ink: string;
-  added: boolean;
-  arriving: boolean;
-}) {
+/**
+ * One block: written on (rising in) when it's new or its text changed since the board showed.
+ * Between steps it's its own view transition, so it glides, appears or fades on its own while the
+ * board stays still.
+ */
+function Block({ item, ink, writtenOn }: { item: BoardItem; ink: string; writtenOn: boolean }) {
   return (
-    <div className={cn(added && ink, arriving && "motion-safe:animate-rise-in")}>
-      <p className={cn(markerFont.className, "text-xl leading-[26px] tracking-[.01em]", ink)}>
-        {block.heading}
-      </p>
-      {block.lines.map((line, i) => (
-        <p key={i} className={cn(handFont.className, "text-[17px] leading-[23px]")}>
-          {line}
+    <ViewTransition
+      name={`board-${item.key.replace(/[^\w-]/g, "-")}`}
+      share="board-block"
+      enter="board-in"
+      exit="board-out"
+      default="none"
+    >
+      {/* Keyed by its text, so a rewrite plays the rise-in again. */}
+      <div
+        key={textOf(item)}
+        className={cn(item.added && ink, writtenOn && "motion-safe:animate-rise-in")}
+      >
+        <p
+          className={cn(
+            markerFont.className,
+            "text-xl leading-[26px] tracking-[.01em]",
+            item.added && "text-lg",
+            ink,
+          )}
+        >
+          {item.heading}
         </p>
-      ))}
-    </div>
+        {item.lines.map((line, i) => (
+          <p key={i} className={cn(handFont.className, "text-[17px] leading-[23px]")}>
+            {line}
+          </p>
+        ))}
+      </div>
+    </ViewTransition>
   );
 }
 

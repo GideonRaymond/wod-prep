@@ -8,7 +8,6 @@ import {
   classOvertime,
   fitPrep,
   isPlannedPart,
-  minimumOvertime,
   partForSkill,
   planClass,
   prepBudget,
@@ -280,28 +279,5 @@ describe("classOvertime", () => {
 
   it("is unknown when a length is", () => {
     expect(classOvertime(lasting(0), null)).toBeNull();
-  });
-});
-
-describe("minimumOvertime", () => {
-  const part = { label: null, minutes: 70 };
-
-  it("is how far the workout and the shortest warm-up run past the class", () => {
-    // 5 + 8 + 70 + 5 = 88
-    expect(minimumOvertime([part])).toBe(88 - CLASS_MINUTES);
-    expect(minimumOvertime([{ ...part, minutes: 30 }])).toBe(0);
-  });
-
-  it("doesn't add a warm-up when one is programmed", () => {
-    expect(
-      minimumOvertime([
-        { label: "Warm-up", minutes: 10 },
-        { ...part, minutes: 40 },
-      ]),
-    ).toBe(0);
-  });
-
-  it("is unknown when a length is", () => {
-    expect(minimumOvertime([{ ...part, minutes: null }])).toBeNull();
   });
 });

@@ -46,5 +46,9 @@ export type WodState = {
 /** The current WOD and the text it was parsed from, as kept across refreshes. */
 export type SavedWod = { text: string; wod: WodState };
 
-/** A block the app writes on the whiteboard itself, like the planned warm-up. */
-export type BoardBlock = { heading: string; lines: string[] };
+/**
+ * One block on the whiteboard: a heading in marker and lines in handwriting. `key` is the class
+ * stage it stands for (see WorkoutPage), so the board can link to it. `added` blocks are the app's
+ * own (the planned warm-up, skill practice, suggested stretches), written in another ink.
+ */
+export type BoardItem = { key: string; heading: string; lines: string[]; added?: boolean };

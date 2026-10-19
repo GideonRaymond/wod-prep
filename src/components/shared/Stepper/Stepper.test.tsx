@@ -1,7 +1,18 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import type { ComponentProps } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Stepper } from "./Stepper";
+
+// Shows each link's view transition types, which next/link otherwise keeps to itself.
+vi.mock("next/link", () => ({
+  default: ({
+    transitionTypes,
+    ...props
+  }: ComponentProps<"a"> & { transitionTypes?: string[] }) => (
+    <a data-transition={transitionTypes?.join(" ")} {...props} />
+  ),
+}));
 
 const steps = [
   { label: "Workout", href: "/" },
@@ -42,5 +53,17 @@ describe("Stepper", () => {
   it("is centered", () => {
     render(<Stepper steps={steps} current={0} />);
     expect(within(screen.getByRole("navigation")).getByRole("list")).toHaveClass("justify-center");
+  });
+
+  it("slides back to an earlier step and forward to a later one", () => {
+    render(<Stepper steps={steps} current={1} reachable={2} />);
+    expect(screen.getByRole("link", { name: "Workout (done)" })).toHaveAttribute(
+      "data-transition",
+      "nav-back",
+    );
+    expect(screen.getByRole("link", { name: "Class" })).toHaveAttribute(
+      "data-transition",
+      "nav-forward",
+    );
   });
 });

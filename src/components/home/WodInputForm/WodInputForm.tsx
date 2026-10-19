@@ -68,7 +68,7 @@ export function WodInputForm({ loading, parsedText, continueTo, onSubmit }: WodI
           </Button>
         )}
         {unchanged && !loading && continueTo && (
-          <ButtonLink href={continueTo} variant="secondary">
+          <ButtonLink href={continueTo} variant="secondary" transitionTypes={["nav-forward"]}>
             Continue checking
           </ButtonLink>
         )}

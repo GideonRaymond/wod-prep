@@ -14,10 +14,12 @@ import type { ParseEvent } from "@/types/parse";
 import type { WodState } from "@/types/wod";
 import { toWodState } from "@/utils/toWodState";
 
-const { push } = vi.hoisted(() => ({ push: vi.fn() }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+const { push, prefetch } = vi.hoisted(() => ({ push: vi.fn(), prefetch: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, prefetch }) }));
 
 const fetchMock = vi.fn();
+/** Moving on a step: the next page comes in from the right. */
+const FORWARD = { transitionTypes: ["nav-forward"] };
 
 /** A streamed parse of `wod`, or a JSON error with a status. */
 function respond(status: number, body: { wod?: Wod; error?: string }) {
@@ -102,13 +104,24 @@ describe("HomePage", () => {
       send(done);
       end();
     });
-    expect(push).toHaveBeenCalledWith("/review");
+    expect(push).toHaveBeenCalledWith("/review", FORWARD);
+    // Still the written-up board, not the text box, until the review page takes over.
+    expect(screen.getByRole("heading", { level: 1, name: "Breaking it down" })).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Workout" })).not.toBeInTheDocument();
+    expect(screen.getByText("B. Fran")).toBeInTheDocument();
+  });
+
+  it("gets the review page ready as soon as it starts reading", async () => {
+    fetchMock.mockReturnValue(new Promise(() => {}));
+    await submit("Fran");
+    expect(prefetch).toHaveBeenCalledWith("/review");
+    expect(push).not.toHaveBeenCalled();
   });
 
   it("sends the text and moves on to checking it once it's read", async () => {
     respond(200, { wod: fran });
     await submit("Fran");
-    await vi.waitFor(() => expect(push).toHaveBeenCalledWith("/review"));
+    await vi.waitFor(() => expect(push).toHaveBeenCalledWith("/review", FORWARD));
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ text: "Fran" });
     expect(JSON.parse(sessionStorage.getItem(WOD_STORAGE_KEY)!).text).toBe("Fran");
   });
@@ -180,7 +193,7 @@ describe("HomePage", () => {
     await user.click(screen.getByRole("button", { name: "Break it down" }));
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    await vi.waitFor(() => expect(push).toHaveBeenCalledWith("/review"));
+    await vi.waitFor(() => expect(push).toHaveBeenCalledWith("/review", FORWARD));
   });
 
   describe("with an edited workout", () => {
@@ -214,7 +227,7 @@ describe("HomePage", () => {
       await user.click(within(dialog).getByRole("button", { name: "Break it down" }));
 
       expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ text: "Fran!" });
-      await vi.waitFor(() => expect(push).toHaveBeenCalledWith("/review"));
+      await vi.waitFor(() => expect(push).toHaveBeenCalledWith("/review", FORWARD));
     });
   });
 });

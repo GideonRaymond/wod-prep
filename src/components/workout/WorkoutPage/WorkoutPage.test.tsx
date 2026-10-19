@@ -57,6 +57,9 @@ async function renderAndOpen(wod: WodState) {
   await screen.findByRole("heading", { level: 1, name: "Your workout" });
 }
 
+const boardLink = (name: RegExp) =>
+  within(screen.getByRole("list", { name: "Whiteboard" })).getByRole("button", { name });
+
 const stageToggle = (name: string | RegExp) =>
   within(screen.getByRole("region", { name })).getAllByRole("button")[0];
 
@@ -197,7 +200,8 @@ describe("WorkoutPage", () => {
     mockPrep.mockResolvedValue(classPrep);
     await renderAndOpen(toWodState(strengthAndMetcon));
 
-    await user.click(await screen.findByRole("button", { name: /^Warm-up/ }));
+    await screen.findByRole("region", { name: "Warm-up" });
+    await user.click(stageToggle("Warm-up"));
     const warmup = screen.getByRole("region", { name: "Warm-up" });
     expect(within(warmup).getByText(classPrep.warmup!.focus)).toBeVisible();
     expect(within(warmup).getByRole("list", { name: "You'll need" })).toHaveTextContent(
@@ -359,16 +363,39 @@ describe("WorkoutPage", () => {
     expect(screen.getByRole("region", { name: "Cool-down" })).toBeInTheDocument();
   });
 
-  it("jumps to a stage from the menu, opening it", async () => {
+  it("jumps to a stage from the whiteboard, opening it", async () => {
     const user = userEvent.setup();
     renderPage(built(toWodState(strengthAndMetcon)));
-    await user.click(screen.getByRole("button", { name: /Jump to/ }));
-    await user.click(screen.getByRole("button", { name: /B · Fran/ }));
+    expect(stageToggle("Fran")).toHaveAttribute("aria-expanded", "false");
+    await user.click(boardLink(/^B\. Fran/));
     expect(stageToggle("Fran")).toHaveAttribute("aria-expanded", "true");
-    expect(screen.queryByRole("dialog", { name: "Jump to" })).not.toBeInTheDocument();
+
+    // Before class and the briefing head the board, written on like the rest.
+    expect(boardLink(/^Before class/)).toHaveTextContent("Before class");
+    await user.click(stageToggle("Before class"));
+    expect(stageToggle("Before class")).toHaveAttribute("aria-expanded", "false");
+    await user.click(boardLink(/^Before class/));
+    expect(stageToggle("Before class")).toHaveAttribute("aria-expanded", "true");
   });
 
-  it("expands and collapses every stage from the menu", async () => {
+  it("makes the picked block the current one, even one that can't scroll to the top", async () => {
+    const user = userEvent.setup();
+    renderPage(built(toWodState(strengthAndMetcon)));
+    expect(boardLink(/^Cool-down/)).not.toHaveAttribute("aria-current");
+    await user.click(boardLink(/^Cool-down/));
+    expect(boardLink(/^Cool-down/)).toHaveAttribute("aria-current", "location");
+    expect(stageToggle("Cool-down")).toHaveAttribute("aria-expanded", "true");
+    expect(stageToggle("Cool-down")).toHaveFocus();
+  });
+
+  it("has no Jump to button of its own; the whiteboard does that", () => {
+    renderPage(built(toWodState(strengthAndMetcon)));
+    expect(screen.queryByRole("dialog", { name: "Jump to" })).not.toBeInTheDocument();
+    // The only Jump to is the whiteboard folded into a bar on phones.
+    expect(screen.getByRole("button", { name: /Jump to/ })).toHaveAttribute("aria-controls");
+  });
+
+  it("expands and collapses every stage from the whiteboard", async () => {
     const user = userEvent.setup();
     renderPage(built(toWodState(strengthAndMetcon)));
     await user.click(screen.getByRole("button", { name: /Jump to/ }));
@@ -395,10 +422,17 @@ describe("WorkoutPage", () => {
 
   it("shows the whiteboard beside the class, with the warm-up and cool-down on one line each", () => {
     renderPage(built(toWodState(fran), classPrep));
-    const headings = screen
+    const headings = within(screen.getByRole("list", { name: "Whiteboard" }))
       .getAllByText(/./, { selector: ".font-permanent-marker" })
       .map((h) => h.textContent);
-    expect(headings).toEqual(["Warm-up – 10 min", "Fran", expect.stringMatching(/^Cool-down/)]);
+    expect(headings).toEqual([
+      "Before class",
+      "Briefing",
+      "Warm-up – 10 min",
+      "Skill: Pull-up – 11 min",
+      "Fran",
+      expect.stringMatching(/^Cool-down/),
+    ]);
     expect(screen.queryByText("Easy row – 2 min")).not.toBeInTheDocument();
     const board = screen.getByText("Fran", { selector: ".font-permanent-marker" });
     expect(
@@ -410,8 +444,24 @@ describe("WorkoutPage", () => {
     const [part] = toWodState(fran).parts;
     renderPage(built({ parts: [{ ...part, minutes: 70 }] }, classPrep));
     // 5 whiteboard + 10 warm-up + 11 pull-up practice + 70 + 5 wrap-up = 101
-    expect(screen.getByText(/This class runs 41 min over the 60-minute class/)).toBeInTheDocument();
+    // Under the board, and on phones (where the board is a bar) beside it instead.
+    const notes = screen.getAllByText(/This class runs 41 min over the 60-minute class/);
+    expect(notes).toHaveLength(2);
+    expect(notes[0].closest(".max-md\\:hidden")).toBeInTheDocument();
+    expect(notes[1].closest(".md\\:hidden")).toBeInTheDocument();
     expect(screen.getByText("Warm-up – 10 min")).toBeInTheDocument();
+  });
+
+  it("waits for the plan before warning, since only then is the class's length known", async () => {
+    let plan: (prep: ClassPrep) => void = () => {};
+    mockPrep.mockReturnValue(new Promise((resolve) => (plan = resolve)));
+    const [part] = toWodState(fran).parts;
+    renderPage({ parts: [{ ...part, minutes: 70 }] });
+    await screen.findByRole("heading", { level: 1, name: "Building your class" });
+    expect(screen.queryByText(/over the 60-minute class/)).not.toBeInTheDocument();
+
+    await act(async () => plan(classPrep));
+    expect((await screen.findAllByText(/This class runs 41 min over/)).length).toBeGreaterThan(0);
   });
 
   it("has no warning for a class that fits", () => {
@@ -421,10 +471,13 @@ describe("WorkoutPage", () => {
 
   it("keeps the same board in place from the loading screen into the class", async () => {
     renderPage(toWodState(fran));
-    const board = screen.getByText("21-15-9 for time");
+    const frame = () => screen.getByText("21-15-9 for time").closest(".min-h-80");
+    const board = frame();
     await userEvent.click(await screen.findByRole("button", { name: "Open your class" }));
     await screen.findByRole("heading", { level: 1, name: "Your workout" });
-    expect(screen.getByText("21-15-9 for time")).toBe(board);
+    // The same board, now with every block a link to its section.
+    expect(frame()).toBe(board);
+    expect(boardLink(/^Fran/)).toBeInTheDocument();
   });
 
   it("shows links under the board while it builds, holding the countdown while they're read", async () => {

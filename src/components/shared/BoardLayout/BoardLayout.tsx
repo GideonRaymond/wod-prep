@@ -5,6 +5,8 @@ export type BoardLayoutProps = {
   /** The whiteboard, and anything that goes under it. */
   board: ReactNode;
   children: ReactNode;
+  /** Keep the board stuck to the top on phones too, over the page as it scrolls. */
+  stickyOnPhones?: boolean;
   className?: string;
 };
 
@@ -13,7 +15,12 @@ export type BoardLayoutProps = {
  * uses it, so the board stays put while what's beside it changes. On wider screens the board stays
  * in view at the top while the side scrolls, and scrolls on its own if it's taller than the screen.
  */
-export function BoardLayout({ board, children, className }: BoardLayoutProps) {
+export function BoardLayout({
+  board,
+  children,
+  stickyOnPhones = false,
+  className,
+}: BoardLayoutProps) {
   return (
     <div
       className={cn(
@@ -21,7 +28,12 @@ export function BoardLayout({ board, children, className }: BoardLayoutProps) {
         className,
       )}
     >
-      <div className="md:sticky md:top-6 md:max-h-[calc(100dvh-3rem)] md:overflow-y-auto">
+      <div
+        className={cn(
+          "md:sticky md:top-6 md:max-h-[calc(100dvh-3rem)] md:overflow-y-auto",
+          stickyOnPhones && "bg-background max-md:sticky max-md:top-0 max-md:z-30 max-md:py-2",
+        )}
+      >
         {board}
       </div>
       <div className="min-w-0">{children}</div>

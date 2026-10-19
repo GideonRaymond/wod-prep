@@ -32,4 +32,11 @@ describe("SkillPractice", () => {
     render(<SkillPractice skill={{ ...skill, setupMinutes: 0 }} />);
     expect(screen.queryByText(/to set up/)).not.toBeInTheDocument();
   });
+
+  it("puts each step's number above it on phones, and beside it from sm up", () => {
+    render(<SkillPractice skill={classPrep.skills[0]} />);
+    for (const step of screen.getAllByRole("listitem")) {
+      expect(step).toHaveClass("flex-col", "sm:flex-row");
+    }
+  });
 });

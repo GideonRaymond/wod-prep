@@ -205,14 +205,3 @@ export function classOvertime(wod: WodState, prep?: ClassPrep | null): number | 
   const wrapUp = hasStage(wod.parts, "cooldown") ? 0 : WRAP_UP_MINUTES;
   return Math.max(end + wrapUp - CLASS_MINUTES, 0);
 }
-
-/**
- * Before the warm-up is planned: the least the class will run past CLASS_MINUTES once it has one
- * (a programmed one is already counted). 0 when there's room, null when a length is unknown.
- */
-export function minimumOvertime(parts: Pick<WorkoutPartState, "label" | "minutes">[]) {
-  const budget = prepBudget(parts);
-  if (budget === null) return null;
-  const warmup = hasStage(parts, "warmup") ? 0 : MIN_WARMUP_MINUTES;
-  return Math.max(warmup - budget, 0);
-}

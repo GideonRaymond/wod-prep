@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { ClipboardList, Flame, Lightbulb, Snowflake, Target, type LucideIcon } from "lucide-react";
 import { BeforeClass, beforeClassCounts } from "@/components/workout/BeforeClass";
 import { ClassStage, StageMarker } from "@/components/workout/ClassStage";
 import { EquipmentLine, EquipmentList } from "@/components/workout/EquipmentList";
 import { ExerciseList } from "@/components/workout/ExerciseList";
-import { JumpTo } from "@/components/workout/JumpTo";
 import {
   classChecklist,
   LoadingScreen,
@@ -22,9 +22,9 @@ import { Card } from "@/components/shared/Card";
 import { CategoryBadge } from "@/components/shared/CategoryBadge";
 import { FlowPage } from "@/components/shared/FlowPage";
 import { OvertimeNote } from "@/components/shared/OvertimeNote";
-import { WodBoard } from "@/components/shared/WodBoard";
+import { WodBoard, type BoardNav } from "@/components/shared/WodBoard";
 import { MOCK_LOAD } from "@/constants/dev";
-import { STEP } from "@/constants/flow";
+import { STEP, WOD_STEPS, stepTransition } from "@/constants/flow";
 import { FORMAT_LABELS } from "@/constants/wod";
 import { useArticles } from "@/hooks/useArticles";
 import { useBoardRedraw } from "@/hooks/useBoardRedraw";
@@ -42,13 +42,12 @@ import {
   classEnd,
   classOvertime,
   isPlannedPart,
-  minimumOvertime,
   planClass,
   skillMinutes,
   type PlannedPart,
   type PlannedPrep,
 } from "@/utils/classPlan";
-import { boardExtras } from "@/utils/boardExtras";
+import { classBoard } from "@/utils/boardItems";
 import { cn } from "@/utils/cn";
 import { describeIntensity } from "@/utils/describeIntensity";
 import { classStretches } from "@/utils/suggestStretches";
@@ -56,7 +55,7 @@ import { classStretches } from "@/utils/suggestStretches";
 type Stage = {
   key: string;
   title: string;
-  /** Shorter name for the Jump to menu. */
+  /** Shorter name, for the whiteboard folded into a bar on phones. */
   label: string;
   icon?: LucideIcon;
   markerLabel?: string | null;
@@ -113,39 +112,51 @@ export function WorkoutPage() {
 
   const stages = wod ? classStages(wod, prep.plan) : [];
   const [open, setOpen] = useState<Record<string, boolean>>(INITIALLY_OPEN);
-  const current = useCurrentStage(stages.map((s) => s.key));
+  const { current, pin } = useCurrentStage(stages.map((s) => s.key));
 
   const isOpen = (key: string) => open[key] ?? false;
   const setAll = (value: boolean) => setOpen(Object.fromEntries(stages.map((s) => [s.key, value])));
+  /** Opens a stage, makes it the current one and scrolls to it, focusing its header. */
   function jump(key: string) {
-    setOpen((prev) => ({ ...prev, [key]: true }));
-    // Wait for the stage to open before scrolling to it and moving focus to its header.
-    requestAnimationFrame(() => {
-      const section = document.getElementById(`stage-${key}`);
-      section?.scrollIntoView?.({ behavior: "smooth", block: "start" });
-      section?.querySelector("button")?.focus({ preventScroll: true });
-    });
+    // Render it open first, so the scroll lands where the open stage is.
+    flushSync(() => setOpen((prev) => ({ ...prev, [key]: true })));
+    pin(key);
+    const section = document.getElementById(`stage-${key}`);
+    section?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    section?.querySelector("button")?.focus({ preventScroll: true });
   }
 
   const building = wod !== null && (phase === "loading" || phase === "leaving");
   const leaving = phase === "leaving";
+  // How long the class runs is only known once it's planned (and, later, once the coach's own
+  // choices for it are in), so the warning waits for the plan.
+  const overtime = wod && prep.plan && <OvertimeNote minutes={classOvertime(wod, prep.plan)} />;
+  // Once the class shows, the board is its table of contents, with Before class and the
+  // briefing written on above the workout.
+  const nav: BoardNav | undefined =
+    wod && !building
+      ? {
+          current,
+          currentLabel: stages.find((s) => s.key === current)?.label,
+          onJump: jump,
+          onExpandAll: () => setAll(true),
+          onCollapseAll: () => setAll(false),
+        }
+      : undefined;
 
   return (
     <FlowPage
       step={STEP.class}
+      stickyBoardOnPhones={nav !== undefined}
       board={
         wod && (
           <>
-            <WodBoard parts={wod.parts} {...boardExtras(wod.parts, prep.plan)} />
-            {prep.plan ? (
-              <OvertimeNote minutes={classOvertime(wod, prep.plan)} className="mt-3" />
-            ) : (
-              <OvertimeNote
-                minutes={minimumOvertime(wod.parts)}
-                estimate="minimum"
-                className="mt-3"
-              />
-            )}
+            <WodBoard
+              {...classBoard(wod.parts, prep.plan, { sections: nav !== undefined })}
+              nav={nav}
+            />
+            {/* On phones the board sticks to the top as a bar, so the note goes beside it. */}
+            <div className={cn("mt-3", nav && "max-md:hidden")}>{overtime}</div>
             {building && (
               <div className={cn(FADE, leaving && FADED)}>
                 <WhileYouWait references={waitingReferences(wod)} onReading={setReading} />
@@ -189,6 +200,7 @@ export function WorkoutPage() {
           {prep.error && <p className="text-subtle mt-1 text-sm">{prep.error}</p>}
           {articles.error && <p className="text-subtle mt-1 text-sm">{articles.error}</p>}
           {board.error && <p className="text-subtle mt-1 text-sm">{board.error}</p>}
+          <div className="mt-3 md:hidden">{overtime}</div>
 
           {wod ? (
             <>
@@ -212,17 +224,6 @@ export function WorkoutPage() {
                   </ClassStage>
                 ))}
               </div>
-              <JumpTo
-                stages={stages.map((s) => ({
-                  key: s.key,
-                  label: s.label,
-                  marker: <StageMarker icon={s.icon} label={s.markerLabel} size="sm" />,
-                }))}
-                current={current}
-                onJump={jump}
-                onExpandAll={() => setAll(true)}
-                onCollapseAll={() => setAll(false)}
-              />
             </>
           ) : (
             restored && (
@@ -230,7 +231,12 @@ export function WorkoutPage() {
                 <p className="text-zinc-600 dark:text-zinc-400">
                   There&apos;s no workout to show yet.
                 </p>
-                <ButtonLink href="/" size="sm" className="mt-3">
+                <ButtonLink
+                  href={WOD_STEPS[STEP.workout].href}
+                  transitionTypes={stepTransition(STEP.class, STEP.workout)}
+                  size="sm"
+                  className="mt-3"
+                >
                   Paste a workout
                 </ButtonLink>
               </Card>
