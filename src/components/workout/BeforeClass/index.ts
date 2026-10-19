@@ -1,2 +1,1 @@
-export { BeforeClass } from "./BeforeClass";
-export { referenceCounts } from "./referenceCounts";
+export { BeforeClass, beforeClassCounts, beforeClassReferences } from "./BeforeClass";

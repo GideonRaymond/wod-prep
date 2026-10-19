@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createWodStore, WOD_STORAGE_KEY } from "./wodStore";
-import { fran, strengthAndMetcon } from "@/test/fixtures";
+import { classPrep, fran, strengthAndMetcon } from "@/test/fixtures";
 import type { SavedWod, WodState } from "@/types/wod";
 import { toWodState } from "@/utils/toWodState";
 
@@ -29,6 +29,12 @@ describe("createWodStore", () => {
     wod.parts[0].movements[0] = { ...wod.parts[0].movements[0], videos };
     sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(withText(wod)));
     expect(createWodStore().get()?.wod.parts[0].movements[0].videos).toEqual(videos);
+  });
+
+  it("keeps the planned warm-up and skills", () => {
+    const wod = { ...toWodState(fran), prep: { key: "k", plan: classPrep } };
+    sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(withText(wod)));
+    expect(createWodStore().get()?.wod.prep).toEqual({ key: "k", plan: classPrep });
   });
 
   it("keeps the articles found for each part", () => {

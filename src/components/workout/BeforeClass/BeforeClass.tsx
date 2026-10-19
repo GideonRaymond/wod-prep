@@ -1,11 +1,6 @@
-"use client";
-
-import { useId, useState } from "react";
-import { BookOpen, ChevronDown, ExternalLink, Play, type LucideIcon } from "lucide-react";
-import type { WorkoutPartState } from "@/types/wod";
+import { BookOpen, ExternalLink, Play, type LucideIcon } from "lucide-react";
+import type { ReferenceArticle, ReferenceVideo, WorkoutPartState } from "@/types/wod";
 import { cn } from "@/utils/cn";
-import { pickVideos } from "./pickVideos";
-import { referenceCounts } from "./referenceCounts";
 
 type Reference = {
   key: string;
@@ -17,17 +12,48 @@ type Reference = {
   note?: string;
 };
 
-/**
- * Reading and watching for a workout part: its articles ("Read") and a short pick of videos
- * ("Watch"), side by side on a faint purple ground. It folds on its own and renders nothing
- * while a part has no reference material.
- */
-export function BeforeClass({ part }: { part: WorkoutPartState }) {
-  const [open, setOpen] = useState(true);
-  const panelId = useId();
+const VIDEOS_PER_WORKOUT = 2;
+const present = (x: string | undefined | null): x is string => Boolean(x);
 
-  const articles: Reference[] = (part.articles ?? []).map((a, i) => ({
-    key: `a${i}`,
+/**
+ * What to read and watch before class: the articles for any part, and the general videos about
+ * named workouts like "Fran" (a movement's own video is its Watch link further down).
+ */
+export function beforeClassReferences(parts: WorkoutPartState[]) {
+  const articles: (ReferenceArticle & { about: string })[] = parts.flatMap((part) =>
+    (part.articles ?? []).map((article) => ({ ...article, about: part.title })),
+  );
+  const videos: (ReferenceVideo & { about: string })[] = parts.flatMap((part) =>
+    part.named
+      ? (part.videos ?? [])
+          .slice(0, VIDEOS_PER_WORKOUT)
+          .map((video) => ({ ...video, about: part.title }))
+      : [],
+  );
+  return { articles, videos };
+}
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+/** "2 articles · 1 video", or "" when there's nothing yet. */
+export function beforeClassCounts(parts: WorkoutPartState[]) {
+  const { articles, videos } = beforeClassReferences(parts);
+  return [
+    articles.length && plural(articles.length, "article"),
+    videos.length && plural(videos.length, "video"),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/**
+ * Reading ("Read") and general videos ("Watch") for the class on a faint purple ground: side by
+ * side from the sm breakpoint, stacked on phones.
+ */
+export function BeforeClass({ parts }: { parts: WorkoutPartState[] }) {
+  const references = beforeClassReferences(parts);
+  const articles: Reference[] = references.articles.map((a) => ({
+    key: a.url,
     icon: BookOpen,
     title: a.title,
     url: a.url,
@@ -36,53 +62,35 @@ export function BeforeClass({ part }: { part: WorkoutPartState }) {
       a.source,
       a.minutes ? `${a.minutes} min read` : undefined,
       a.members ? "Login needed" : undefined,
-    ].filter((x): x is string => Boolean(x)),
+    ].filter(present),
     note: a.reason,
   }));
-  const videos: Reference[] = pickVideos(part).map((v) => ({
+  const videos: Reference[] = references.videos.map((v) => ({
     key: v.url,
     icon: Play,
     title: v.title,
     url: v.url,
-    meta: ["Video", v.duration, v.about].filter((x): x is string => Boolean(x)),
+    meta: ["Video", v.duration, v.about].filter(present),
     note: v.reason,
   }));
-  if (articles.length === 0 && videos.length === 0) return null;
+
+  if (articles.length === 0 && videos.length === 0) {
+    return (
+      <p className="bg-accent-faint text-subtle rounded-lg px-4 py-3 text-sm">
+        Reading and videos for this class show up here once they&apos;re found.
+      </p>
+    );
+  }
 
   return (
-    <div className="bg-accent-faint rounded-lg px-4 pt-3 pb-2">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        aria-controls={panelId}
-        className="flex w-full items-center gap-2 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 dark:focus-visible:outline-purple-400"
-      >
-        <span className="text-sm font-semibold text-purple-800 dark:text-purple-200">
-          Before class
-        </span>
-        <span className="text-subtle flex-1 text-xs">{referenceCounts(part)}</span>
-        <ChevronDown
-          size={16}
-          aria-hidden
-          className={cn(
-            "text-zinc-600 transition-transform dark:text-zinc-400",
-            open && "rotate-180",
-          )}
-        />
-      </button>
-
-      <div
-        id={panelId}
-        hidden={!open}
-        className={cn(
-          "mt-4 grid gap-x-6 gap-y-3",
-          articles.length > 0 && videos.length > 0 && "sm:grid-cols-2",
-        )}
-      >
-        <ReferenceList title="Read" items={articles} />
-        <ReferenceList title="Watch" items={videos} />
-      </div>
+    <div
+      className={cn(
+        "bg-accent-faint grid gap-x-6 gap-y-3 rounded-lg px-4 pt-3 pb-2",
+        articles.length > 0 && videos.length > 0 && "sm:grid-cols-2",
+      )}
+    >
+      <ReferenceList title="Read" items={articles} />
+      <ReferenceList title="Watch" items={videos} />
     </div>
   );
 }
@@ -91,7 +99,7 @@ function ReferenceList({ title, items }: { title: string; items: Reference[] }) 
   if (items.length === 0) return null;
   return (
     <div>
-      <h4 className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">{title}</h4>
+      <h3 className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">{title}</h3>
       <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
         {items.map(({ key, icon: Icon, title: itemTitle, url, meta, note }) => (
           <li key={key} className="flex items-start gap-3 py-2">

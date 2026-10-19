@@ -32,6 +32,7 @@ export function useArticles() {
           setWod(
             (current) =>
               current && {
+                ...current,
                 parts: current.parts.map((p) => (p.id === part.id ? { ...p, articles } : p)),
               },
           );

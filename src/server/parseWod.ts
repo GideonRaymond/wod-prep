@@ -13,7 +13,9 @@ List each distinct movement once, in the order it first appears, using its stand
 If the same movement at the same load appears more than once (e.g. Murph starts and ends with a 1 mile run), combine it into one entry and add up the reps (Murph's run is "2 miles"). Keep the same movement at different loads as separate entries.
 Keep loads and reps as written (e.g. "95/65 lb" means male/female). Do not invent movements, loads or reps that aren't in the text.
 Always describe the intended stimulus as a coach would brief the class: the energy system, how heavy or light it should feel, the target time or pace, and whether to go unbroken or break early.
-Rate the intended intensity from 1 to 10: 1-3 easy (cool-downs, mobility, recovery), 4-6 moderate (skill work, steady aerobic), 7-8 hard (heavy strength, longer metcons), 9-10 all-out (short sprints like Fran).`;
+Rate the intended intensity from 1 to 10: 1-3 easy (cool-downs, mobility, recovery), 4-6 moderate (skill work, steady aerobic), 7-8 hard (heavy strength, longer metcons), 9-10 all-out (short sprints like Fran).
+Estimate how many minutes of class each part takes, including setup and rest between sets: use its time cap or duration when it has one, otherwise a coach's estimate.
+List the equipment members need for each part (e.g. "Barbell", "Plates", "Pull-up bar", "Rower", "Box", "Resistance band"), using one name per item and the same name across parts. Bodyweight-only parts need none.`;
 
 export class WodParseError extends UnusableResultError {}
 

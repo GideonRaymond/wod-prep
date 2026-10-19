@@ -49,6 +49,19 @@ describe("WorkoutPartSchema", () => {
     expect(WorkoutPartSchema.safeParse(part).success).toBe(true);
   });
 
+  it("takes the part's length in minutes, or null when it can't be told", () => {
+    expect(WorkoutPartSchema.safeParse({ ...franPart, minutes: null }).success).toBe(true);
+    expect(WorkoutPartSchema.safeParse({ ...franPart, minutes: 0 }).success).toBe(false);
+    expect(WorkoutPartSchema.safeParse({ ...franPart, minutes: 7.5 }).success).toBe(false);
+  });
+
+  it("requires the equipment list, which may be empty", () => {
+    expect(WorkoutPartSchema.safeParse({ ...franPart, equipment: [] }).success).toBe(true);
+    const part: Partial<WorkoutPart> = { ...franPart };
+    delete part.equipment;
+    expect(WorkoutPartSchema.safeParse(part).success).toBe(false);
+  });
+
   it("rejects an unknown format", () => {
     expect(WorkoutPartSchema.safeParse({ ...franPart, format: "tabata" }).success).toBe(false);
   });

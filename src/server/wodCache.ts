@@ -4,7 +4,7 @@ import { fillMissingLabels } from "@/utils/fillMissingLabels";
 import { createFileCache } from "./fileCache";
 
 /** Bump when the parser prompt or schema changes, so old results get parsed again. */
-export const CACHE_VERSION = 4;
+export const CACHE_VERSION = 5;
 
 const cache = createFileCache("parsed-wods", WodSchema);
 
