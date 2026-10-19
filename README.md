@@ -48,6 +48,7 @@ In development, every parsed WOD is saved to `.cache/parsed-wods.json` and every
   - A cached parse streams its outline after about 2s, then each part after 3–6s.
   - Videos take 1–3.5s, the warm-up plan 4–7s, and articles 8–14s.
   - Fresh results aren't slowed down.
+  - The loading screen doesn't count down to the class; open it with **Open your class**. `next.config.ts` passes `MOCK_LOAD` to the browser for this.
 - **Clear the cache:** delete `.cache/`. **Turn it on or off:** set `WOD_CACHE=on|off`. It's off in production by default.
 - Bump `CACHE_VERSION` in `src/server/wodCache.ts` (or `POINTS_CACHE_VERSION` in `src/server/pointsOfPerformance.ts`) when that prompt or schema changes.
 

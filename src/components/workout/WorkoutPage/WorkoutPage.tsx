@@ -23,6 +23,7 @@ import { Whiteboard } from "@/components/workout/Whiteboard";
 import { ButtonLink } from "@/components/shared/ButtonLink";
 import { Card } from "@/components/shared/Card";
 import { CategoryBadge } from "@/components/shared/CategoryBadge";
+import { MOCK_LOAD } from "@/constants/dev";
 import { FORMAT_LABELS } from "@/constants/wod";
 import { useArticles } from "@/hooks/useArticles";
 import { useClassPrep } from "@/hooks/useClassPrep";
@@ -126,6 +127,7 @@ export function WorkoutPage() {
           })}
           onOpen={openClass}
           leaving={phase === "leaving"}
+          autoOpen={!MOCK_LOAD}
         />
       </main>
     );

@@ -1,1 +1,1 @@
-export { ReadyToOpen, OPEN_COUNTDOWN_SECONDS } from "./ReadyToOpen";
+export { ReadyToOpen, OPEN_COUNTDOWN_SECONDS, type ReadyToOpenProps } from "./ReadyToOpen";

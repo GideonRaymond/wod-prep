@@ -36,6 +36,17 @@ describe("ReadyToOpen", () => {
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
+  it("only opens from the button when it doesn't open on its own", () => {
+    const onOpen = vi.fn();
+    render(<ReadyToOpen onOpen={onOpen} autoOpen={false} />);
+    expect(screen.queryByText(/Opening in/)).not.toBeInTheDocument();
+    tick(10);
+    expect(onOpen).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open your class" }));
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
   it("waits while someone is reading, then carries on", () => {
     const onOpen = vi.fn();
     const { rerender } = render(<ReadyToOpen onOpen={onOpen} paused />);

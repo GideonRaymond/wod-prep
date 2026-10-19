@@ -16,6 +16,8 @@ export type LoadingScreenProps = {
   onOpen: () => void;
   /** Fading out, on the way to the class page. */
   leaving?: boolean;
+  /** Count down to the class once it's ready (off in mock mode, so it waits for the button). */
+  autoOpen?: boolean;
 };
 
 /**
@@ -25,7 +27,13 @@ export type LoadingScreenProps = {
  * countdown to the class.
  * A polite live region announces each step as it finishes.
  */
-export function LoadingScreen({ wod, checklist, onOpen, leaving = false }: LoadingScreenProps) {
+export function LoadingScreen({
+  wod,
+  checklist,
+  onOpen,
+  leaving = false,
+  autoOpen = true,
+}: LoadingScreenProps) {
   const [reading, setReading] = useState(false);
   const live = useAnnouncements(checklist);
 
@@ -50,7 +58,7 @@ export function LoadingScreen({ wod, checklist, onOpen, leaving = false }: Loadi
         <div>
           <h2 className="mb-2 text-sm font-semibold">Getting it ready</h2>
           <Checklist items={checklist.items} label="Getting it ready" />
-          {checklist.ready && <ReadyToOpen onOpen={onOpen} paused={reading} />}
+          {checklist.ready && <ReadyToOpen onOpen={onOpen} paused={reading} autoOpen={autoOpen} />}
         </div>
       </div>
     </div>

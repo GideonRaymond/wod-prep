@@ -90,6 +90,19 @@ describe("LoadingScreen", () => {
     expect(onOpen).toHaveBeenCalled();
   });
 
+  it("leaves out the countdown when it shouldn't open on its own", () => {
+    render(
+      <LoadingScreen
+        wod={base}
+        checklist={classChecklist({ wod: base, ...done })}
+        onOpen={vi.fn()}
+        autoOpen={false}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Open your class" })).toBeInTheDocument();
+    expect(screen.queryByText(/Opening in/)).not.toBeInTheDocument();
+  });
+
   it("fades out on the way to the class", () => {
     const { container } = render(
       <LoadingScreen
