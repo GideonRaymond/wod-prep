@@ -25,7 +25,7 @@ Open http://localhost:3000.
 
 After **Confirm workout**, the workout page shows a loading screen while the class is still being built (reading, videos, the warm-up and skills plan). This follows the WOD Prep design system's **LoadingScreen**.
 
-- **Left:** the pasted workout on a whiteboard. Each block's first line is in Permanent Marker and the rest in Kalam, in purple inks only; both fonts are loaded with `next/font/google` and used only here. Each part gets circled in turn, with its marker. On phones the board is capped with a fade and a **Show all** button.
+- **Left:** the pasted workout on a whiteboard. Each block's first line is in Permanent Marker and the rest in Kalam, in purple inks only; both fonts are loaded with `next/font/google` and used only here. When no part has a real name (like Fran), "WOD" heads the board. On phones the board is capped with a fade and a **Show all** button.
 - **Right:** a checklist (`classChecklist`) with these rows:
   - **Reading your workout**, **Before class**, **Warm-up**, **Workout** and **Cool-down**.
   - The Workout row grows into this workout's own parts and skills, in class order. A part ticks off once its videos are found, and skills appear once the plan arrives.
