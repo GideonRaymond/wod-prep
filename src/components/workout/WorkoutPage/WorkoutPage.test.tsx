@@ -3,8 +3,12 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const { mockVideos } = vi.hoisted(() => ({ mockVideos: vi.fn() }));
+const { mockVideos, mockArticles } = vi.hoisted(() => ({
+  mockVideos: vi.fn(),
+  mockArticles: vi.fn(),
+}));
 vi.mock("@/services/videosApi", () => ({ requestMovementVideos: mockVideos }));
+vi.mock("@/services/articlesApi", () => ({ requestArticles: mockArticles }));
 
 import { WorkoutPage } from "./WorkoutPage";
 import { WodProvider } from "@/providers/WodProvider";
@@ -27,6 +31,7 @@ const stageToggle = (name: string | RegExp) =>
 describe("WorkoutPage", () => {
   beforeEach(() => {
     mockVideos.mockReset().mockResolvedValue([]);
+    mockArticles.mockReset().mockResolvedValue([]);
   });
   afterEach(() => {
     cleanup();
@@ -123,7 +128,7 @@ describe("WorkoutPage", () => {
       return [];
     });
     renderPage(toWodState(fran));
-    expect(screen.getByRole("status")).toHaveTextContent("Finding videos…");
+    expect(screen.getByRole("status")).toHaveTextContent("Finding videos and reading…");
 
     expect(await screen.findByRole("link", { name: /Fran explained/ })).toBeVisible();
     expect(screen.getByText("Video · 3:40 · Fran")).toBeInTheDocument();
@@ -139,6 +144,30 @@ describe("WorkoutPage", () => {
     renderPage(toWodState(fran));
     expect(await screen.findByText("Videos need a YouTube API key.")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Fran" })).toBeInTheDocument();
+  });
+
+  it("finds reading for each part and lists it under Before class", async () => {
+    mockArticles.mockResolvedValue([
+      {
+        title: "Fooling Around with Fran",
+        url: "https://library.crossfit.com/free/pdf/31_05_fooling_with_fran.pdf",
+        source: "CrossFit Journal",
+        minutes: 11,
+        reason: "Why thrusters and pull-ups.",
+      },
+    ]);
+    renderPage(toWodState(fran));
+
+    expect(await screen.findByRole("link", { name: /Fooling Around with Fran/ })).toBeVisible();
+    expect(screen.getByText("Why thrusters and pull-ups.")).toBeInTheDocument();
+    expect(mockArticles).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("explains when reading can't be found", async () => {
+    mockArticles.mockRejectedValue(new Error("Set ANTHROPIC_API_KEY in .env.local."));
+    renderPage(toWodState(fran));
+    expect(await screen.findByText("Set ANTHROPIC_API_KEY in .env.local.")).toBeInTheDocument();
   });
 
   it("marks a single-part workout as WOD and keeps part labels otherwise", () => {

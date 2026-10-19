@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ReferenceArticlesSchema } from "@/schemas/articles";
 import { ReferenceVideosSchema } from "@/schemas/videos";
 import { MovementSchema, WorkoutPartSchema } from "@/schemas/wod";
 import type { SavedWod, WodState } from "@/types/wod";
@@ -14,6 +15,7 @@ export const WodStateSchema: z.ZodType<WodState> = z.object({
         id: z.string(),
         originalStimulus: z.string(),
         videos: ReferenceVideosSchema.optional(),
+        articles: ReferenceArticlesSchema.optional(),
         movements: z.array(
           MovementSchema.extend({ id: z.string(), videos: ReferenceVideosSchema.optional() }),
         ),

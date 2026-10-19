@@ -60,4 +60,17 @@ describe("BeforeClass", () => {
     render(<BeforeClass parts={[{ ...fran, videos: [{ ...video(1), reason }] }]} />);
     expect(screen.getByText(reason)).toBeInTheDocument();
   });
+
+  it("says why an article was picked and when it needs a login", () => {
+    const article = {
+      title: "The Story of Fran",
+      url: "https://journal.crossfit.com/2009/12/the-story-of-fran.tpl",
+      source: "CrossFit Journal",
+      reason: "Where Fran came from.",
+      members: true,
+    };
+    render(<BeforeClass parts={[{ ...fran, articles: [article] }]} />);
+    expect(screen.getByText("Article · CrossFit Journal · Login needed")).toBeInTheDocument();
+    expect(screen.getByText("Where Fran came from.")).toBeInTheDocument();
+  });
 });

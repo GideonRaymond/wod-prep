@@ -8,7 +8,7 @@ type Reference = {
   title: string;
   url: string;
   meta: string[];
-  /** Why it's worth watching, when Claude picked it. */
+  /** Why it's worth reading or watching, when Claude picked it. */
   note?: string;
 };
 
@@ -57,7 +57,13 @@ export function BeforeClass({ parts }: { parts: WorkoutPartState[] }) {
     icon: BookOpen,
     title: a.title,
     url: a.url,
-    meta: ["Article", a.source, a.minutes ? `${a.minutes} min read` : undefined].filter(present),
+    meta: [
+      "Article",
+      a.source,
+      a.minutes ? `${a.minutes} min read` : undefined,
+      a.members ? "Login needed" : undefined,
+    ].filter(present),
+    note: a.reason,
   }));
   const videos: Reference[] = references.videos.map((v) => ({
     key: v.url,
