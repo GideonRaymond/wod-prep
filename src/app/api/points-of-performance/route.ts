@@ -1,4 +1,5 @@
 import { MAX_MOVEMENT_NAME_LENGTH } from "@/constants/wod";
+import { mockLoad } from "@/server/mockLoad";
 import { claudeErrorResponse, missingApiKeyResponse } from "@/server/apiErrors";
 import {
   cachePoints,
@@ -19,10 +20,14 @@ export async function POST(request: Request) {
   }
 
   const curated = findCuratedPoints(name);
-  if (curated) return Response.json({ points: curated, source: "curated" });
+  if (curated) {
+    await mockLoad("points");
+    return Response.json({ points: curated, source: "curated" });
+  }
 
   const cached = await getCachedPoints(name);
   if (cached) {
+    await mockLoad("points");
     return Response.json({ points: cached, source: "ai" }, { headers: { "X-Cache": "HIT" } });
   }
 

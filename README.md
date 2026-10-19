@@ -12,6 +12,29 @@ npm run dev
 
 Open http://localhost:3000.
 
+## Parsing, in two steps
+
+**Break it down** streams its progress, so the review page fills in while the workout is read:
+
+1. **The structure** comes back in a few seconds from a quick read by Claude Haiku (`FAST_MODEL`): each part's label, title, kind (warm-up, part, cool-down) and lines. A warm-up or cool-down gets a label that says so.
+2. **Each part's details** are then read at the same time, one Claude call per part: format, movements, stimulus, minutes and equipment.
+
+`POST /api/parse` answers with newline-delimited JSON (`ParseEvent` in `src/types/parse.ts`): an `outline` event, a `part` event as each part finishes, then `done` with the whole workout, or an `error`. A cached workout streams the same events at once. While parsing, the home page shows a checklist ("Reading your workout", then each part found, ticked off as it's read).
+
+## Loading screen
+
+After **Confirm workout**, the workout page shows a loading screen while the class is still being built (reading, videos, the warm-up and skills plan). This follows the WOD Prep design system's **LoadingScreen**.
+
+- **Left:** the pasted workout on a whiteboard. Each block's first line is in Permanent Marker and the rest in Kalam, in purple inks only; both fonts are loaded with `next/font/google` and used only here. Each part gets circled in turn, with its marker. On phones the board is capped with a fade and a **Show all** button.
+- **Right:** a checklist (`classChecklist`) with these rows:
+  - **Reading your workout**, **Before class**, **Warm-up**, **Workout** and **Cool-down**.
+  - The Workout row grows into this workout's own parts and skills, in class order. A part ticks off once its videos are found, and skills appear once the plan arrives.
+  - **Timing the class** comes last, with every stage's start minute.
+- **While you wait:** under the whiteboard, up to 3 videos or articles as soon as they're found. Videos come first, because articles take the longest.
+- **Opening the class:** "Your class is ready" appears with **Open your class** and a 3-second countdown. The countdown pauses while the pointer or focus is on the reading list. Then the screen fades out, the class page's stages settle in 60 ms apart, and focus moves to the page heading.
+- **Accessibility:** a polite live region announces each step ("Warm-up ready") and when the class is ready. With `prefers-reduced-motion`, nothing slides or fades.
+- **When it's skipped:** if everything is already there when the page opens (say, after a refresh), the class shows straight away.
+
 ## Parse cache
 
 In development, every parsed WOD is saved to `.cache/parsed-wods.json` and every AI-generated set of points of performance to `.cache/points-of-performance.json` (both gitignored), so testing with the same workouts costs nothing after the first time. Cached results even work without an API key.
@@ -21,6 +44,11 @@ In development, every parsed WOD is saved to `.cache/parsed-wods.json` and every
 - **Named workouts** (and named parts) are also stored under their name, so after parsing Fran once, even as Part B of a longer class, typing just `Fran` is a cache hit. Made-up titles like "Intense Couplet" aren't.
 - **Different wording** (e.g. `21-15-9 pullups and thrusters`) is parsed once more, then cached too.
 - Responses carry an `X-Cache: HIT` or `MISS` header (visible in the browser's network tab).
+- **Test the loading screens with cached results:** set `MOCK_LOAD=true` in `.env.local` and restart the dev server. Cached and hand-picked results then arrive about as slowly as real ones (`MOCK_DELAYS_MS` in `src/server/mockLoad.ts`):
+  - A cached parse streams its outline after about 2s, then each part after 3–6s.
+  - Videos take 1–3.5s, the warm-up plan 4–7s, and articles 8–14s.
+  - Fresh results aren't slowed down.
+  - The loading screen doesn't count down to the class; open it with **Open your class**. `next.config.ts` passes `MOCK_LOAD` to the browser for this.
 - **Clear the cache:** delete `.cache/`. **Turn it on or off:** set `WOD_CACHE=on|off`. It's off in production by default.
 - Bump `CACHE_VERSION` in `src/server/wodCache.ts` (or `POINTS_CACHE_VERSION` in `src/server/pointsOfPerformance.ts`) when that prompt or schema changes.
 
@@ -112,7 +140,7 @@ CI runs all of these plus `npm run build` on every pull request. `main` is prote
 src/
 ├── app/                  # Next.js routes only (pages, layouts, API route handlers)
 │   ├── page.tsx          #   renders <HomePage />
-│   └── api/              #   POST /api/parse, /api/points-of-performance, /api/videos, /api/articles, /api/class-prep
+│   └── api/              #   POST /api/parse (streamed), /api/points-of-performance, /api/videos, /api/articles, /api/class-prep
 ├── components/
 │   ├── shared/           # Reusable UI (Button, ButtonLink, TextArea, Card, Badge, Dialog, IntensityGauge, MovementDetails, …)
 │   ├── home/             # Review page: paste, check and edit the parsed workout (HomePage, WorkoutPart, …)

@@ -7,6 +7,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/server/articles", () => mocks);
+const { mockLoad, isMockLoad } = vi.hoisted(() => ({
+  mockLoad: vi.fn(async () => {}),
+  isMockLoad: vi.fn(() => false),
+}));
+vi.mock("@/server/mockLoad", () => ({ mockLoad, isMockLoad }));
 
 import { POST } from "./route";
 import { UnusableResultError } from "@/server/apiErrors";
@@ -50,6 +55,18 @@ describe("POST /api/articles", () => {
     await expect(res.json()).resolves.toEqual({ articles });
     expect(mocks.findArticles).toHaveBeenCalledWith(part);
     expect(mocks.cacheArticles).toHaveBeenCalledWith(part, articles);
+  });
+
+  it("waits like a real search on a cache hit when MOCK_LOAD is on, and not otherwise", async () => {
+    mocks.getCachedArticles.mockResolvedValue(articles);
+    await post({ part });
+    expect(mockLoad).toHaveBeenCalledWith("articles");
+
+    mockLoad.mockClear();
+    mocks.getCachedArticles.mockResolvedValue(null);
+    mocks.findArticles.mockResolvedValue(articles);
+    await post({ part });
+    expect(mockLoad).not.toHaveBeenCalled();
   });
 
   it("returns cached articles without searching", async () => {

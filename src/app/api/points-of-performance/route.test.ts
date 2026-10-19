@@ -11,6 +11,12 @@ vi.mock("@/server/pointsOfPerformance", async (importOriginal) => ({
   ...mocks,
 }));
 
+const { mockLoad, isMockLoad } = vi.hoisted(() => ({
+  mockLoad: vi.fn(async () => {}),
+  isMockLoad: vi.fn(() => false),
+}));
+vi.mock("@/server/mockLoad", () => ({ mockLoad, isMockLoad }));
+
 import { POST } from "./route";
 import { UnusableResultError } from "@/server/apiErrors";
 import { MAX_MOVEMENT_NAME_LENGTH } from "@/constants/wod";
@@ -55,6 +61,20 @@ describe("POST /api/points-of-performance", () => {
     expect(res.headers.get("X-Cache")).toBe("HIT");
     expect(await res.json()).toEqual({ points, source: "ai" });
     expect(mocks.generatePoints).not.toHaveBeenCalled();
+  });
+
+  it("waits like a real lookup for curated and cached points when MOCK_LOAD is on", async () => {
+    mockLoad.mockClear();
+    await post({ name: "Thrusters" });
+    mocks.getCachedPoints.mockResolvedValue(points);
+    await post({ name: "Ring Muscle-up" });
+    expect(mockLoad.mock.calls).toEqual([["points"], ["points"]]);
+
+    mockLoad.mockClear();
+    mocks.getCachedPoints.mockResolvedValue(null);
+    mocks.generatePoints.mockResolvedValue(points);
+    await post({ name: "Ring Muscle-up" });
+    expect(mockLoad).not.toHaveBeenCalled();
   });
 
   it("generates and caches points for an unknown movement", async () => {

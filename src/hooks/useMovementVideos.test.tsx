@@ -2,14 +2,14 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { strengthAndMetcon } from "@/test/fixtures";
+import { fran, strengthAndMetcon } from "@/test/fixtures";
 import type { WodState } from "@/types/wod";
 import { toWodState } from "@/utils/toWodState";
 
 const { mockRequest } = vi.hoisted(() => ({ mockRequest: vi.fn() }));
 vi.mock("@/services/videosApi", () => ({ requestMovementVideos: mockRequest }));
 
-import { useMovementVideos } from "./useMovementVideos";
+import { useMovementVideos, videoSearchKey } from "./useMovementVideos";
 import { useWod, WodProvider } from "@/providers/WodProvider";
 
 const video = (title: string) => ({ title, url: `https://www.youtube.com/watch?v=${title}` });
@@ -131,7 +131,30 @@ describe("useMovementVideos", () => {
 
   it("does nothing without a workout", () => {
     const { result } = renderWithWod(null);
-    expect(result.current.videos).toEqual({ loading: false, error: null });
+    expect(result.current.videos).toEqual({ loading: false, pending: new Set(), error: null });
     expect(mockRequest).not.toHaveBeenCalled();
+  });
+
+  it("lists the searches still waiting, until each one is found", async () => {
+    const waiting = new Map<string, (videos: unknown[]) => void>();
+    mockRequest.mockImplementation(
+      (name: string) => new Promise((resolve) => waiting.set(name, resolve)),
+    );
+    const finish = (name: string) => waiting.get(name)!([video(name)]);
+    const { result } = renderWithWod(toWodState(fran));
+
+    expect(result.current.videos.pending).toEqual(
+      new Set([
+        videoSearchKey("Fran", "workout"),
+        videoSearchKey("Thruster", "movement"),
+        videoSearchKey("Pull-up", "movement"),
+      ]),
+    );
+    await waitFor(() => expect(waiting.size).toBe(3));
+    act(() => finish("Thruster"));
+    await waitFor(() =>
+      expect(result.current.videos.pending.has(videoSearchKey("Thruster", "movement"))).toBe(false),
+    );
+    expect(result.current.videos.pending.size).toBe(2);
   });
 });

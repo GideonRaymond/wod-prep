@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -16,8 +16,10 @@ vi.mock("@/services/classPrepApi", async (importOriginal) => ({
 }));
 
 import { WorkoutPage } from "./WorkoutPage";
-import { WodProvider } from "@/providers/WodProvider";
+import { useWod, WodProvider } from "@/providers/WodProvider";
 import { WOD_STORAGE_KEY } from "@/stores/wodStore";
+import type { ClassPrep } from "@/schemas/classPrep";
+import { prepKey } from "@/services/classPrepApi";
 import type { WodState } from "@/types/wod";
 import { classPrep, fran, strengthAndMetcon } from "@/test/fixtures";
 import { toWodState } from "@/utils/toWodState";
@@ -30,6 +32,26 @@ function renderPage(wod: WodState | null) {
   );
 }
 
+/** A workout with everything already found and planned, so the class shows straight away. */
+function built(wod: WodState, plan: ClassPrep = { warmup: null, skills: [] }): WodState {
+  const done: WodState = {
+    parts: wod.parts.map((part) => ({
+      ...part,
+      articles: part.articles ?? [],
+      ...(part.named && { videos: part.videos ?? [] }),
+      movements: part.movements.map((m) => ({ ...m, videos: m.videos ?? [] })),
+    })),
+  };
+  return { ...done, prep: { key: prepKey(done), plan } };
+}
+
+/** Opens a workout that still needs building: the loading screen, then Open your class. */
+async function renderAndOpen(wod: WodState) {
+  renderPage(wod);
+  await userEvent.click(await screen.findByRole("button", { name: "Open your class" }));
+  await screen.findByRole("heading", { level: 1, name: "Your workout" });
+}
+
 const stageToggle = (name: string | RegExp) =>
   within(screen.getByRole("region", { name })).getAllByRole("button")[0];
 
@@ -38,13 +60,16 @@ describe("WorkoutPage", () => {
     mockVideos.mockReset().mockResolvedValue([]);
     mockArticles.mockReset().mockResolvedValue([]);
     mockPrep.mockReset().mockResolvedValue({ warmup: null, skills: [] });
+    // Hand over to the class at once instead of fading out.
+    vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") }));
   });
   afterEach(() => {
     cleanup();
+    vi.unstubAllGlobals();
   });
 
   it("runs the class in order: Before class, Whiteboard, the parts, then Cool-down", () => {
-    renderPage(toWodState(strengthAndMetcon));
+    renderPage(built(toWodState(strengthAndMetcon)));
     expect(screen.getByRole("heading", { level: 1, name: "Your workout" })).toBeInTheDocument();
     expect(screen.getAllByRole("region").map((r) => r.getAttribute("id"))).toHaveLength(5);
     const names = screen
@@ -53,14 +78,66 @@ describe("WorkoutPage", () => {
     expect(names).toEqual(["Before class", "Whiteboard", "Heavy Back Squats", "Fran", "Cool-down"]);
   });
 
-  it("marks Before class with a lightbulb", () => {
+  it("builds the class on the loading screen, then hands over to it", async () => {
+    let finishPrep: (plan: ClassPrep) => void = () => {};
+    mockPrep.mockReturnValue(new Promise((resolve) => (finishPrep = resolve)));
     renderPage(toWodState(strengthAndMetcon));
+
+    expect(screen.getByRole("heading", { level: 1, name: "Building your class" })).toBeVisible();
+    const checklist = screen.getByRole("list", { name: "Getting it ready" });
+    expect(within(checklist).getByText("Warm-up")).toBeInTheDocument();
+    expect(within(checklist).getByText("Heavy Back Squats")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Whiteboard" })).not.toBeInTheDocument();
+
+    act(() => finishPrep(classPrep));
+    expect(await screen.findByRole("button", { name: "Open your class" })).toBeVisible();
+    expect(within(checklist).getByText("Timing the class")).toBeInTheDocument();
+    expect(within(checklist).getByText("Pull-up")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Open your class" }));
+    const heading = await screen.findByRole("heading", { level: 1, name: "Your workout" });
+    expect(heading).toHaveFocus();
+    expect(screen.getByRole("region", { name: "Whiteboard" })).toHaveClass(
+      "motion-safe:animate-settle",
+    );
+  });
+
+  it("builds the next workout on the loading screen too, though the page stays alive", async () => {
+    let wodContext: ReturnType<typeof useWod> | null = null;
+    function Capture() {
+      wodContext = useWod();
+      return null;
+    }
+    render(
+      <WodProvider initialWod={built(toWodState(fran))}>
+        <Capture />
+        <WorkoutPage />
+      </WodProvider>,
+    );
+    expect(screen.getByRole("heading", { level: 1, name: "Your workout" })).toBeInTheDocument();
+
+    act(() => wodContext!.loadWod("A) squats B) Fran", toWodState(strengthAndMetcon)));
+    expect(screen.getByRole("heading", { level: 1, name: "Building your class" })).toBeVisible();
+    await userEvent.click(await screen.findByRole("button", { name: "Open your class" }));
+    expect(await screen.findByRole("region", { name: "Heavy Back Squats" })).toBeInTheDocument();
+  });
+
+  it("skips the loading screen when the class is already built", () => {
+    renderPage(built(toWodState(strengthAndMetcon)));
+    expect(screen.queryByText("Building your class")).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Whiteboard" })).not.toHaveClass(
+      "motion-safe:animate-settle",
+    );
+  });
+
+  it("marks Before class with a lightbulb", () => {
+    renderPage(built(toWodState(strengthAndMetcon)));
     const stage = screen.getByRole("region", { name: "Before class" });
     expect(stage.querySelector("svg.lucide-lightbulb")).toBeInTheDocument();
   });
 
   it("opens Before class and the whiteboard, and folds the rest", () => {
-    renderPage(toWodState(strengthAndMetcon));
+    renderPage(built(toWodState(strengthAndMetcon)));
     expect(stageToggle("Before class")).toHaveAttribute("aria-expanded", "true");
     expect(stageToggle("Whiteboard")).toHaveAttribute("aria-expanded", "true");
     expect(stageToggle("Heavy Back Squats")).toHaveAttribute("aria-expanded", "false");
@@ -69,7 +146,7 @@ describe("WorkoutPage", () => {
   });
 
   it("shows when each stage starts, after the whiteboard", () => {
-    renderPage(toWodState(strengthAndMetcon));
+    renderPage(built(toWodState(strengthAndMetcon)));
     for (const when of ["Before", "0′", "5′", "20′", "32′"]) {
       expect(screen.getByText(when)).toBeInTheDocument();
     }
@@ -77,7 +154,7 @@ describe("WorkoutPage", () => {
   });
 
   it("briefs the stimulus and lists the day's equipment on the whiteboard", () => {
-    renderPage(toWodState(strengthAndMetcon));
+    renderPage(built(toWodState(strengthAndMetcon)));
     const board = screen.getByRole("region", { name: "Whiteboard" });
     expect(within(board).getAllByRole("meter", { name: "Intensity" })).toHaveLength(2);
     expect(within(board).getByRole("list", { name: "Equipment today" })).toHaveTextContent(
@@ -87,7 +164,7 @@ describe("WorkoutPage", () => {
 
   it("plans a warm-up and puts each skill right before the part that uses it", async () => {
     mockPrep.mockResolvedValue(classPrep);
-    renderPage(toWodState(strengthAndMetcon));
+    await renderAndOpen(toWodState(strengthAndMetcon));
 
     expect(await screen.findByRole("region", { name: "Skill: Pull-up" })).toBeInTheDocument();
     const names = screen
@@ -112,7 +189,7 @@ describe("WorkoutPage", () => {
   it("opens the planned warm-up and the skill practice", async () => {
     const user = userEvent.setup();
     mockPrep.mockResolvedValue(classPrep);
-    renderPage(toWodState(strengthAndMetcon));
+    await renderAndOpen(toWodState(strengthAndMetcon));
 
     await user.click(await screen.findByRole("button", { name: /^Warm-up/ }));
     const warmup = screen.getByRole("region", { name: "Warm-up" });
@@ -128,7 +205,7 @@ describe("WorkoutPage", () => {
 
   it("adds the warm-up and skill equipment to the whiteboard", async () => {
     mockPrep.mockResolvedValue(classPrep);
-    renderPage(toWodState(strengthAndMetcon));
+    await renderAndOpen(toWodState(strengthAndMetcon));
     await screen.findByRole("region", { name: "Skill: Pull-up" });
     const board = screen.getByRole("region", { name: "Whiteboard" });
     expect(within(board).getByRole("list", { name: "Equipment today" })).toHaveTextContent(
@@ -138,13 +215,13 @@ describe("WorkoutPage", () => {
 
   it("explains when the warm-up can't be planned", async () => {
     mockPrep.mockRejectedValue(new Error("Rate limited. Try again in a moment."));
-    renderPage(toWodState(strengthAndMetcon));
+    await renderAndOpen(toWodState(strengthAndMetcon));
     expect(await screen.findByText("Rate limited. Try again in a moment.")).toBeInTheDocument();
   });
 
   it("suggests stretches in a cool-down of their own, if time allows", async () => {
     const user = userEvent.setup();
-    renderPage(toWodState(fran));
+    renderPage(built(toWodState(fran)));
 
     const names = screen
       .getAllByRole("heading", { level: 2 })
@@ -163,7 +240,7 @@ describe("WorkoutPage", () => {
 
   it("adds suggested stretches under a programmed cool-down", async () => {
     const user = userEvent.setup();
-    renderPage(toWodState(strengthAndMetcon));
+    renderPage(built(toWodState(strengthAndMetcon)));
     expect(screen.getAllByRole("region", { name: "Cool-down" })).toHaveLength(1);
 
     await user.click(stageToggle("Cool-down"));
@@ -175,7 +252,7 @@ describe("WorkoutPage", () => {
   it("shows the edited stimulus", () => {
     const wod = toWodState(strengthAndMetcon);
     wod.parts[1] = { ...wod.parts[1], stimulus: { ...wod.parts[1].stimulus, description: "Go!" } };
-    renderPage(wod);
+    renderPage(built(wod));
     expect(
       within(screen.getByRole("region", { name: "Whiteboard" })).getByText("Go!"),
     ).toBeVisible();
@@ -183,7 +260,7 @@ describe("WorkoutPage", () => {
 
   it("opens a part to show what you need and each movement", async () => {
     const user = userEvent.setup();
-    renderPage(toWodState(strengthAndMetcon));
+    renderPage(built(toWodState(strengthAndMetcon)));
     await user.click(stageToggle("Fran"));
     const part = screen.getByRole("region", { name: "Fran" });
     expect(within(part).getByRole("list", { name: "You'll need" })).toBeVisible();
@@ -194,7 +271,7 @@ describe("WorkoutPage", () => {
   it("restores the workout after a page refresh", () => {
     sessionStorage.setItem(
       WOD_STORAGE_KEY,
-      JSON.stringify({ text: "A) squats B) Fran", wod: toWodState(strengthAndMetcon) }),
+      JSON.stringify({ text: "A) squats B) Fran", wod: built(toWodState(strengthAndMetcon)) }),
     );
     render(
       <WodProvider>
@@ -226,10 +303,7 @@ describe("WorkoutPage", () => {
       }
       return [];
     });
-    renderPage(toWodState(fran));
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Finding videos and reading · Planning the warm-up…",
-    );
+    await renderAndOpen(toWodState(fran));
 
     expect(await screen.findByRole("link", { name: /Fran explained/ })).toBeVisible();
     expect(screen.getByText("Video · 3:40 · Fran")).toBeInTheDocument();
@@ -242,7 +316,7 @@ describe("WorkoutPage", () => {
 
   it("explains when videos can't be found", async () => {
     mockVideos.mockRejectedValue(new Error("Videos need a YouTube API key."));
-    renderPage(toWodState(fran));
+    await renderAndOpen(toWodState(fran));
     expect(await screen.findByText("Videos need a YouTube API key.")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Fran" })).toBeInTheDocument();
   });
@@ -257,7 +331,7 @@ describe("WorkoutPage", () => {
         reason: "Why thrusters and pull-ups.",
       },
     ]);
-    renderPage(toWodState(fran));
+    await renderAndOpen(toWodState(fran));
 
     expect(await screen.findByRole("link", { name: /Fooling Around with Fran/ })).toBeVisible();
     expect(screen.getByText("Why thrusters and pull-ups.")).toBeInTheDocument();
@@ -267,23 +341,23 @@ describe("WorkoutPage", () => {
 
   it("explains when reading can't be found", async () => {
     mockArticles.mockRejectedValue(new Error("Set ANTHROPIC_API_KEY in .env.local."));
-    renderPage(toWodState(fran));
+    await renderAndOpen(toWodState(fran));
     expect(await screen.findByText("Set ANTHROPIC_API_KEY in .env.local.")).toBeInTheDocument();
   });
 
   it("marks a single-part workout as WOD and keeps part labels otherwise", () => {
-    renderPage(toWodState(fran));
+    renderPage(built(toWodState(fran)));
     expect(screen.getAllByText("WOD").length).toBeGreaterThan(0);
     cleanup();
 
-    renderPage(toWodState(strengthAndMetcon));
+    renderPage(built(toWodState(strengthAndMetcon)));
     expect(screen.queryByText("WOD")).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Cool-down" })).toBeInTheDocument();
   });
 
   it("jumps to a stage from the menu, opening it", async () => {
     const user = userEvent.setup();
-    renderPage(toWodState(strengthAndMetcon));
+    renderPage(built(toWodState(strengthAndMetcon)));
     await user.click(screen.getByRole("button", { name: /Jump to/ }));
     await user.click(screen.getByRole("button", { name: /B · Fran/ }));
     expect(stageToggle("Fran")).toHaveAttribute("aria-expanded", "true");
@@ -292,7 +366,7 @@ describe("WorkoutPage", () => {
 
   it("expands and collapses every stage from the menu", async () => {
     const user = userEvent.setup();
-    renderPage(toWodState(strengthAndMetcon));
+    renderPage(built(toWodState(strengthAndMetcon)));
     await user.click(screen.getByRole("button", { name: /Jump to/ }));
     await user.click(screen.getByRole("button", { name: "Expand all" }));
     for (const name of ["Before class", "Whiteboard", "Heavy Back Squats", "Fran", "Cool-down"]) {
@@ -303,7 +377,7 @@ describe("WorkoutPage", () => {
   });
 
   it("links back to the review page", () => {
-    renderPage(toWodState(strengthAndMetcon));
+    renderPage(built(toWodState(strengthAndMetcon)));
     expect(screen.getByRole("link", { name: "Back to edit" })).toHaveAttribute("href", "/");
   });
 

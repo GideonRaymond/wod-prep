@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
   ClipboardList,
@@ -15,6 +15,7 @@ import { ClassStage, StageMarker } from "@/components/workout/ClassStage";
 import { EquipmentLine, EquipmentList } from "@/components/workout/EquipmentList";
 import { ExerciseList } from "@/components/workout/ExerciseList";
 import { JumpTo } from "@/components/workout/JumpTo";
+import { classChecklist, LoadingScreen } from "@/components/workout/LoadingScreen";
 import { SkillPractice } from "@/components/workout/SkillPractice";
 import { StretchList } from "@/components/workout/StretchList";
 import { WarmupPlan } from "@/components/workout/WarmupPlan";
@@ -22,12 +23,15 @@ import { Whiteboard } from "@/components/workout/Whiteboard";
 import { ButtonLink } from "@/components/shared/ButtonLink";
 import { Card } from "@/components/shared/Card";
 import { CategoryBadge } from "@/components/shared/CategoryBadge";
+import { MOCK_LOAD } from "@/constants/dev";
 import { FORMAT_LABELS } from "@/constants/wod";
 import { useArticles } from "@/hooks/useArticles";
 import { useClassPrep } from "@/hooks/useClassPrep";
 import { useCurrentStage } from "@/hooks/useCurrentStage";
+import { useHandOver } from "@/hooks/useHandOver";
 import { useMovementVideos } from "@/hooks/useMovementVideos";
 import { useWod } from "@/providers/WodProvider";
+import { prepKey } from "@/services/classPrepApi";
 import type { Stretch } from "@/data/stretches";
 import type { ClassPrep } from "@/schemas/classPrep";
 import type { WodState, WorkoutPartState } from "@/types/wod";
@@ -41,7 +45,7 @@ import {
   type PlannedPrep,
 } from "@/utils/classPlan";
 import { describeIntensity } from "@/utils/describeIntensity";
-import { suggestStretches } from "@/utils/suggestStretches";
+import { classStretches } from "@/utils/suggestStretches";
 
 type Stage = {
   key: string;
@@ -64,7 +68,8 @@ const INITIALLY_OPEN = { pre: true, board: true };
 /**
  * The class page on one rail: Before class, Whiteboard, the warm-up (programmed or planned),
  * skill practice when the workout needs it, each part and the cool-down, with suggested stretches
- * if time allows.
+ * if time allows. While the class is still being built when the page opens, the loading screen
+ * shows instead, then hands over and the stages settle in one by one.
  */
 export function WorkoutPage() {
   const { wod, restored } = useWod();
@@ -78,6 +83,18 @@ export function WorkoutPage() {
   ]
     .filter(Boolean)
     .join(" · ");
+
+  // A new parse gives new part ids, and edits change what the class is planned from.
+  const workoutKey = wod ? `${wod.parts.map((p) => p.id).join(",")}|${prepKey(wod)}` : null;
+  const { phase, open: openClass } = useHandOver({
+    workout: workoutKey,
+    building: videos.loading || articles.loading || prep.loading,
+  });
+  const heading = useRef<HTMLHeadingElement>(null);
+  // After the hand-over, start keyboard and screen reader users at the top of the class.
+  useEffect(() => {
+    if (phase === "opened") heading.current?.focus();
+  }, [phase]);
 
   const stages = wod ? classStages(wod, prep.plan) : [];
   const [open, setOpen] = useState<Record<string, boolean>>(INITIALLY_OPEN);
@@ -95,12 +112,39 @@ export function WorkoutPage() {
     });
   }
 
+  if (wod && (phase === "loading" || phase === "leaving")) {
+    return (
+      <main className="mx-auto w-full max-w-2xl px-4 py-12">
+        <LoadingScreen
+          key={workoutKey}
+          wod={wod}
+          checklist={classChecklist({
+            wod,
+            prep: prep.plan,
+            prepLoading: prep.loading,
+            articlesLoading: articles.loading,
+            videosPending: videos.pending,
+          })}
+          onOpen={openClass}
+          leaving={phase === "leaving"}
+          autoOpen={!MOCK_LOAD}
+        />
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-12">
       <ButtonLink href="/" variant="secondary" size="xs" icon={ArrowLeft} className="-ml-2">
         Back to edit
       </ButtonLink>
-      <h1 className="mt-2 text-3xl font-bold tracking-tight">Your workout</h1>
+      <h1
+        ref={heading}
+        tabIndex={-1}
+        className="mt-2 text-3xl font-bold tracking-tight focus:outline-none"
+      >
+        Your workout
+      </h1>
       {wod && busy && (
         <p role="status" className="text-subtle mt-1 text-sm">
           {busy}…
@@ -126,6 +170,7 @@ export function WorkoutPage() {
                 open={isOpen(stage.key)}
                 onToggle={() => setOpen((prev) => ({ ...prev, [stage.key]: !prev[stage.key] }))}
                 last={i === stages.length - 1}
+                settleIndex={phase === "opened" ? i : undefined}
               >
                 {stage.body}
               </ClassStage>
@@ -174,10 +219,7 @@ function classStages(wod: WodState, prep: ClassPrep | null): Stage[] {
   // A single-part workout is marked "WOD"; otherwise each part keeps its label.
   const markerFor = (part: WorkoutPartState) => (wod.parts.length === 1 ? "WOD" : part.label);
   const preCounts = beforeClassCounts(wod.parts);
-  const stretches = suggestStretches(
-    workoutParts.flatMap((part) => part.movements),
-    workoutParts.map((part) => part.sourceText).join("\n"),
-  );
+  const stretches = classStretches(wod.parts);
   // Stretches go with the (last) programmed cool-down, or get a cool-down of their own.
   const cooldownId = partsOf("cooldown").at(-1)?.id;
 

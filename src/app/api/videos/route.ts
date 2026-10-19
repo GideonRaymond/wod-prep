@@ -6,6 +6,7 @@ import {
   getCachedVideos,
   YouTubeError,
 } from "@/server/movementVideos";
+import { mockLoad } from "@/server/mockLoad";
 import { VIDEO_KINDS, type VideoKind } from "@/schemas/videos";
 
 export async function POST(request: Request) {
@@ -24,10 +25,16 @@ export async function POST(request: Request) {
   }
 
   const curated = kind === "movement" && findCuratedVideo(name);
-  if (curated) return Response.json({ videos: [curated] });
+  if (curated) {
+    await mockLoad("videos");
+    return Response.json({ videos: [curated] });
+  }
 
   const cached = await getCachedVideos(name, kind);
-  if (cached) return Response.json({ videos: cached }, { headers: { "X-Cache": "HIT" } });
+  if (cached) {
+    await mockLoad("videos");
+    return Response.json({ videos: cached }, { headers: { "X-Cache": "HIT" } });
+  }
 
   if (!process.env.YOUTUBE_API_KEY) {
     return Response.json(

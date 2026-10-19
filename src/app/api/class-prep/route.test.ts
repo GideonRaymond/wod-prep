@@ -7,6 +7,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/server/classPrep", () => mocks);
+const { mockLoad, isMockLoad } = vi.hoisted(() => ({
+  mockLoad: vi.fn(async () => {}),
+  isMockLoad: vi.fn(() => false),
+}));
+vi.mock("@/server/mockLoad", () => ({ mockLoad, isMockLoad }));
 
 import { POST } from "./route";
 import { UnusableResultError } from "@/server/apiErrors";
@@ -52,6 +57,18 @@ describe("POST /api/class-prep", () => {
     await expect(res.json()).resolves.toEqual({ prep: classPrep });
     expect(mocks.planPrep).toHaveBeenCalledWith({ parts: [part] });
     expect(mocks.cachePrep).toHaveBeenCalledWith({ parts: [part] }, classPrep);
+  });
+
+  it("waits like a real plan on a cache hit when MOCK_LOAD is on, and not otherwise", async () => {
+    mocks.getCachedPrep.mockResolvedValue(classPrep);
+    await post({ parts: [part] });
+    expect(mockLoad).toHaveBeenCalledWith("prep");
+
+    mockLoad.mockClear();
+    mocks.getCachedPrep.mockResolvedValue(null);
+    mocks.planPrep.mockResolvedValue(classPrep);
+    await post({ parts: [part] });
+    expect(mockLoad).not.toHaveBeenCalled();
   });
 
   it("returns a cached plan without asking Claude", async () => {

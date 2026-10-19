@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { ParseProgress } from "@/components/home/ParseProgress";
 import { WodInputForm } from "@/components/home/WodInputForm";
 import { WodSummary } from "@/components/home/WodSummary";
 import { Alert } from "@/components/shared/Alert";
@@ -9,7 +10,7 @@ import { useParseWod } from "@/hooks/useParseWod";
 
 export function HomePage() {
   const router = useRouter();
-  const { wod, setWod, error, loading, parsedText, restored, parse } = useParseWod();
+  const { wod, setWod, error, loading, progress, parsedText, restored, parse } = useParseWod();
   const missingStimulus = wod?.parts.some((part) => !part.stimulus.description.trim());
 
   return (
@@ -28,6 +29,8 @@ export function HomePage() {
       />
 
       {error && <Alert className="mt-6">{error}</Alert>}
+
+      {loading && <ParseProgress progress={progress} />}
 
       {wod && (
         <>

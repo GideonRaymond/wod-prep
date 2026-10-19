@@ -58,6 +58,31 @@ describe("StageMarker", () => {
     cleanup();
   });
 
+  it("settles in after the loading screen, 60 ms after the stage before it", () => {
+    render(
+      <ClassStage
+        id="b"
+        marker={null}
+        title="Fran"
+        open={false}
+        onToggle={() => {}}
+        settleIndex={3}
+      >
+        <p>Fran</p>
+      </ClassStage>,
+    );
+    const stage = screen.getByRole("region", { name: "Fran" });
+    expect(stage).toHaveClass("motion-safe:animate-settle");
+    expect(stage).toHaveStyle({ animationDelay: "180ms" });
+  });
+
+  it("doesn't animate otherwise", () => {
+    render(<Harness />);
+    expect(screen.getByRole("region", { name: "Warm-up" })).not.toHaveClass(
+      "motion-safe:animate-settle",
+    );
+  });
+
   it("shows a part label", () => {
     render(<StageMarker label="B" />);
     expect(screen.getByText("B")).toHaveClass("bg-purple-600");
