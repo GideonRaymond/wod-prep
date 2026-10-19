@@ -18,6 +18,7 @@ describe("toArticleRequest", () => {
       duration: franPart.duration,
       movements: franPart.movements.map(({ name, reps, load }) => ({ name, reps, load })),
       stimulus: franPart.stimulus.description,
+      intensity: franPart.stimulus.intensity,
     });
   });
 });

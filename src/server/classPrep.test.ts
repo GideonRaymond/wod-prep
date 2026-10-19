@@ -91,6 +91,8 @@ describe("planPrep", () => {
     const params = mockParse.mock.calls[0][0];
     expect(sent().minutesForWarmupAndSkills).toBe(0);
     expect(params.system).toContain("Safety comes before the clock");
+    expect(params.system).toContain("stimulus and intensity (1 to 10) are the coach's");
+    expect(params.system).toContain("plan the warm-up for the harder of the two");
     expect(params.output_config.format.schema.required).toContain("warmup");
     expect(params.output_config.format.schema.properties.warmup.anyOf).toBeUndefined();
 

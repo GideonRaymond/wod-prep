@@ -42,6 +42,8 @@ describe("wodEdited", () => {
     expect(wodEdited([squats, { ...fran, movements: fran.movements.slice(1) }])).toBe(true);
     const stimulus = { ...fran.stimulus, description: "Go!" };
     expect(wodEdited([squats, { ...fran, stimulus }])).toBe(true);
+    const intensity = { ...fran.stimulus, intensity: 4 };
+    expect(wodEdited([squats, { ...fran, stimulus: intensity }])).toBe(true);
   });
 
   it("still counts an edit once the board is redrawn with it", () => {

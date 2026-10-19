@@ -29,11 +29,15 @@ export type WorkoutPartState = Omit<
   id: string;
   /** The stimulus description as parsed, to revert edits to. */
   originalStimulus: string;
+  /** The intensity as parsed, to revert edits to; missing on workouts saved before it was kept. */
+  originalIntensity?: number;
   movements: MovementItem[];
   /** Videos about this part as a whole, for named workouts like "Fran", shown in Before class. */
   videos?: ReferenceVideo[];
   /** Articles for this part, once they're found (not parsed from the WOD). */
   articles?: ReferenceArticle[];
+  /** What the articles were found for (see articlesKey), so edits find new ones. */
+  articlesKey?: string;
 };
 
 /** A parsed WOD as held in UI state. */

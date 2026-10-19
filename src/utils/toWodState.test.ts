@@ -16,6 +16,9 @@ describe("toWodState", () => {
     expect(parts.map((p) => p.originalStimulus)).toEqual(
       strengthAndMetcon.parts.map((p) => p.stimulus.description),
     );
+    expect(parts.map((p) => p.originalIntensity)).toEqual(
+      strengthAndMetcon.parts.map((p) => p.stimulus.intensity),
+    );
   });
 
   it("remembers what each part was when parsed, which is also what its board shows", () => {

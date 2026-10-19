@@ -24,6 +24,7 @@ const part = {
   duration: null,
   movements: [{ name: "Thruster", reps: "21-15-9", load: "95/65 lb" }],
   stimulus: "Short and all-out.",
+  intensity: 9,
 };
 const articles = [{ title: "Fooling Around with Fran", url: "https://library.crossfit.com/a.pdf" }];
 
@@ -82,6 +83,7 @@ describe("POST /api/articles", () => {
     ["no movements", { part: { ...part, movements: [] } }],
     ["an unknown format", { part: { ...part, format: "chipper" } }],
     ["a very long stimulus", { part: { ...part, stimulus: "x".repeat(1001) } }],
+    ["an intensity over 10", { part: { ...part, intensity: 11 } }],
   ])("rejects %s", async (_, body) => {
     expect((await post(body)).status).toBe(400);
     expect(mocks.findArticles).not.toHaveBeenCalled();

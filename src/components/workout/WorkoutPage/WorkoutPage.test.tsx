@@ -10,7 +10,10 @@ const { mockVideos, mockArticles, mockPrep, mockBoards } = vi.hoisted(() => ({
   mockBoards: vi.fn(),
 }));
 vi.mock("@/services/videosApi", () => ({ requestMovementVideos: mockVideos }));
-vi.mock("@/services/articlesApi", () => ({ requestArticles: mockArticles }));
+vi.mock("@/services/articlesApi", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/articlesApi")>()),
+  requestArticles: mockArticles,
+}));
 vi.mock("@/services/classPrepApi", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/services/classPrepApi")>()),
   requestClassPrep: mockPrep,

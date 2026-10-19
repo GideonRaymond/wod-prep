@@ -18,6 +18,8 @@ export const WodStateSchema: z.ZodType<WodState> = z.object({
         boardKey: z.string().optional(),
         id: z.string(),
         originalStimulus: z.string(),
+        originalIntensity: WorkoutPartSchema.shape.stimulus.shape.intensity.optional(),
+        articlesKey: z.string().optional(),
         videos: ReferenceVideosSchema.optional(),
         articles: ReferenceArticlesSchema.optional(),
         movements: z.array(
