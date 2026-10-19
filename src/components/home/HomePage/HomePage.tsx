@@ -3,19 +3,23 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ParseProgress } from "@/components/home/ParseProgress";
+import { Welcome } from "@/components/home/Welcome";
 import { WodInputForm } from "@/components/home/WodInputForm";
 import { Alert } from "@/components/shared/Alert";
+import { BoardLayout } from "@/components/shared/BoardLayout";
 import { Button } from "@/components/shared/Button";
 import { Dialog } from "@/components/shared/Dialog";
 import { Stepper } from "@/components/shared/Stepper";
+import { WodBoard } from "@/components/shared/WodBoard";
 import { STEP, WOD_STEPS } from "@/constants/flow";
 import { useParseWod } from "@/hooks/useParseWod";
 import { wodEdited } from "@/utils/partKey";
 
 /**
- * The first step: paste a workout and break it down. While it's read, the whiteboard is written
- * up beside a checklist; once it's read, the review page opens. Breaking down a new workout
- * replaces the current one, so it asks first if that one has been edited.
+ * The first step: write the workout on the whiteboard, beside a short welcome and the steps ahead.
+ * While it's read, the board is written up part by part and the welcome makes way for a checklist;
+ * once it's read, the review page opens. Breaking down a new workout replaces the current one, so
+ * it asks first if that one has been edited.
  */
 export function HomePage() {
   const router = useRouter();
@@ -37,28 +41,29 @@ export function HomePage() {
     <main className="mx-auto w-full max-w-5xl px-4 py-8">
       <Stepper steps={WOD_STEPS} current={STEP.workout} reachable={wod ? STEP.review : undefined} />
 
-      <div className="mt-8 max-w-2xl">
-        <h1 className="text-3xl font-bold tracking-tight">WOD Prep</h1>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-          {loading
-            ? "Writing it up on the board. This takes a few seconds."
-            : "Paste today's workout and we'll break it down."}
-        </p>
-      </div>
-
-      {loading && <ParseProgress progress={progress} />}
-      {/* Hidden, not unmounted, while parsing, so the text is still there if it fails. */}
-      <div hidden={loading} className="max-w-2xl">
-        {/* Remount once the saved workout is read, so the text box starts with its text. */}
-        <WodInputForm
-          key={restored ? "restored" : "server"}
-          loading={loading}
-          parsedText={parsedText}
-          continueTo={wod ? WOD_STEPS[STEP.review].href : undefined}
-          onSubmit={submit}
-        />
-        {error && <Alert className="mt-6">{error}</Alert>}
-      </div>
+      <BoardLayout
+        className="mt-8"
+        sideFirstOnPhones={!loading}
+        board={
+          <>
+            {loading && <WodBoard parts={progress.outline ?? []} writing={!progress.outline} />}
+            {/* Hidden, not unmounted, while parsing, so the text is still there if it fails. */}
+            <div hidden={loading}>
+              {/* Remount once the saved workout is read, so the text box starts with its text. */}
+              <WodInputForm
+                key={restored ? "restored" : "server"}
+                loading={loading}
+                parsedText={parsedText}
+                continueTo={wod ? WOD_STEPS[STEP.review].href : undefined}
+                onSubmit={submit}
+              />
+              {error && <Alert className="mt-4">{error}</Alert>}
+            </div>
+          </>
+        }
+      >
+        {loading ? <ParseProgress progress={progress} /> : <Welcome />}
+      </BoardLayout>
 
       <Dialog
         open={pending !== null}

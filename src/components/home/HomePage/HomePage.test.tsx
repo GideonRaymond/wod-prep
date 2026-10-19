@@ -61,6 +61,13 @@ describe("HomePage", () => {
     expect(within(progress).queryByRole("link")).not.toBeInTheDocument();
   });
 
+  it("puts the text box on the board, beside the welcome and the steps ahead", () => {
+    renderPage();
+    expect(screen.getByRole("textbox", { name: "Workout" })).toHaveClass("font-kalam");
+    expect(screen.getByRole("heading", { level: 1, name: "WOD Prep" })).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "How it works" })).toBeInTheDocument();
+  });
+
   it("writes the parts on the board as they're found, ticking each off as it's read", async () => {
     const encoder = new TextEncoder();
     let send: (event: ParseEvent) => void = () => {};
@@ -76,6 +83,8 @@ describe("HomePage", () => {
     });
     await submit("A) squats B) Fran");
     expect(await screen.findByText("Reading your workout")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Breaking it down" })).toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "How it works" })).not.toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: "Workout" })).not.toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Workout", hidden: true })).not.toBeVisible();
     expect(screen.getByTestId("board-writing")).toBeInTheDocument();

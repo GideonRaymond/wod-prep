@@ -1,7 +1,5 @@
 import { ClipboardList, Flame, Snowflake } from "lucide-react";
-import { BoardLayout } from "@/components/shared/BoardLayout";
 import { Checklist, type ChecklistItem } from "@/components/shared/Checklist";
-import { WodBoard } from "@/components/shared/WodBoard";
 import type { ParseProgress as Progress } from "@/hooks/useParseWod";
 import type { PartOutline } from "@/schemas/wod";
 
@@ -36,16 +34,17 @@ function markerFor(part: PartOutline, single: boolean): Pick<ChecklistItem, "ico
 }
 
 /**
- * The parse as it happens: the whiteboard, written up part by part as soon as the structure is
- * found, beside a checklist that ticks off each part as it's read.
+ * What's happening while the workout is read, beside the board it's written up on: a checklist
+ * that finds the parts, then ticks off each one as it's read.
  */
 export function ParseProgress({ progress }: { progress: Progress }) {
   return (
-    <section aria-label="Reading your workout" className="mt-8">
-      <BoardLayout board={<WodBoard parts={progress.outline ?? []} writing={!progress.outline} />}>
-        <h2 className="mb-2 text-sm font-semibold">Breaking it down</h2>
-        <Checklist items={parseChecklist(progress)} />
-      </BoardLayout>
+    <section aria-label="Reading your workout">
+      <h1 className="text-3xl font-bold tracking-tight">Breaking it down</h1>
+      <p className="mt-2 mb-6 text-zinc-600 dark:text-zinc-400">
+        Writing it up on the board. This takes a few seconds.
+      </p>
+      <Checklist items={parseChecklist(progress)} />
     </section>
   );
 }

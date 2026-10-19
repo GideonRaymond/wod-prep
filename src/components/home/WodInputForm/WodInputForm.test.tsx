@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WodInputForm } from "./WodInputForm";
-import { MAX_WOD_LENGTH } from "@/constants/wod";
+import { EXAMPLE_WOD, MAX_WOD_LENGTH } from "@/constants/wod";
 
 const textbox = () => screen.getByRole("textbox", { name: "Workout" });
 const submitButton = () => screen.getByRole("button", { name: "Break it down" });
@@ -115,5 +115,16 @@ describe("WodInputForm", () => {
     );
     await user.type(textbox(), "!");
     expect(screen.queryByRole("link", { name: "Continue checking" })).not.toBeInTheDocument();
+  });
+
+  it("is written on the whiteboard, in handwriting", () => {
+    setup();
+    expect(textbox()).toHaveClass("font-kalam", "placeholder:text-zinc-400");
+    expect(textbox().parentElement).toHaveClass("bg-[#fdfdfb]");
+  });
+
+  it("shows the example workout, in grey, while the board is empty", () => {
+    setup();
+    expect(textbox()).toHaveAttribute("placeholder", EXAMPLE_WOD);
   });
 });
