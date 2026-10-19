@@ -16,7 +16,7 @@ vi.mock("@/services/classPrepApi", async (importOriginal) => ({
 }));
 
 import { WorkoutPage } from "./WorkoutPage";
-import { WodProvider } from "@/providers/WodProvider";
+import { useWod, WodProvider } from "@/providers/WodProvider";
 import { WOD_STORAGE_KEY } from "@/stores/wodStore";
 import type { ClassPrep } from "@/schemas/classPrep";
 import { prepKey } from "@/services/classPrepApi";
@@ -100,6 +100,26 @@ describe("WorkoutPage", () => {
     expect(screen.getByRole("region", { name: "Whiteboard" })).toHaveClass(
       "motion-safe:animate-settle",
     );
+  });
+
+  it("builds the next workout on the loading screen too, though the page stays alive", async () => {
+    let wodContext: ReturnType<typeof useWod> | null = null;
+    function Capture() {
+      wodContext = useWod();
+      return null;
+    }
+    render(
+      <WodProvider initialWod={built(toWodState(fran))}>
+        <Capture />
+        <WorkoutPage />
+      </WodProvider>,
+    );
+    expect(screen.getByRole("heading", { level: 1, name: "Your workout" })).toBeInTheDocument();
+
+    act(() => wodContext!.loadWod("A) squats B) Fran", toWodState(strengthAndMetcon)));
+    expect(screen.getByRole("heading", { level: 1, name: "Building your class" })).toBeVisible();
+    await userEvent.click(await screen.findByRole("button", { name: "Open your class" }));
+    expect(await screen.findByRole("region", { name: "Heavy Back Squats" })).toBeInTheDocument();
   });
 
   it("skips the loading screen when the class is already built", () => {

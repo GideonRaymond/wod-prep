@@ -30,6 +30,7 @@ import { useCurrentStage } from "@/hooks/useCurrentStage";
 import { useHandOver } from "@/hooks/useHandOver";
 import { useMovementVideos } from "@/hooks/useMovementVideos";
 import { useWod } from "@/providers/WodProvider";
+import { prepKey } from "@/services/classPrepApi";
 import type { Stretch } from "@/data/stretches";
 import type { ClassPrep } from "@/schemas/classPrep";
 import type { WodState, WorkoutPartState } from "@/types/wod";
@@ -82,8 +83,10 @@ export function WorkoutPage() {
     .filter(Boolean)
     .join(" · ");
 
+  // A new parse gives new part ids, and edits change what the class is planned from.
+  const workoutKey = wod ? `${wod.parts.map((p) => p.id).join(",")}|${prepKey(wod)}` : null;
   const { phase, open: openClass } = useHandOver({
-    ready: Boolean(wod),
+    workout: workoutKey,
     building: videos.loading || articles.loading || prep.loading,
   });
   const heading = useRef<HTMLHeadingElement>(null);
@@ -112,6 +115,7 @@ export function WorkoutPage() {
     return (
       <main className="mx-auto w-full max-w-2xl px-4 py-12">
         <LoadingScreen
+          key={workoutKey}
           wod={wod}
           checklist={classChecklist({
             wod,

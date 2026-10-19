@@ -14,25 +14,33 @@ const prefersReducedMotion = () =>
   (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
 
 /**
- * Decides, once the workout is there, whether the class still needs building (show the loading
- * screen) or not (show the class). `open` hands over from the loading screen: it fades out, then
- * the class opens; with reduced motion it switches at once. Calling it again does nothing.
+ * Decides, for each workout, whether its class still needs building (show the loading screen) or
+ * not (show the class). `workout` identifies the workout (null while there's none), so a new or
+ * edited workout is decided afresh, even though Next.js keeps this page alive between visits.
+ * `open` hands over from the loading screen: it fades out, then the class opens; with reduced
+ * motion it switches at once. Calling it again does nothing.
  */
-export function useHandOver({ ready, building }: { ready: boolean; building: boolean }) {
-  const [phase, setPhase] = useState<HandOverPhase>("deciding");
+export function useHandOver({ workout, building }: { workout: string | null; building: boolean }) {
+  const [state, setState] = useState<{ phase: HandOverPhase; workout: string | null }>({
+    phase: "deciding",
+    workout: null,
+  });
   // Decided during render, so the first paint is already the right screen.
-  if (ready && phase === "deciding") setPhase(building ? "loading" : "class");
+  if (workout !== null && state.workout !== workout) {
+    setState({ phase: building ? "loading" : "class", workout });
+  }
+  const phase = workout === null ? "deciding" : state.phase;
 
   useEffect(() => {
     if (phase !== "leaving") return;
-    const timer = setTimeout(() => setPhase("opened"), LEAVE_MS);
+    const timer = setTimeout(() => setState((s) => ({ ...s, phase: "opened" })), LEAVE_MS);
     return () => clearTimeout(timer);
   }, [phase]);
 
   const open = useCallback(
     () =>
-      setPhase((current) =>
-        current !== "loading" ? current : prefersReducedMotion() ? "opened" : "leaving",
+      setState((s) =>
+        s.phase !== "loading" ? s : { ...s, phase: prefersReducedMotion() ? "opened" : "leaving" },
       ),
     [],
   );
