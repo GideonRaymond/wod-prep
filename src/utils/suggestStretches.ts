@@ -7,8 +7,8 @@ import {
 } from "@/data/stretches";
 import type { Movement } from "@/schemas/wod";
 
-/** How many stretches a cool-down suggests at most. */
-export const STRETCHES_PER_CLASS = 5;
+/** How many stretches a cool-down suggests at most. To become a setting (see the README roadmap). */
+export const STRETCHES_PER_CLASS = 3;
 
 /** The areas a movement works: by its name when a rule knows it, otherwise by its category. */
 export function movementAreas(movement: Pick<Movement, "name" | "category">): StretchArea[] {

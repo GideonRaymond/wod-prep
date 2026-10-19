@@ -37,12 +37,15 @@ describe("movementAreas", () => {
 
 describe("suggestStretches", () => {
   it("covers the areas the workout works, without stretching one twice", () => {
-    const stretches = suggestStretches(fran, "fran");
+    const stretches = suggestStretches(fran, "fran", 5);
     expect(stretches.length).toBeGreaterThanOrEqual(3);
-    expect(stretches.length).toBeLessThanOrEqual(STRETCHES_PER_CLASS);
     const areas = stretches.flatMap((s) => s.areas);
     for (const area of ["quads", "glutes", "shoulders", "lats"]) expect(areas).toContain(area);
     expect(new Set(stretches).size).toBe(stretches.length);
+  });
+
+  it(`suggests ${STRETCHES_PER_CLASS} by default`, () => {
+    expect(suggestStretches(fran, "fran")).toHaveLength(STRETCHES_PER_CLASS);
   });
 
   it("starts with the area the movements share most", () => {
