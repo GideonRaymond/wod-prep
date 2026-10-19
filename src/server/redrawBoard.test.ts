@@ -47,7 +47,7 @@ describe("redrawBoards", () => {
     expect(params.model).toBe("claude-haiku-5-5");
     expect(params.system).toContain("change only the lines that are now wrong");
     // Movements come merged (Murph's two runs are one), which must not double the board's lines.
-    expect(params.system).toContain("Murph's two \"1 mile run\" lines");
+    expect(params.system).toContain('Murph\'s two "1 mile run" lines');
     expect(JSON.parse(params.messages[0].content)).toEqual(request);
   });
 
