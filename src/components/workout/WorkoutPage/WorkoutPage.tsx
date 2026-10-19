@@ -3,9 +3,9 @@
 import { useState, type ReactNode } from "react";
 import {
   ArrowLeft,
-  BookOpen,
   ClipboardList,
   Flame,
+  Lightbulb,
   Snowflake,
   type LucideIcon,
 } from "lucide-react";
@@ -142,7 +142,7 @@ function classStages(wod: WodState): Stage[] {
       key: "pre",
       title: "Before class",
       label: "Before class",
-      icon: BookOpen,
+      icon: Lightbulb,
       when: "Before",
       subtitle: "Read and watch at home",
       summary: <span className="text-subtle text-xs">{preCounts || "Nothing to read yet"}</span>,

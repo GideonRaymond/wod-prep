@@ -47,6 +47,12 @@ describe("WorkoutPage", () => {
     expect(names).toEqual(["Before class", "Whiteboard", "Heavy Back Squats", "Fran", "Cool-down"]);
   });
 
+  it("marks Before class with a lightbulb", () => {
+    renderPage(toWodState(strengthAndMetcon));
+    const stage = screen.getByRole("region", { name: "Before class" });
+    expect(stage.querySelector("svg.lucide-lightbulb")).toBeInTheDocument();
+  });
+
   it("opens Before class and the whiteboard, and folds the rest", () => {
     renderPage(toWodState(strengthAndMetcon));
     expect(stageToggle("Before class")).toHaveAttribute("aria-expanded", "true");
