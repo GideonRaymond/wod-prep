@@ -1,13 +1,12 @@
 import type { ClassPrep } from "@/schemas/classPrep";
 import type { BoardBlock, WorkoutPartState } from "@/types/wod";
-import { stageKind } from "./classPlan";
+import { CLASS_MINUTES, classEnd, planClass, stageKind } from "./classPlan";
 import { classStretches } from "./suggestStretches";
 
-const line = (name: string, dose: string | null) => (dose ? `${name} – ${dose}` : name);
-
 /**
- * What the app adds to the whiteboard once the class is planned: the planned warm-up (unless one
- * is programmed) and the suggested stretches (unless a cool-down is), each as a block.
+ * What the app adds to the whiteboard once the class is planned, kept to one line each: the
+ * planned warm-up and its length (unless one is programmed), and a cool-down with the minutes
+ * left at the end of class for the suggested stretches (unless one is programmed).
  */
 export function boardExtras(
   parts: WorkoutPartState[],
@@ -19,19 +18,15 @@ export function boardExtras(
   const planned = prep?.warmup;
   const warmup =
     planned && !programmed("warmup")
-      ? {
-          heading: "Warm-up",
-          lines: [
-            ...(planned.rounds ? [planned.rounds] : []),
-            ...planned.drills.map((drill) => line(drill.name, drill.dose)),
-          ],
-        }
+      ? { heading: `Warm-up – ${planned.minutes} min`, lines: [] }
       : null;
 
   const stretches = programmed("cooldown") ? [] : classStretches(parts);
+  const end = classEnd(planClass({ parts }, prep));
+  const left = end === null ? 0 : CLASS_MINUTES - end;
   const cooldown =
     stretches.length > 0
-      ? { heading: "Cool-down", lines: stretches.map((s) => line(s.name, s.dose)) }
+      ? { heading: left > 0 ? `Cool-down – ${left} min` : "Cool-down if time allows", lines: [] }
       : null;
 
   return { warmup, cooldown };
