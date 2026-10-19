@@ -85,6 +85,16 @@ The workout page plans the start of class with one Claude call per workout, size
 - **Saving:** the plan is stored with the workout and remembers what it was planned for, so editing the workout plans again.
 - **Caching:** plans are cached in `.cache/class-prep.json` for 30 days. Bump `PREP_CACHE_VERSION` in `src/server/classPrep.ts` when the prompt changes.
 
+## Cool-down stretches
+
+Every class ends with **suggested stretches, if time allows**. No time is set aside for them. They're added under a programmed cool-down, or get a **Cool-down** stage of their own at the end.
+
+- **Library:** about 40 stretches in `src/data/stretches.ts`. Each has the body areas it targets, a dose, any equipment (band, box) and a short hand-picked YouTube demo shown as a **Watch** link. Swap a video by editing its entry.
+- **Which areas:** movement names are mapped to the areas they work (`MOVEMENT_AREAS`, e.g. thrusters → quads, glutes, shoulders, hip flexors), falling back on the movement's category.
+- **Which stretches** (`suggestStretches`): up to 3 (`STRETCHES_PER_CLASS`), one per area, starting with the areas the workout works most. Areas an earlier pick already covers are skipped.
+- **Variation:** the pick is random but seeded by the workout's text, so a workout keeps its stretches across refreshes, while next week's squat day gets different ones (not always the couch stretch). Stretches aimed at that area, and stretches covering more of what the workout works, are favored.
+- A test checks every area has at least 3 stretches to choose from (2 for triceps and forearms).
+
 ## Checks
 
 ```bash
@@ -143,3 +153,8 @@ Middleware is called **proxy** in Next.js 16 and must live in a single `src/prox
    - Move the parse cache from the local file to a shared store (e.g. Upstash Redis / Vercel KV, or Postgres) so it works on serverless hosting
    - Cache research per movement, so agent results for common movements are reused across workouts (videos and articles: 30 days)
    - Replace the "first version wins" name lookup, since in production the cache is shared by all users. Idea: only store a workout under its name when it's the standard version of a benchmark Girl or Hero WOD, so typing "Fran" or "Murph" always gives the official version and variants never take over the name. (A draft is in the local git stash "Benchmark-only name lookup…".)
+7. Settings: let coaches set up their class instead of the defaults that are fixed in code for now
+   - Class length (60 min, `CLASS_MINUTES`) and class size (12 athletes, in the warm-up and skills prompt)
+   - Whiteboard and wrap-up time (5 min each, `WHITEBOARD_MINUTES`, `WRAP_UP_MINUTES`)
+   - Stretches per cool-down (3, `STRETCHES_PER_CLASS`)
+   - The gym's equipment counts (rowers, ropes, ring sets), which the warm-up and skills prompt assumes

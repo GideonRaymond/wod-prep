@@ -142,6 +142,36 @@ describe("WorkoutPage", () => {
     expect(await screen.findByText("Rate limited. Try again in a moment.")).toBeInTheDocument();
   });
 
+  it("suggests stretches in a cool-down of their own, if time allows", async () => {
+    const user = userEvent.setup();
+    renderPage(toWodState(fran));
+
+    const names = screen
+      .getAllByRole("heading", { level: 2 })
+      .map((h) => h.querySelector("[id]")?.textContent);
+    expect(names.at(-1)).toBe("Cool-down");
+    expect(screen.getByText("If time allows · suggested stretches")).toBeInTheDocument();
+    // Fran ends 12 minutes after the whiteboard.
+    expect(screen.getByText("17′")).toBeInTheDocument();
+
+    await user.click(stageToggle("Cool-down"));
+    const cooldown = screen.getByRole("region", { name: "Cool-down" });
+    const links = within(cooldown).getAllByRole("link", { name: /^Watch / });
+    expect(links.length).toBeGreaterThanOrEqual(3);
+    expect(links[0]).toHaveAttribute("href", expect.stringMatching(/youtube\.com\/watch/));
+  });
+
+  it("adds suggested stretches under a programmed cool-down", async () => {
+    const user = userEvent.setup();
+    renderPage(toWodState(strengthAndMetcon));
+    expect(screen.getAllByRole("region", { name: "Cool-down" })).toHaveLength(1);
+
+    await user.click(stageToggle("Cool-down"));
+    const cooldown = screen.getByRole("region", { name: "Cool-down" });
+    expect(within(cooldown).getByText("Stretches if time allows")).toBeVisible();
+    expect(within(cooldown).getByRole("heading", { name: "Row" })).toBeInTheDocument();
+  });
+
   it("shows the edited stimulus", () => {
     const wod = toWodState(strengthAndMetcon);
     wod.parts[1] = { ...wod.parts[1], stimulus: { ...wod.parts[1].stimulus, description: "Go!" } };

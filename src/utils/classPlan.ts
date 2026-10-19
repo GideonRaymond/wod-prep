@@ -157,6 +157,19 @@ export function planClass(wod: WodState, prep?: ClassPrep | null): PlannedStage[
   return stages;
 }
 
+/** The minute the last stage ends, or null when a length along the way is unknown. */
+export function classEnd(plan: PlannedStage[]): number | null {
+  const last = plan.at(-1);
+  if (!last) return WHITEBOARD_MINUTES;
+  if (last.startsAt === null) return null;
+  const minutes = isPlannedPart(last)
+    ? last.part.minutes
+    : last.kind === "planned-warmup"
+      ? last.warmup.minutes
+      : skillMinutes(last.skill);
+  return minutes ? last.startsAt + minutes : null;
+}
+
 /** Every piece of equipment the class needs, once each (ignoring case), in order of first use. */
 export function allEquipment(parts: Pick<WorkoutPartState, "equipment">[]): string[] {
   const seen = new Set<string>();
