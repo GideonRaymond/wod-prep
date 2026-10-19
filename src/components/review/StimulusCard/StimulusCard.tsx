@@ -142,7 +142,8 @@ export function StimulusCard({
               onChange={(e) => typeIntensity(e.target.value)}
               invalid={badIntensity}
               aria-describedby={badIntensity ? `${intensityId}-error` : undefined}
-              className="w-16 tabular-nums"
+              // No spin arrows: it's typed (arrow keys still step it).
+              className="w-14 [appearance:textfield] text-center tabular-nums [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
             <span className="text-subtle">/ {MAX_INTENSITY}</span>
           </div>

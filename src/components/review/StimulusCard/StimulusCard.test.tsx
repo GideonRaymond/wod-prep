@@ -177,6 +177,7 @@ describe("StimulusCard", () => {
       expect(field()).toHaveAttribute("min", "1");
       expect(field()).toHaveAttribute("max", "10");
       expect(field()).toHaveAttribute("step", "1");
+      expect(field()).toHaveClass("[appearance:textfield]");
     });
 
     it("moves the gauge as it's changed, and counts as an edit", async () => {
