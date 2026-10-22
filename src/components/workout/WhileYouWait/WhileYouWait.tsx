@@ -1,5 +1,7 @@
 import { useId } from "react";
 import { BookOpen, ExternalLink, Play } from "lucide-react";
+import { cn } from "@/utils/cn";
+import { READ_LINK_COLORS } from "@/styles/linkStyles";
 
 /** A video or article to look at while the class builds. */
 export type WaitingReference = {
@@ -55,7 +57,10 @@ export function WhileYouWait({ references, onReading }: WhileYouWaitProps) {
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm font-medium text-purple-700 underline-offset-2 hover:underline dark:text-purple-300"
+                  className={cn(
+                    "text-sm font-medium underline-offset-2 hover:underline",
+                    READ_LINK_COLORS,
+                  )}
                 >
                   {title}
                   <ExternalLink size={12} aria-hidden className="ml-1 inline align-[-1px]" />
