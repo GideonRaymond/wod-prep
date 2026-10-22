@@ -34,6 +34,13 @@ describe("WhileYouWait", () => {
     expect(container.querySelector("svg.lucide-book-open")).toBeInTheDocument();
   });
 
+  it("turns its links a softer pink once they've been opened", () => {
+    render(<WhileYouWait references={[video, article]} />);
+    for (const link of screen.getAllByRole("link")) {
+      expect(link).toHaveClass("visited:text-pink-700", "dark:visited:text-pink-400");
+    }
+  });
+
   it("renders nothing until there's something", () => {
     const { container } = render(<WhileYouWait references={[]} />);
     expect(container).toBeEmptyDOMElement();

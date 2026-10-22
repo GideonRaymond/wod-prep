@@ -49,6 +49,13 @@ describe("BeforeClass", () => {
     expect(beforeClassCounts(withReferences)).toBe("1 article · 2 videos");
   });
 
+  it("turns its links a softer pink once they've been opened", () => {
+    render(<BeforeClass parts={withReferences} />);
+    for (const link of screen.getAllByRole("link")) {
+      expect(link).toHaveClass("visited:text-pink-700", "dark:visited:text-pink-400");
+    }
+  });
+
   it("only goes side by side from the sm breakpoint, when it has both lists", () => {
     const { container } = render(<BeforeClass parts={withReferences} />);
     expect(container.firstChild).toHaveClass("sm:grid-cols-2");

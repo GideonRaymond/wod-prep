@@ -1,6 +1,7 @@
 import { BookOpen, ExternalLink, Play, type LucideIcon } from "lucide-react";
 import type { ReferenceArticle, ReferenceVideo, WorkoutPartState } from "@/types/wod";
 import { cn } from "@/utils/cn";
+import { READ_LINK_COLORS } from "@/styles/linkStyles";
 
 type Reference = {
   key: string;
@@ -113,7 +114,10 @@ function ReferenceList({ title, items }: { title: string; items: Reference[] }) 
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm font-medium text-purple-700 underline-offset-2 hover:underline dark:text-purple-300"
+                className={cn(
+                  "text-sm font-medium underline-offset-2 hover:underline",
+                  READ_LINK_COLORS,
+                )}
               >
                 {itemTitle}
                 <ExternalLink size={12} aria-hidden className="ml-1 inline align-[-1px]" />
