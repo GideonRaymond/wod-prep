@@ -1,6 +1,7 @@
 import { BookOpen, ExternalLink, Play, type LucideIcon } from "lucide-react";
 import type { ReferenceArticle, ReferenceVideo, WorkoutPartState } from "@/types/wod";
 import { cn } from "@/utils/cn";
+import { READ_LINK_COLORS } from "@/styles/linkStyles";
 
 type Reference = {
   key: string;
@@ -102,25 +103,21 @@ function ReferenceList({ title, items }: { title: string; items: Reference[] }) 
       <h3 className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">{title}</h3>
       <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
         {items.map(({ key, icon: Icon, title: itemTitle, url, meta, note }) => (
-          <li key={key} className="flex items-start gap-3 py-2">
-            <Icon
-              size={16}
-              aria-hidden
-              className="mt-0.5 shrink-0 text-purple-700 dark:text-purple-300"
-            />
-            <div>
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium text-purple-700 underline-offset-2 hover:underline dark:text-purple-300"
-              >
-                {itemTitle}
-                <ExternalLink size={12} aria-hidden className="ml-1 inline align-[-1px]" />
-              </a>
-              <p className="text-subtle text-xs">{meta.join(" · ")}</p>
-              {note && <p className="text-xs text-zinc-600 dark:text-zinc-400">{note}</p>}
-            </div>
+          // Room on the left for the icon, which is inside the link so it turns pink with it once
+          // opened (visited colours only reach the link itself), placed level with its first line.
+          <li key={key} className="relative py-2 pl-7 text-sm">
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn("font-medium underline-offset-2 hover:underline", READ_LINK_COLORS)}
+            >
+              <Icon size={16} aria-hidden className="absolute top-2.5 left-0" />
+              {itemTitle}
+              <ExternalLink size={12} aria-hidden className="ml-1 inline align-[-1px]" />
+            </a>
+            <p className="text-subtle text-xs">{meta.join(" · ")}</p>
+            {note && <p className="text-xs text-zinc-600 dark:text-zinc-400">{note}</p>}
           </li>
         ))}
       </ul>

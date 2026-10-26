@@ -49,6 +49,30 @@ describe("BeforeClass", () => {
     expect(beforeClassCounts(withReferences)).toBe("1 article · 2 videos");
   });
 
+  it("lines each icon up with its title's first line, by giving both the same line height", () => {
+    render(<BeforeClass parts={withReferences} />);
+    for (const link of screen.getAllByRole("link")) {
+      expect(link.parentElement).toHaveClass("text-sm");
+    }
+  });
+
+  it("keeps each icon inside its link, in the link's colour, so it turns pink with it", () => {
+    render(<BeforeClass parts={withReferences} />);
+    for (const link of screen.getAllByRole("link")) {
+      const icon = link.querySelector("svg");
+      expect(icon).toHaveAttribute("aria-hidden");
+      expect(icon).toHaveClass("absolute");
+      expect(icon!.getAttribute("class")).not.toMatch(/text-purple/);
+    }
+  });
+
+  it("turns its links a softer pink once they've been opened", () => {
+    render(<BeforeClass parts={withReferences} />);
+    for (const link of screen.getAllByRole("link")) {
+      expect(link).toHaveClass("visited:text-pink-700", "dark:visited:text-pink-300");
+    }
+  });
+
   it("only goes side by side from the sm breakpoint, when it has both lists", () => {
     const { container } = render(<BeforeClass parts={withReferences} />);
     expect(container.firstChild).toHaveClass("sm:grid-cols-2");
