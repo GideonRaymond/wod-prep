@@ -11,7 +11,7 @@ describe("Welcome", () => {
 
   it("names the app and walks through the three steps", () => {
     render(<Welcome />);
-    expect(screen.getByRole("heading", { level: 1, name: "WOD Prep" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Chalkup" })).toBeInTheDocument();
     const steps = within(screen.getByRole("list", { name: "How it works" })).getAllByRole(
       "listitem",
     );

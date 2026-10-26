@@ -21,6 +21,19 @@ describe("FlowPage", () => {
     expect(screen.getByText("Check").closest("[aria-current]")).toBeInTheDocument();
   });
 
+  it("shows the logo, linking home, above everything else", () => {
+    render(
+      <FlowPage step={2}>
+        <p>Side</p>
+      </FlowPage>,
+    );
+    const logo = screen.getByRole("link", { name: "Chalkup" });
+    expect(logo).toHaveAttribute("href", "/");
+    expect(logo.compareDocumentPosition(screen.getByRole("navigation", { name: "Progress" }))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
   it("is a single column without a board", () => {
     render(
       <FlowPage step={1}>

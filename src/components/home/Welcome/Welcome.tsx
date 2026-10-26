@@ -1,10 +1,11 @@
+import { APP_NAME } from "@/constants/brand";
 import { WOD_STEPS } from "@/constants/flow";
 
 /** The home screen beside the board: what the app is, and the three steps to get prepped. */
 export function Welcome() {
   return (
     <div>
-      <h1 className="text-3xl font-bold tracking-tight">WOD Prep</h1>
+      <h1 className="text-3xl font-bold tracking-tight">{APP_NAME}</h1>
       <p className="mt-2 text-zinc-600 dark:text-zinc-400">
         Get ready for today&apos;s class in three steps.
       </p>
