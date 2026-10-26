@@ -46,28 +46,20 @@ export function WhileYouWait({ references, onReading }: WhileYouWaitProps) {
         {references.map(({ kind, title, url, meta }) => {
           const Icon = kind === "video" ? Play : BookOpen;
           return (
-            <li key={url} className="motion-safe:animate-row-in flex items-start gap-3 py-2">
-              <Icon
-                size={16}
-                aria-hidden
-                className="mt-0.5 shrink-0 text-purple-700 dark:text-purple-300"
-              />
-              {/* The title's text size sets the line height, so the icon lines up with its first line. */}
-              <div className="min-w-0 text-sm">
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    "text-sm font-medium underline-offset-2 hover:underline",
-                    READ_LINK_COLORS,
-                  )}
-                >
-                  {title}
-                  <ExternalLink size={12} aria-hidden className="ml-1 inline align-[-1px]" />
-                </a>
-                <p className="text-subtle text-xs">{meta.join(" · ")}</p>
-              </div>
+            // Room on the left for the icon, which is inside the link so it turns pink with it once
+            // opened (visited colours only reach the link itself), placed level with its first line.
+            <li key={url} className="motion-safe:animate-row-in relative min-w-0 py-2 pl-7 text-sm">
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn("font-medium underline-offset-2 hover:underline", READ_LINK_COLORS)}
+              >
+                <Icon size={16} aria-hidden className="absolute top-2.5 left-0" />
+                {title}
+                <ExternalLink size={12} aria-hidden className="ml-1 inline align-[-1px]" />
+              </a>
+              <p className="text-subtle text-xs">{meta.join(" · ")}</p>
             </li>
           );
         })}

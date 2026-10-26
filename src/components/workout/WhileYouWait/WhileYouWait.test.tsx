@@ -41,6 +41,16 @@ describe("WhileYouWait", () => {
     }
   });
 
+  it("keeps each icon inside its link, in the link's colour, so it turns pink with it", () => {
+    render(<WhileYouWait references={[video, article]} />);
+    for (const link of screen.getAllByRole("link")) {
+      const icon = link.querySelector("svg");
+      expect(icon).toHaveAttribute("aria-hidden");
+      expect(icon).toHaveClass("absolute");
+      expect(icon!.getAttribute("class")).not.toMatch(/text-purple/);
+    }
+  });
+
   it("turns its links a softer pink once they've been opened", () => {
     render(<WhileYouWait references={[video, article]} />);
     for (const link of screen.getAllByRole("link")) {
