@@ -18,7 +18,7 @@ export type LoadingScreenProps = {
 };
 
 /**
- * What members see beside the whiteboard while the class is built: a checklist that grows from
+ * What members see beside the chalkboard while the class is built: a checklist that grows from
  * the fixed structure into this workout's own parts and skills and, once everything is ready, a
  * short countdown to the class. A polite live region announces each step as it finishes.
  */

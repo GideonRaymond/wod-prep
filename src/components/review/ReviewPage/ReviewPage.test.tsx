@@ -43,7 +43,7 @@ describe("ReviewPage", () => {
     expect(within(progress).getByText("Check").closest("[aria-current]")).toBeInTheDocument();
   });
 
-  it("shows the whiteboard beside the summary, stimulus and movements", () => {
+  it("shows the chalkboard beside the summary, stimulus and movements", () => {
     renderPage();
     expect(screen.getByText("21-15-9 for time")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Fran" })).toBeInTheDocument();

@@ -117,9 +117,9 @@ describe("WodInputForm", () => {
     expect(screen.queryByRole("link", { name: "Continue checking" })).not.toBeInTheDocument();
   });
 
-  it("is written on the whiteboard, in handwriting", () => {
+  it("is written on the chalkboard, in handwriting", () => {
     setup();
-    expect(textbox()).toHaveClass("font-kalam", "placeholder:text-zinc-400");
+    expect(textbox()).toHaveClass("font-kalam", "chalk-text", "placeholder:text-zinc-500");
     // It fills the board, which every page's board is at least as tall as.
     expect(textbox()).toHaveClass("flex-1");
     expect(textbox().parentElement).toHaveClass("bg-[#fdfdfb]", "min-h-80");

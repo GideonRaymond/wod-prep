@@ -61,7 +61,7 @@ async function renderAndOpen(wod: WodState) {
 }
 
 const boardLink = (name: RegExp) =>
-  within(screen.getByRole("list", { name: "Whiteboard" })).getByRole("button", { name });
+  within(screen.getByRole("list", { name: "Chalkboard" })).getByRole("button", { name });
 
 const stageToggle = (name: string | RegExp) =>
   within(screen.getByRole("region", { name })).getAllByRole("button")[0];
@@ -148,7 +148,7 @@ describe("WorkoutPage", () => {
     expect(stage.querySelector("svg.lucide-lightbulb")).toBeInTheDocument();
   });
 
-  it("opens Before class and the whiteboard, and folds the rest", () => {
+  it("opens Before class and the chalkboard, and folds the rest", () => {
     renderPage(built(toWodState(strengthAndMetcon)));
     expect(stageToggle("Before class")).toHaveAttribute("aria-expanded", "true");
     expect(stageToggle("Briefing")).toHaveAttribute("aria-expanded", "true");
@@ -157,7 +157,7 @@ describe("WorkoutPage", () => {
     expect(stageToggle("Cool-down")).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("shows when each stage starts, after the whiteboard", () => {
+  it("shows when each stage starts, after the chalkboard", () => {
     renderPage(built(toWodState(strengthAndMetcon)));
     for (const when of ["Before", "0′", "5′", "20′", "32′"]) {
       expect(screen.getByText(when)).toBeInTheDocument();
@@ -165,7 +165,7 @@ describe("WorkoutPage", () => {
     expect(screen.getByText(/Starts at 20′/)).toBeInTheDocument();
   });
 
-  it("briefs the stimulus and lists the day's equipment on the whiteboard", () => {
+  it("briefs the stimulus and lists the day's equipment on the chalkboard", () => {
     renderPage(built(toWodState(strengthAndMetcon)));
     const board = screen.getByRole("region", { name: "Briefing" });
     expect(within(board).getAllByRole("meter", { name: "Intensity" })).toHaveLength(2);
@@ -216,7 +216,7 @@ describe("WorkoutPage", () => {
     expect(within(skill).getByText("Move on after: 8 tight swings")).toBeVisible();
   });
 
-  it("adds the warm-up and skill equipment to the whiteboard", async () => {
+  it("adds the warm-up and skill equipment to the chalkboard", async () => {
     mockPrep.mockResolvedValue(classPrep);
     await renderAndOpen(toWodState(strengthAndMetcon));
     await screen.findByRole("region", { name: "Skill: Pull-up" });
@@ -241,7 +241,7 @@ describe("WorkoutPage", () => {
       .map((h) => h.querySelector("[id]")?.textContent);
     expect(names.at(-1)).toBe("Cool-down");
     expect(screen.getByText("If time allows · suggested stretches")).toBeInTheDocument();
-    // Fran ends 12 minutes after the whiteboard.
+    // Fran ends 12 minutes after the chalkboard.
     expect(screen.getByText("17′")).toBeInTheDocument();
 
     await user.click(stageToggle("Cool-down"));
@@ -366,7 +366,7 @@ describe("WorkoutPage", () => {
     expect(screen.getByRole("region", { name: "Cool-down" })).toBeInTheDocument();
   });
 
-  it("jumps to a stage from the whiteboard, opening it", async () => {
+  it("jumps to a stage from the chalkboard, opening it", async () => {
     const user = userEvent.setup();
     renderPage(built(toWodState(strengthAndMetcon)));
     expect(stageToggle("Fran")).toHaveAttribute("aria-expanded", "false");
@@ -391,10 +391,10 @@ describe("WorkoutPage", () => {
     expect(stageToggle("Cool-down")).toHaveFocus();
   });
 
-  it("has no Jump to button of its own; the whiteboard does that", () => {
+  it("has no Jump to button of its own; the chalkboard does that", () => {
     renderPage(built(toWodState(strengthAndMetcon)));
     expect(screen.queryByRole("dialog", { name: "Jump to" })).not.toBeInTheDocument();
-    // The only Jump to is the whiteboard folded into a bar on phones.
+    // The only Jump to is the chalkboard folded into a bar on phones.
     expect(screen.getByRole("button", { name: /Jump to/ })).toHaveAttribute("aria-controls");
   });
 
@@ -438,9 +438,9 @@ describe("WorkoutPage", () => {
     );
   });
 
-  it("shows the whiteboard beside the class, with the warm-up and cool-down on one line each", () => {
+  it("shows the chalkboard beside the class, with the warm-up and cool-down on one line each", () => {
     renderPage(built(toWodState(fran), classPrep));
-    const headings = within(screen.getByRole("list", { name: "Whiteboard" }))
+    const headings = within(screen.getByRole("list", { name: "Chalkboard" }))
       .getAllByText(/./, { selector: ".font-permanent-marker" })
       .map((h) => h.textContent);
     expect(headings).toEqual([
@@ -461,7 +461,7 @@ describe("WorkoutPage", () => {
   it("warns under the board when the planned class runs over, keeping the warm-up", () => {
     const [part] = toWodState(fran).parts;
     renderPage(built({ parts: [{ ...part, minutes: 70 }] }, classPrep));
-    // 5 whiteboard + 10 warm-up + 11 pull-up practice + 70 + 5 wrap-up = 101
+    // 5 chalkboard + 10 warm-up + 11 pull-up practice + 70 + 5 wrap-up = 101
     // Under the board, and on phones (where the board is a bar) beside it instead.
     const notes = screen.getAllByText(/This class runs 41 min over the 60-minute class/);
     expect(notes).toHaveLength(2);

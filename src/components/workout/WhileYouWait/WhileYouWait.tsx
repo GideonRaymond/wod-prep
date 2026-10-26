@@ -19,7 +19,7 @@ export type WhileYouWaitProps = {
 };
 
 /**
- * A few videos and articles to look at while the class builds, under the whiteboard. Links open in
+ * A few videos and articles to look at while the class builds, under the chalkboard. Links open in
  * a new tab, so the class keeps building. While the pointer or focus is on the list, the page knows
  * someone is reading (to hold the countdown to the class). Renders nothing until there's something.
  */

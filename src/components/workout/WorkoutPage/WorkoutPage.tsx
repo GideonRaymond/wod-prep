@@ -65,7 +65,7 @@ import { classStretches } from "@/utils/suggestStretches";
 type Stage = {
   key: string;
   title: string;
-  /** Shorter name, for the whiteboard folded into a bar on phones. */
+  /** Shorter name, for the chalkboard folded into a bar on phones. */
   label: string;
   icon?: LucideIcon;
   markerLabel?: string | null;
@@ -85,7 +85,7 @@ const minute = (at: number | null) => (at === null ? null : `${at}′`);
 const INITIALLY_OPEN = { pre: true, briefing: true };
 
 /**
- * The last step: the whiteboard as confirmed (edited parts redrawn, with the planned warm-up and
+ * The last step: the chalkboard as confirmed (edited parts redrawn, with the planned warm-up and
  * stretches), then the class on one rail: Before class, Briefing, the warm-up (programmed or
  * planned), skill practice when the workout needs it, each part and the cool-down, with suggested
  * stretches if time allows. While the class is still being built when the page opens, the loading
@@ -101,7 +101,7 @@ export function WorkoutPage() {
   const busy = [
     finding.length > 0 && `Finding ${finding.join(" and ")}`,
     prep.loading && "Planning the warm-up",
-    board.loading && "Redrawing the whiteboard",
+    board.loading && "Redrawing the chalkboard",
   ]
     .filter(Boolean)
     .join(" · ");

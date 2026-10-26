@@ -9,17 +9,17 @@ import type { BoardItem } from "@/types/wod";
 import { cn } from "@/utils/cn";
 import { handFont, markerFont } from "./fonts";
 
-/** Marker inks for each part's heading, in turn: purples only, all at least 3:1 on the board. */
+/** Chalk for each part's heading, in turn: white and purples only, all at least 6:1 on the board. */
 const INKS = [
-  "text-purple-800",
-  "text-purple-600",
-  "text-purple-700",
-  "text-purple-900",
-  "text-purple-500",
+  "text-zinc-100",
+  "text-purple-300",
+  "text-purple-200",
+  "text-violet-50",
+  "text-purple-400",
 ];
 
-/** The ink for what the app adds to the board itself (a planned warm-up, skills, stretches). */
-const ADDED_INK = "text-sky-800";
+/** The chalk for what the app adds to the board itself (a planned warm-up, skills, stretches). */
+const ADDED_INK = "text-sky-300";
 
 /** Turns the board into the class's table of contents (see WodBoard). */
 export type BoardNav = {
@@ -41,12 +41,12 @@ export type WodBoardProps = {
 };
 
 /**
- * The workout written on a whiteboard: each block's heading in marker, the rest in handwriting,
- * with the app's own blocks (the planned warm-up, skill practice, stretches) in a blue marker.
+ * The workout written on a chalkboard: each block's heading in block capitals, the rest in
+ * handwriting, with the app's own blocks (the planned warm-up, skill practice, stretches) in blue chalk.
  * Anything written after the board first shows rises in.
  *
  * With `nav`, it's the class's table of contents: every block jumps to its section, and the one
- * on screen has a small outline. On phones it folds into a bar named after that section, which
+ * on screen is circled in chalk. On phones it folds into a bar named after that section, which
  * opens the board to pick another. Without it, phones get a short preview and a Show all button.
  * Whenever its height changes (opening, showing all, a part written on), it eases to the new one.
  */
@@ -87,10 +87,10 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
           aria-controls={contentId}
           className="flex w-full items-center justify-between gap-3 text-left md:hidden"
         >
-          <span className={cn(markerFont.className, "truncate text-lg text-purple-800")}>
-            {nav.currentLabel ?? "Whiteboard"}
+          <span className={cn(markerFont.className, "chalk-text truncate text-lg text-purple-200")}>
+            {nav.currentLabel ?? "Chalkboard"}
           </span>
-          <span className="flex shrink-0 items-center gap-1 text-xs text-zinc-600">
+          <span className="flex shrink-0 items-center gap-1 text-xs text-zinc-300">
             {open ? "Close" : "Jump to"}
             {open ? <ChevronUp size={16} aria-hidden /> : <ChevronDown size={16} aria-hidden />}
           </span>
@@ -113,7 +113,12 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
         <div ref={content} className={cn("px-2", nav && "max-md:pt-3")}>
           <div className="flex items-start justify-between gap-3">
             {title && (
-              <p className={cn(markerFont.className, "mb-2 text-2xl leading-8 text-purple-800")}>
+              <p
+                className={cn(
+                  markerFont.className,
+                  "chalk-text mb-2 text-2xl leading-8 text-zinc-100",
+                )}
+              >
                 {title}
               </p>
             )}
@@ -123,14 +128,14 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
                 size="xs"
                 onClick={() => setShowAll(!showAll)}
                 aria-expanded={showAll}
-                className="ml-auto text-zinc-600 hover:bg-zinc-100 sm:hidden dark:text-zinc-600 dark:hover:bg-zinc-100"
+                className="ml-auto border-zinc-600 bg-transparent text-zinc-200 hover:bg-white/10 sm:hidden dark:border-zinc-600 dark:bg-transparent dark:text-zinc-200 dark:hover:bg-white/10"
               >
                 {showAll ? "Show less" : "Show all"}
               </Button>
             )}
           </div>
           {nav ? (
-            <ul aria-label="Whiteboard" className="space-y-0.5">
+            <ul aria-label="Chalkboard" className="space-y-0.5">
               {inked.map(({ item, ink }) => (
                 <li key={item.key}>
                   <button
@@ -138,8 +143,10 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
                     onClick={() => jump(item.key)}
                     aria-current={nav.current === item.key ? "location" : undefined}
                     className={cn(
-                      "-mx-2 block w-[calc(100%+1rem)] rounded-md px-2 py-0.5 text-left -outline-offset-2 hover:bg-purple-50 focus-visible:outline-2 focus-visible:outline-purple-600",
-                      nav.current === item.key && "outline-2 outline-purple-300",
+                      "-mx-2 block w-[calc(100%+1rem)] rounded-md px-2 py-0.5 text-left -outline-offset-2 hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-purple-300",
+                      // Circled by hand: the outline follows a lopsided radius.
+                      nav.current === item.key &&
+                        "rounded-[255px_15px_225px_15px/15px_225px_15px_255px] outline-2 outline-purple-300/75",
                     )}
                   >
                     <Block item={item} ink={ink} writtenOn={writtenOn(item)} />
@@ -161,7 +168,7 @@ export function WodBoard({ items, title, writing = false, nav }: WodBoardProps) 
         <div
           aria-hidden
           className={cn(
-            "pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-linear-to-b from-[#fdfdfb]/0 to-[#fdfdfb] motion-safe:transition-opacity motion-safe:duration-300 sm:hidden",
+            "pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-linear-to-b from-[#26262b]/0 to-[#26262b] motion-safe:transition-opacity motion-safe:duration-300 sm:hidden",
             showAll && "opacity-0",
           )}
         />
@@ -194,7 +201,7 @@ function Block({ item, ink, writtenOn }: { item: BoardItem; ink: string; written
         <p
           className={cn(
             markerFont.className,
-            "text-xl leading-[26px] tracking-[.01em]",
+            "chalk-text text-xl leading-[26px] tracking-[.01em]",
             item.added && "text-lg",
             ink,
           )}
@@ -202,7 +209,7 @@ function Block({ item, ink, writtenOn }: { item: BoardItem; ink: string; written
           {item.heading}
         </p>
         {item.lines.map((line, i) => (
-          <p key={i} className={cn(handFont.className, "text-[17px] leading-[23px]")}>
+          <p key={i} className={cn(handFont.className, "chalk-text text-[17px] leading-[23px]")}>
             {line}
           </p>
         ))}
@@ -211,7 +218,7 @@ function Block({ item, ink, writtenOn }: { item: BoardItem; ink: string; written
   );
 }
 
-/** Faint marker strokes where the next part is being written; decoration only. */
+/** Faint chalk strokes where the next part is being written; decoration only. */
 function WritingLine({ first }: { first: boolean }) {
   return (
     <div
@@ -219,9 +226,9 @@ function WritingLine({ first }: { first: boolean }) {
       data-testid="board-writing"
       className="space-y-2 pt-1 motion-safe:animate-pulse"
     >
-      <div className="h-3 w-32 rounded-full bg-purple-200/70" />
-      {first && <div className="h-2.5 w-48 rounded-full bg-purple-100" />}
-      {first && <div className="h-2.5 w-40 rounded-full bg-purple-100" />}
+      <div className="h-3 w-32 rounded-full bg-purple-300/40" />
+      {first && <div className="h-2.5 w-48 rounded-full bg-white/15" />}
+      {first && <div className="h-2.5 w-40 rounded-full bg-white/15" />}
     </div>
   );
 }

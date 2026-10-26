@@ -5,7 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/utils/cn";
 
 export type ClassStageProps = {
-  /** Used for the section's id (`stage-<id>`), so the whiteboard can scroll to it. */
+  /** Used for the section's id (`stage-<id>`), so the chalkboard can scroll to it. */
   id: string;
   /** The round marker on the rail (see StageMarker). */
   marker: ReactNode;
@@ -27,7 +27,7 @@ export type ClassStageProps = {
 };
 
 /**
- * One stage of the class on the purple rail (Before class, Whiteboard, Warm-up, a part,
+ * One stage of the class on the purple rail (Before class, Briefing, Warm-up, a part,
  * Cool-down). Its header folds it; several stages can be open at once.
  */
 export function ClassStage({
@@ -53,7 +53,7 @@ export function ClassStage({
       aria-labelledby={titleId}
       style={settleIndex === undefined ? undefined : { animationDelay: `${settleIndex * 60}ms` }}
       className={cn(
-        // On phones, clear the whiteboard bar stuck to the top.
+        // On phones, clear the chalkboard bar stuck to the top.
         "grid scroll-mt-4 grid-cols-[36px_minmax(0,1fr)] gap-x-3 max-md:scroll-mt-20",
         settleIndex !== undefined && "motion-safe:animate-settle",
       )}

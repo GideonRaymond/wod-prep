@@ -23,7 +23,7 @@ export type WodInputFormProps = {
 };
 
 /**
- * Where the workout is written: a text box on the whiteboard, in handwriting, with the example
+ * Where the workout is written: a text box on the chalkboard, in handwriting, with the example
  * workout as its placeholder. Under the board: the length, Break it down and Use example.
  */
 export function WodInputForm({ loading, parsedText, continueTo, onSubmit }: WodInputFormProps) {
@@ -38,7 +38,7 @@ export function WodInputForm({ loading, parsedText, continueTo, onSubmit }: WodI
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <BoardFrame className="focus-within:border-purple-300">
+      <BoardFrame className="focus-within:border-[#9c8169]">
         <TextArea
           aria-label="Workout"
           value={text}
@@ -49,7 +49,7 @@ export function WodInputForm({ loading, parsedText, continueTo, onSubmit }: WodI
           aria-describedby="wod-length"
           className={cn(
             handFont.className,
-            "flex-1 rounded-none border-0 bg-transparent p-0 text-[17px] leading-[23px] text-purple-950 placeholder:text-zinc-400 dark:bg-transparent",
+            "chalk-text flex-1 rounded-none border-0 bg-transparent p-0 text-[17px] leading-[23px] text-zinc-100 caret-purple-300 placeholder:text-zinc-500 dark:bg-transparent dark:text-zinc-100",
           )}
         />
       </BoardFrame>

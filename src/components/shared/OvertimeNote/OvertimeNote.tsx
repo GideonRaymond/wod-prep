@@ -9,7 +9,7 @@ export type OvertimeNoteProps = {
 };
 
 /**
- * A heads-up under the whiteboard when the planned class runs longer than the time it has. It's
+ * A heads-up under the chalkboard when the planned class runs longer than the time it has. It's
  * only shown once the class is planned, on the class page, since that's when its length is known. The warm-up
  * and progressions are kept anyway, for a safe class, so this tells the coach what to cut instead.
  */

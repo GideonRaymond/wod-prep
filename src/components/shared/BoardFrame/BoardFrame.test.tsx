@@ -8,10 +8,10 @@ describe("BoardFrame", () => {
     cleanup();
   });
 
-  it("is a white board in a frame, with whatever's written on it", () => {
+  it("is a chalkboard in a wooden frame, with whatever's written on it", () => {
     render(<BoardFrame aria-busy="true">Fran</BoardFrame>);
     const board = screen.getByText("Fran");
-    expect(board).toHaveClass("bg-[#fdfdfb]", "border-zinc-300", "min-h-80");
+    expect(board).toHaveClass("bg-[#26262b]", "border-[#6b5a4a]", "chalk-dust", "min-h-80");
     expect(board).toHaveAttribute("aria-busy", "true");
   });
 

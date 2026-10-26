@@ -19,7 +19,7 @@ export type ClassProgress = {
   wod: WodState;
   prep: ClassPrep | null;
   prepLoading: boolean;
-  /** Edited parts are having their whiteboard redrawn. */
+  /** Edited parts are having their chalkboard redrawn. */
   boardLoading?: boolean;
   articlesLoading: boolean;
   /** Video searches still waiting (see videoSearchKey). */
@@ -36,7 +36,7 @@ const stateOf = (working: boolean): ChecklistState => (working ? "working" : "do
 
 /**
  * The loading screen's checklist: the structure every class has (reading the workout, Before
- * class, Warm-up, Workout, Cool-down), a Whiteboard step when edits are being redrawn, with the Workout row grown into this workout's own parts
+ * class, Warm-up, Workout, Cool-down), a Chalkboard step when edits are being redrawn, with the Workout row grown into this workout's own parts
  * and skills in class order, and a last "Timing the class" step once everything else is done.
  * `ready` is true once that last step is.
  */
@@ -65,7 +65,7 @@ export function classChecklist(progress: ClassProgress): {
       ? [
           {
             id: "board",
-            name: "Whiteboard",
+            name: "Chalkboard",
             icon: PenLine,
             state: stateOf(boardLoading),
             meta: boardLoading ? "Redrawing it with your changes" : "Redrawn with your changes",
