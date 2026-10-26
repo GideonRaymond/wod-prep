@@ -49,6 +49,13 @@ describe("BeforeClass", () => {
     expect(beforeClassCounts(withReferences)).toBe("1 article · 2 videos");
   });
 
+  it("lines each icon up with its title's first line, by giving both the same line height", () => {
+    render(<BeforeClass parts={withReferences} />);
+    for (const link of screen.getAllByRole("link")) {
+      expect(link.parentElement).toHaveClass("text-sm");
+    }
+  });
+
   it("turns its links a softer pink once they've been opened", () => {
     render(<BeforeClass parts={withReferences} />);
     for (const link of screen.getAllByRole("link")) {

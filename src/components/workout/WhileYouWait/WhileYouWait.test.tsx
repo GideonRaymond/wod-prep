@@ -34,6 +34,13 @@ describe("WhileYouWait", () => {
     expect(container.querySelector("svg.lucide-book-open")).toBeInTheDocument();
   });
 
+  it("lines each icon up with its title's first line, by giving both the same line height", () => {
+    render(<WhileYouWait references={[video, article]} />);
+    for (const link of screen.getAllByRole("link")) {
+      expect(link.parentElement).toHaveClass("text-sm");
+    }
+  });
+
   it("turns its links a softer pink once they've been opened", () => {
     render(<WhileYouWait references={[video, article]} />);
     for (const link of screen.getAllByRole("link")) {

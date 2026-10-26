@@ -109,7 +109,8 @@ function ReferenceList({ title, items }: { title: string; items: Reference[] }) 
               aria-hidden
               className="mt-0.5 shrink-0 text-purple-700 dark:text-purple-300"
             />
-            <div>
+            {/* The title's text size sets the line height, so the icon lines up with its first line. */}
+            <div className="text-sm">
               <a
                 href={url}
                 target="_blank"

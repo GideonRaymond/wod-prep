@@ -52,7 +52,8 @@ export function WhileYouWait({ references, onReading }: WhileYouWaitProps) {
                 aria-hidden
                 className="mt-0.5 shrink-0 text-purple-700 dark:text-purple-300"
               />
-              <div className="min-w-0">
+              {/* The title's text size sets the line height, so the icon lines up with its first line. */}
+              <div className="min-w-0 text-sm">
                 <a
                   href={url}
                   target="_blank"
