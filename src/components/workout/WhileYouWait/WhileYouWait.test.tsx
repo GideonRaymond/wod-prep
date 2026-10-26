@@ -34,6 +34,30 @@ describe("WhileYouWait", () => {
     expect(container.querySelector("svg.lucide-book-open")).toBeInTheDocument();
   });
 
+  it("lines each icon up with its title's first line, by giving both the same line height", () => {
+    render(<WhileYouWait references={[video, article]} />);
+    for (const link of screen.getAllByRole("link")) {
+      expect(link.parentElement).toHaveClass("text-sm");
+    }
+  });
+
+  it("keeps each icon inside its link, in the link's colour, so it turns pink with it", () => {
+    render(<WhileYouWait references={[video, article]} />);
+    for (const link of screen.getAllByRole("link")) {
+      const icon = link.querySelector("svg");
+      expect(icon).toHaveAttribute("aria-hidden");
+      expect(icon).toHaveClass("absolute");
+      expect(icon!.getAttribute("class")).not.toMatch(/text-purple/);
+    }
+  });
+
+  it("turns its links a softer pink once they've been opened", () => {
+    render(<WhileYouWait references={[video, article]} />);
+    for (const link of screen.getAllByRole("link")) {
+      expect(link).toHaveClass("visited:text-pink-700", "dark:visited:text-pink-300");
+    }
+  });
+
   it("renders nothing until there's something", () => {
     const { container } = render(<WhileYouWait references={[]} />);
     expect(container).toBeEmptyDOMElement();

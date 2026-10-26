@@ -1,5 +1,7 @@
 import { useId } from "react";
 import { BookOpen, ExternalLink, Play } from "lucide-react";
+import { cn } from "@/utils/cn";
+import { READ_LINK_COLORS } from "@/styles/linkStyles";
 
 /** A video or article to look at while the class builds. */
 export type WaitingReference = {
@@ -44,24 +46,20 @@ export function WhileYouWait({ references, onReading }: WhileYouWaitProps) {
         {references.map(({ kind, title, url, meta }) => {
           const Icon = kind === "video" ? Play : BookOpen;
           return (
-            <li key={url} className="motion-safe:animate-row-in flex items-start gap-3 py-2">
-              <Icon
-                size={16}
-                aria-hidden
-                className="mt-0.5 shrink-0 text-purple-700 dark:text-purple-300"
-              />
-              <div className="min-w-0">
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-medium text-purple-700 underline-offset-2 hover:underline dark:text-purple-300"
-                >
-                  {title}
-                  <ExternalLink size={12} aria-hidden className="ml-1 inline align-[-1px]" />
-                </a>
-                <p className="text-subtle text-xs">{meta.join(" · ")}</p>
-              </div>
+            // Room on the left for the icon, which is inside the link so it turns pink with it once
+            // opened (visited colours only reach the link itself), placed level with its first line.
+            <li key={url} className="motion-safe:animate-row-in relative min-w-0 py-2 pl-7 text-sm">
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn("font-medium underline-offset-2 hover:underline", READ_LINK_COLORS)}
+              >
+                <Icon size={16} aria-hidden className="absolute top-2.5 left-0" />
+                {title}
+                <ExternalLink size={12} aria-hidden className="ml-1 inline align-[-1px]" />
+              </a>
+              <p className="text-subtle text-xs">{meta.join(" · ")}</p>
             </li>
           );
         })}
