@@ -32,7 +32,7 @@ describe("WatchLink", () => {
     expect(screen.getByRole("link")).toHaveClass(
       "text-purple-700",
       "visited:text-pink-700",
-      "dark:visited:text-pink-400",
+      "dark:visited:text-pink-300",
     );
   });
 });
