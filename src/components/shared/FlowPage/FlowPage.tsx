@@ -11,6 +11,8 @@ export type FlowPageProps = {
   reachable?: number;
   /** The chalkboard, and anything under it; without one, the page is a single column. */
   board?: ReactNode;
+  /** Show the small logo in the header; off where the page shows the brand big itself (home). */
+  showLogo?: boolean;
   /** Keep the board stuck to the top on phones too (when it folds into a bar there). */
   stickyBoardOnPhones?: boolean;
   children: ReactNode;
@@ -28,13 +30,16 @@ export function FlowPage({
   reachable,
   board,
   stickyBoardOnPhones = false,
+  showLogo = true,
   children,
 }: FlowPageProps) {
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-8">
       <header className="flex flex-col items-center gap-4 md:grid md:grid-cols-[1fr_auto_1fr]">
-        <Logo className="md:justify-self-start" />
-        <Stepper steps={WOD_STEPS} current={step} reachable={reachable} />
+        {showLogo && <Logo className="md:justify-self-start" />}
+        <div className="md:col-start-2">
+          <Stepper steps={WOD_STEPS} current={step} reachable={reachable} />
+        </div>
       </header>
       {board ? (
         <BoardLayout className="mt-8" board={board} stickyOnPhones={stickyBoardOnPhones}>

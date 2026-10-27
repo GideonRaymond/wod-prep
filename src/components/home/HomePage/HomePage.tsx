@@ -55,6 +55,7 @@ export function HomePage() {
   return (
     <FlowPage
       step={STEP.workout}
+      showLogo={false}
       reachable={reachableStep(wod)}
       board={
         <>
