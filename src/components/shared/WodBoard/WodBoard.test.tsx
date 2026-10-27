@@ -80,11 +80,13 @@ describe("WodBoard", () => {
 
   it("draws a line where the next part goes while it's being written", () => {
     const { container, rerender } = render(<WodBoard items={[]} writing />);
+    // The board itself (the writing surface inside the frame) is busy.
+    const surface = () => container.querySelector(".chalk-dust");
     expect(screen.getByTestId("board-writing")).toHaveAttribute("aria-hidden");
-    expect(container.firstChild).toHaveAttribute("aria-busy", "true");
+    expect(surface()).toHaveAttribute("aria-busy", "true");
     rerender(<WodBoard {...board} />);
     expect(screen.queryByTestId("board-writing")).not.toBeInTheDocument();
-    expect(container.firstChild).not.toHaveAttribute("aria-busy");
+    expect(surface()).not.toHaveAttribute("aria-busy");
   });
 
   it("eases to its content's height whenever that changes", () => {
