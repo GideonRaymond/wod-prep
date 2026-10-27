@@ -15,7 +15,8 @@ export function Welcome() {
       </h1>
       <p className="mt-3 text-xl font-medium text-purple-700 dark:text-purple-300">{APP_TAGLINE}</p>
       <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-        Get ready for today&apos;s class in three steps.
+        Turn today&apos;s workout into a plan for class in three quick steps, so you walk in knowing
+        what&apos;s coming.
       </p>
       <ol aria-label="How it works" className="mt-6 space-y-4">
         {WOD_STEPS.map((step, i) => (
