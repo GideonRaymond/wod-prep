@@ -32,16 +32,18 @@ describe("WodBoard", () => {
     expect(screen.getByText("1 mile run")).toHaveClass("font-kalam");
   });
 
-  it("inks each part's heading in its own purple, and the app's own blocks in blue", () => {
+  it("chalks each part's heading in white or its own purple, and the app's own blocks in blue", () => {
     render(<WodBoard items={[warmup, squats, fran, cooldown]} />);
     const ink = (text: string) =>
-      [...screen.getByText(text).classList].find((c) => /^text-(purple|sky)-\d/.test(c));
+      [...screen.getByText(text).classList].find((c) =>
+        /^text-(zinc|purple|violet|sky)-\d/.test(c),
+      );
     expect([squats, fran, cooldown].map((item) => ink(item.heading))).toEqual([
-      "text-purple-800",
-      "text-purple-600",
-      "text-purple-700",
+      "text-zinc-100",
+      "text-purple-300",
+      "text-purple-200",
     ]);
-    expect(ink("Warm-up – 10 min")).toBe("text-sky-800");
+    expect(ink("Warm-up – 10 min")).toBe("text-sky-300");
   });
 
   it("heads the board with its title, if it has one", () => {
@@ -78,11 +80,13 @@ describe("WodBoard", () => {
 
   it("draws a line where the next part goes while it's being written", () => {
     const { container, rerender } = render(<WodBoard items={[]} writing />);
+    // The board itself (the writing surface inside the frame) is busy.
+    const surface = () => container.querySelector(".chalk-dust");
     expect(screen.getByTestId("board-writing")).toHaveAttribute("aria-hidden");
-    expect(container.firstChild).toHaveAttribute("aria-busy", "true");
+    expect(surface()).toHaveAttribute("aria-busy", "true");
     rerender(<WodBoard {...board} />);
     expect(screen.queryByTestId("board-writing")).not.toBeInTheDocument();
-    expect(container.firstChild).not.toHaveAttribute("aria-busy");
+    expect(surface()).not.toHaveAttribute("aria-busy");
   });
 
   it("eases to its content's height whenever that changes", () => {
@@ -141,7 +145,7 @@ describe("WodBoard", () => {
       return { onJump, user: userEvent.setup() };
     }
     const block = (name: RegExp) =>
-      within(screen.getByRole("list", { name: "Whiteboard" })).getByRole("button", { name });
+      within(screen.getByRole("list", { name: "Chalkboard" })).getByRole("button", { name });
 
     it("jumps to a block's section when it's clicked", async () => {
       const { onJump, user } = renderNav();
@@ -151,7 +155,7 @@ describe("WodBoard", () => {
       expect(onJump).toHaveBeenLastCalledWith(squats.key);
     });
 
-    it("outlines the block on screen", () => {
+    it("circles the block on screen", () => {
       renderNav();
       expect(block(/^B\. Fran/)).toHaveAttribute("aria-current", "location");
       expect(block(/^B\. Fran/)).toHaveClass("outline-2");
@@ -185,9 +189,9 @@ describe("WodBoard", () => {
       expect(bar).toHaveAttribute("aria-expanded", "false");
     });
 
-    it("says Whiteboard on the bar before a section is on screen", () => {
+    it("says Chalkboard on the bar before a section is on screen", () => {
       renderNav({ currentLabel: undefined });
-      expect(screen.getByRole("button", { name: /^Whiteboard/ })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^Chalkboard/ })).toBeInTheDocument();
     });
 
     it("has no Show all preview", () => {

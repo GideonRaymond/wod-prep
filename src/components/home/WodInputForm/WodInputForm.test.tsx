@@ -117,12 +117,14 @@ describe("WodInputForm", () => {
     expect(screen.queryByRole("link", { name: "Continue checking" })).not.toBeInTheDocument();
   });
 
-  it("is written on the whiteboard, in handwriting", () => {
+  it("is written on the chalkboard, in handwriting", () => {
     setup();
-    expect(textbox()).toHaveClass("font-kalam", "placeholder:text-zinc-400");
+    expect(textbox()).toHaveClass("font-kalam", "chalk-text", "placeholder:text-zinc-500");
     // It fills the board, which every page's board is at least as tall as.
     expect(textbox()).toHaveClass("flex-1");
-    expect(textbox().parentElement).toHaveClass("bg-[#fdfdfb]", "min-h-80");
+    expect(textbox().parentElement).toHaveClass("bg-[#26262b]", "min-h-80");
+    // Writing on it rings the whole board, frame and all.
+    expect(textbox().closest(".ash-board")).toHaveClass("focus-within:outline-2");
   });
 
   it("shows the example workout, in grey, while the board is empty", () => {

@@ -44,7 +44,30 @@ export function BrandTransition({ children }: { children: ReactNode }) {
   );
 }
 
-/** Just the mark: the tally on its chalkboard tile. Decorative, so hidden from screen readers. */
+/**
+ * The tally's strokes, drawn by hand: each a little different in lean, bow and weight, with small
+ * gaps (the dashes) where the chalk skipped. Shared with app/icon.svg, which draws the same paths.
+ */
+const STROKES = [
+  { d: "M9.3 8.9C9.6 13.2 8.9 18.6 9.4 23.4", width: 2.5, skips: "5.2 .9 7 .7 30" },
+  { d: "M13.8 8.1C14 12.9 13.5 18.9 13.7 23.9", width: 2.2, skips: "3 .8 9.5 1 30" },
+  { d: "M18.1 8.7C18.4 13 17.9 18.2 18.3 23.2", width: 2.6, skips: "8 .9 3.5 .6 30" },
+  { d: "M22.5 8.2C22.7 12.6 22.3 19 22.6 23.8", width: 2.3, skips: "4.4 1 6 .8 30" },
+];
+const SLASH = {
+  d: "M5.4 21.9C11.8 18.9 18.8 14.8 26.8 10.3",
+  width: 2.9,
+  skips: "8 1 6.5 .7 4 .9 40",
+};
+
+/** The filter's id; every mark defines the same filter, so a repeat on the page is harmless. */
+const CHALK_FILTER = "logo-chalk";
+
+/**
+ * Just the mark: the tally on its chalkboard tile, in chalk. A filter wobbles the strokes' edges
+ * and lets a few specks of board show through; its numbers are in the mark's 32-unit grid, so the
+ * texture scales with the logo. Decorative, so hidden from screen readers.
+ */
 export function LogoMark({ size = 28, className }: LogoProps) {
   return (
     <svg
@@ -54,15 +77,50 @@ export function LogoMark({ size = 28, className }: LogoProps) {
       viewBox="0 0 32 32"
       className={cn("shrink-0 dark:[&>rect]:stroke-zinc-700", className)}
     >
+      <defs>
+        <filter id={CHALK_FILTER} x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.7"
+            numOctaves={2}
+            seed={3}
+            result="n"
+          />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="n"
+            scale={0.9}
+            xChannelSelector="R"
+            yChannelSelector="G"
+            result="rough"
+          />
+          <feTurbulence type="fractalNoise" baseFrequency="1.6" seed={11} result="grain" />
+          <feColorMatrix
+            in="grain"
+            type="matrix"
+            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.2 1.75"
+            result="specks"
+          />
+          <feComposite in="rough" in2="specks" operator="in" />
+        </filter>
+      </defs>
       <rect width="32" height="32" rx="8" fill="#26262b" strokeWidth="1" />
-      <g fill="none" strokeLinecap="round">
-        <g stroke="#f4f4f5" strokeWidth="2.4">
-          <path d="M9.2 8.6c.2 4.6-.3 10 .1 15" />
-          <path d="M13.6 8.2c.3 4.8-.2 10.4.1 15.4" />
-          <path d="M18 8.5c.2 4.6-.2 10.2.1 15.1" />
-          <path d="M22.4 8.3c.3 4.7-.2 10.3 0 15.2" />
-        </g>
-        <path d="M5.6 21.6C12 18.6 19 14.6 26.6 10.6" stroke="#d8b4fe" strokeWidth="2.8" />
+      <g fill="none" strokeLinecap="round" filter={`url(#${CHALK_FILTER})`}>
+        {STROKES.map((stroke) => (
+          <path
+            key={stroke.d}
+            d={stroke.d}
+            stroke="#f4f4f5"
+            strokeWidth={stroke.width}
+            strokeDasharray={stroke.skips}
+          />
+        ))}
+        <path
+          d={SLASH.d}
+          stroke="#d8b4fe"
+          strokeWidth={SLASH.width}
+          strokeDasharray={SLASH.skips}
+        />
       </g>
     </svg>
   );

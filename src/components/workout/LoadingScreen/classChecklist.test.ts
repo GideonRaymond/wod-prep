@@ -43,13 +43,13 @@ describe("classChecklist", () => {
     expect(ready).toBe(false);
   });
 
-  it("adds a Whiteboard step while edited parts are redrawn, and keeps it once they are", () => {
+  it("adds a Chalkboard step while edited parts are redrawn, and keeps it once they are", () => {
     const lighter = { ...wod.parts[1], rounds: "15-12-9" };
     const edited = { parts: [wod.parts[0], lighter, wod.parts[2]] };
     const working = classChecklist(progress({ wod: edited, boardLoading: true }));
     expect(working.items.map((item) => item.id).slice(0, 3)).toEqual(["reading", "board", "pre"]);
     expect(row(working.items, "board")).toMatchObject({
-      name: "Whiteboard",
+      name: "Chalkboard",
       state: "working",
       meta: "Redrawing it with your changes",
     });
@@ -66,7 +66,7 @@ describe("classChecklist", () => {
     expect(done.ready).toBe(true);
   });
 
-  it("has no Whiteboard step when nothing was redrawn", () => {
+  it("has no Chalkboard step when nothing was redrawn", () => {
     expect(row(classChecklist(progress()).items, "board")).toBeUndefined();
   });
 

@@ -9,7 +9,7 @@ export type FlowPageProps = {
   step: number;
   /** The last step that can be opened from here. */
   reachable?: number;
-  /** The whiteboard, and anything under it; without one, the page is a single column. */
+  /** The chalkboard, and anything under it; without one, the page is a single column. */
   board?: ReactNode;
   /** Show the small logo in the header; off where the page shows the brand big itself (home). */
   showLogo?: boolean;
@@ -19,7 +19,7 @@ export type FlowPageProps = {
 };
 
 /**
- * The frame every step of the flow shares: the logo and the stepper on top, then the whiteboard on
+ * The frame every step of the flow shares: the logo and the stepper on top, then the chalkboard on
  * the left and the step's own content beside it. The board starts in the same place on every
  * step, so it stays put while the page around it changes. Moving between steps, the page beside
  * the board fades out with a small lift and the next one fades in from the side it's headed

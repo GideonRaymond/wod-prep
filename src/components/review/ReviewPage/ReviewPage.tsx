@@ -14,7 +14,7 @@ import { boardOutdated } from "@/utils/partKey";
 import { reachableStep } from "@/utils/reachableStep";
 
 /**
- * The second step: check the parsed workout beside the whiteboard and fix anything that's off,
+ * The second step: check the parsed workout beside the chalkboard and fix anything that's off,
  * then confirm it. The board shows the workout as it was read; edited parts are redrawn once the
  * workout is confirmed.
  */

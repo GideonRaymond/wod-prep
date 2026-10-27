@@ -1,7 +1,7 @@
 import type { WodState } from "@/types/wod";
 import type { WaitingReference } from "@/components/workout/WhileYouWait";
 
-/** How many references to show under the whiteboard while the class builds. */
+/** How many references to show under the chalkboard while the class builds. */
 export const WAITING_REFERENCES = 3;
 
 /**

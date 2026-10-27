@@ -17,7 +17,7 @@ import { wodEdited } from "@/utils/partKey";
 import { reachableStep } from "@/utils/reachableStep";
 
 /**
- * The first step: write the workout on the whiteboard, beside a short welcome and the steps ahead.
+ * The first step: write the workout on the chalkboard, beside a short welcome and the steps ahead.
  * While it's read, the board is written up part by part and the welcome makes way for a checklist;
  * once it's read, the review page opens. Breaking down a new workout replaces the current one, so
  * it asks first if that one has been edited.

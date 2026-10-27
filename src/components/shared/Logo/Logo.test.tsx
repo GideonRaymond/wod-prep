@@ -29,6 +29,17 @@ describe("Logo", () => {
     expect(container.querySelector("svg")).toHaveAttribute("aria-hidden");
   });
 
+  it("draws the mark in chalk: four hand-drawn strokes and a slash, roughened by a filter", () => {
+    const { container } = render(<Logo />);
+    const svg = container.querySelector("svg")!;
+    const paths = svg.querySelectorAll("path");
+    expect(paths).toHaveLength(5);
+    paths.forEach((path) => expect(path).toHaveAttribute("stroke-dasharray"));
+    const filter = svg.querySelector("filter")!;
+    expect(svg.querySelector("g")).toHaveAttribute("filter", `url(#${filter.id})`);
+    expect(filter.querySelectorAll("feTurbulence")).toHaveLength(2);
+  });
+
   it("is the shared brand element, so it moves between the home heading and the header", () => {
     render(<Logo />);
     const vt = screen.getByTestId("vt");
