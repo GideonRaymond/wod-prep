@@ -14,9 +14,7 @@ describe("Welcome", () => {
     const heading = screen.getByRole("heading", { level: 1, name: "Chalkup" });
     expect(heading).toHaveClass("sm:text-5xl");
     expect(heading.querySelector("svg")).toHaveAttribute("aria-hidden");
-    expect(
-      screen.getByText("Chalk up your mind before you chalk up your hands."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Chalk up. Read up. Show up.")).toBeInTheDocument();
     const steps = within(screen.getByRole("list", { name: "How it works" })).getAllByRole(
       "listitem",
     );
