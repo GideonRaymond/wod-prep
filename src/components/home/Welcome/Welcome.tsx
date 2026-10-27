@@ -22,7 +22,7 @@ export function Welcome() {
       </p>
       <ol aria-label="How it works" className="mt-6 space-y-4">
         {WOD_STEPS.map((step, i) => (
-          <li key={step.href} className="flex gap-3">
+          <li key={step.href} className="flex items-baseline gap-3">
             <span
               aria-hidden
               className="flex size-7 shrink-0 items-center justify-center rounded-full bg-purple-100 text-sm font-semibold text-purple-800 dark:bg-purple-950 dark:text-purple-200"
