@@ -45,7 +45,8 @@ function BrandTransition({ children }: { children: ReactNode }) {
 
 /**
  * The tally's strokes, drawn by hand: each a little different in lean, bow and weight, with small
- * gaps (the dashes) where the chalk skipped. Shared with app/icon.svg, which draws the same paths.
+ * gaps (the dashes) where the chalk skipped. app/icon.svg draws the same
+ * paths with the same filter, so the favicon matches.
  */
 const STROKES = [
   { d: "M9.3 8.9C9.6 13.2 8.9 18.6 9.4 23.4", width: 2.5, skips: "5.2 .9 7 .7 30" },
@@ -88,7 +89,7 @@ export function LogoMark({ size = 28, className }: LogoProps) {
           <feDisplacementMap
             in="SourceGraphic"
             in2="n"
-            scale={0.9}
+            scale={0.4}
             xChannelSelector="R"
             yChannelSelector="G"
             result="rough"
@@ -97,7 +98,7 @@ export function LogoMark({ size = 28, className }: LogoProps) {
           <feColorMatrix
             in="grain"
             type="matrix"
-            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.2 1.75"
+            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.1 1.72"
             result="specks"
           />
           <feComposite in="rough" in2="specks" operator="in" />
