@@ -15,9 +15,31 @@ describe("proxy", () => {
     vi.unstubAllEnvs();
   });
 
-  it("lets everything through without a SITE_PASSWORD", async () => {
+  it("lets everything through without a SITE_PASSWORD in development", async () => {
     vi.stubEnv("SITE_PASSWORD", "");
-    expect(passes(await proxy(request("/")))).toBe(true);
+    vi.stubEnv("NODE_ENV", "development");
+    const res = await proxy(request("/"));
+    expect(passes(res)).toBe(true);
+    expect(res.headers.get("X-Site-Gate")).toBe("off");
+  });
+
+  it("fails closed without a SITE_PASSWORD in production, pages and API alike", async () => {
+    vi.stubEnv("SITE_PASSWORD", "");
+    vi.stubEnv("NODE_ENV", "production");
+    for (const path of ["/", "/api/parse"]) {
+      const res = await proxy(request(path));
+      expect(res.status).toBe(503);
+      expect(res.headers.get("X-Site-Gate")).toBe("unconfigured");
+      await expect(res.text()).resolves.toContain("set SITE_PASSWORD");
+    }
+  });
+
+  it("opens the site on purpose with SITE_PASSWORD=off, even in production", async () => {
+    vi.stubEnv("SITE_PASSWORD", "off");
+    vi.stubEnv("NODE_ENV", "production");
+    const res = await proxy(request("/"));
+    expect(passes(res)).toBe(true);
+    expect(res.headers.get("X-Site-Gate")).toBe("off");
   });
 
   it("asks for the password, for pages and the API alike", async () => {
@@ -26,12 +48,15 @@ describe("proxy", () => {
       const res = await proxy(request(path));
       expect(res.status).toBe(401);
       expect(res.headers.get("WWW-Authenticate")).toBe('Basic realm="Chalkup", charset="UTF-8"');
+      expect(res.headers.get("X-Site-Gate")).toBe("on");
     }
   });
 
   it("lets in the right password with any username", async () => {
     vi.stubEnv("SITE_PASSWORD", "chalk up");
-    expect(passes(await proxy(request("/", basic("coach:chalk up"))))).toBe(true);
+    const res = await proxy(request("/", basic("coach:chalk up")));
+    expect(passes(res)).toBe(true);
+    expect(res.headers.get("X-Site-Gate")).toBe("on");
     expect(passes(await proxy(request("/", basic(":chalk up"))))).toBe(true);
   });
 

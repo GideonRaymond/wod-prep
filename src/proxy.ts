@@ -1,21 +1,47 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { APP_NAME } from "@/constants/brand";
 
+/** The value of SITE_PASSWORD that opens the site to everyone on purpose. */
+export const OPEN_SITE = "off";
+
 /**
  * Keeps the whole site behind one shared password while it's a preview: set SITE_PASSWORD and the
- * browser asks for it (any username), then sends it with every request, the API included, so
- * nobody else can spend the API keys. Without SITE_PASSWORD (like in development) it's open.
+ * browser asks for it once a session (any username), then sends it with every request, the API
+ * included, so nobody else can spend the API keys.
+ *
+ * It fails closed: in production without SITE_PASSWORD, the site says it isn't set up rather than
+ * opening, so a forgotten variable can't leave it open. SITE_PASSWORD=off opens it on purpose.
+ * Development and tests stay open without one. Every response says which it was in X-Site-Gate
+ * (on, off or unconfigured), to check from outside that the gate runs on the host.
  * Uses only Web Crypto, so it runs wherever the host puts the proxy.
  */
 export async function proxy(request: NextRequest) {
   const password = process.env.SITE_PASSWORD;
-  if (!password || (await givesPassword(request.headers.get("authorization"), password))) {
-    return NextResponse.next();
+
+  if (password === OPEN_SITE) return pass("off");
+  if (!password) {
+    if (process.env.NODE_ENV !== "production") return pass("off");
+    return new NextResponse(
+      `${APP_NAME} isn't set up yet: set SITE_PASSWORD, or SITE_PASSWORD=${OPEN_SITE} to open it to everyone.`,
+      { status: 503, headers: { "X-Site-Gate": "unconfigured" } },
+    );
   }
+
+  if (await givesPassword(request.headers.get("authorization"), password)) return pass("on");
   return new NextResponse(`${APP_NAME} is a preview for now. Ask for the password.`, {
     status: 401,
-    headers: { "WWW-Authenticate": `Basic realm="${APP_NAME}", charset="UTF-8"` },
+    headers: {
+      "WWW-Authenticate": `Basic realm="${APP_NAME}", charset="UTF-8"`,
+      "X-Site-Gate": "on",
+    },
   });
+}
+
+/** Lets the request through, saying how the gate is set. */
+function pass(gate: "on" | "off") {
+  const response = NextResponse.next();
+  response.headers.set("X-Site-Gate", gate);
+  return response;
 }
 
 /** Whether a Basic Authorization header carries the password (whatever the username). */

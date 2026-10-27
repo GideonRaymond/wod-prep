@@ -21,5 +21,5 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - The workout page's loading screen (`src/components/workout/LoadingScreen`) is driven by `classChecklist` and the hand-over by `useHandOver`. The handwriting fonts load only in `WodBoard/fonts.ts`; tests mock `next/font/google` in `src/test/setup.ts`.
 - Routes call `mockLoad(kind)` (`src/server/mockLoad.ts`) before returning a cached or hand-picked result, so `MOCK_LOAD=true` shows the loading screens with cached data. Do the same in new routes.
 - Routes call `rateLimit(request, kind)` (`src/server/rateLimit.ts`) after a cache miss, right before calling Claude or YouTube, and return its 429 when it gives one; cached and hand-picked results don't count. Every API route exports `maxDuration` (at most 60, Netlify's ceiling). Do the same in new routes.
-- Middleware is `src/proxy.ts` (Next.js 16 name), one file only: the shared-password gate (`SITE_PASSWORD`). It uses only Web APIs (no Node.js modules), so it runs on any host.
+- Middleware is `src/proxy.ts` (Next.js 16 name), one file only: the shared-password gate (`SITE_PASSWORD`). It fails closed: production without `SITE_PASSWORD` answers 503, and only `SITE_PASSWORD=off` opens it. It uses only Web APIs (no Node.js modules), so it runs on any host.
 - Every change comes with tests next to the code it covers.

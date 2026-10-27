@@ -132,7 +132,7 @@ The app needs a host that runs Next.js as a Node.js server (its API routes strea
 
 **What protects it** (all in this repo):
 
-- **A shared password** (`src/proxy.ts`): with `SITE_PASSWORD` set, the browser asks for it on every page and API call (any username). Leave it empty to open the site up.
+- **A shared password** (`src/proxy.ts`): with `SITE_PASSWORD` set, the browser asks for it once a session (any username) and sends it with every page and API call. It fails closed: in production without `SITE_PASSWORD`, every page answers 503 "isn't set up yet" rather than opening. Set `SITE_PASSWORD=off` to open the site on purpose. Each response's `X-Site-Gate` header (`on`, `off` or `unconfigured`) shows what the gate did, so `curl -I https://<site>` confirms it runs on the host.
 - **Per-visitor rate limits** (`src/server/rateLimit.ts`): only calls that miss the cache count, per IP per hour: 5 workouts broken down, 15 planning calls (about 3 classes; each uses two to five), 50 lookups (videos, points of performance). Over the limit, the app says when to try again.
 - **The shared cache** (above), so nobody pays twice for the same workout, and YouTube's daily search quota lasts.
 - **Time limits**: every API route sets `maxDuration`, at most 60 seconds (Netlify's ceiling).
@@ -141,7 +141,7 @@ The app needs a host that runs Next.js as a Node.js server (its API routes strea
 
 1. Create a free Redis database at [Upstash](https://upstash.com) (pick a region near Netlify's functions) and copy its REST URL and token.
 2. In Netlify, import the GitHub repo. It detects Next.js and builds with `npm run build`; `.nvmrc` sets Node 22.
-3. Under **Environment variables**, add `ANTHROPIC_API_KEY`, `YOUTUBE_API_KEY`, `SITE_PASSWORD`, `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Leave `MOCK_LOAD` and `WOD_CACHE` unset.
+3. Under **Environment variables**, add `ANTHROPIC_API_KEY`, `YOUTUBE_API_KEY`, `SITE_PASSWORD`, `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (with the Functions scope, which the proxy and API need), then redeploy: new variables only reach new deploys. Leave `MOCK_LOAD` and `WOD_CACHE` unset.
 4. Under **Domain management**, add `wod-prep.<your domain>`. Then, where the domain's DNS is managed (Strato, GoDaddy…), add a **CNAME** record named `wod-prep` pointing at the Netlify site's address (`<site>.netlify.app`). Netlify sets up HTTPS once it sees the record.
 
 **Keep an eye on spend:** give production its own Anthropic API key with a monthly limit, and restrict the YouTube key to the YouTube Data API.
