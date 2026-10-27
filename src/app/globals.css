@@ -162,3 +162,88 @@ body {
   filter: url(#chalk);
   text-shadow: 0 0 1px rgb(255 255 255 / 0.35);
 }
+
+/*
+ * The chalkboard's ash frame (see BoardFrame): four grained bars with mitred corners, and a ledge
+ * underneath holding chalk and an eraser. Light ash in both themes, like the board stays dark.
+ */
+@layer components {
+  .ash-board {
+    --ash: 14px;
+    --grain-x: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .42' numOctaves='3' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .3 0 0 0 0 .14 0 0 0 1.1 -.42'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23g)'/%3E%3C/svg%3E");
+    --grain-y: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.42 .012' numOctaves='3' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .3 0 0 0 0 .14 0 0 0 1.1 -.42'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23g)'/%3E%3C/svg%3E");
+  }
+  .ash-frame {
+    position: relative;
+    padding: var(--ash);
+    border-radius: 3px;
+    box-shadow: 0 2px 4px rgb(0 0 0 / 0.18);
+  }
+  .ash-bar {
+    position: absolute;
+    background-color: #e2cfaa;
+  }
+  .ash-bar-top,
+  .ash-bar-bottom {
+    inset-inline: 0;
+    height: var(--ash);
+  }
+  .ash-bar-left,
+  .ash-bar-right {
+    inset-block: 0;
+    width: var(--ash);
+  }
+  .ash-bar-top {
+    top: 0;
+    background-image: var(--grain-x), linear-gradient(180deg, #ecdcbc, #d6be92);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6);
+    clip-path: polygon(0 0, 100% 0, calc(100% - var(--ash)) 100%, var(--ash) 100%);
+  }
+  .ash-bar-bottom {
+    bottom: 0;
+    background-image: var(--grain-x), linear-gradient(0deg, #c9ae7f, #dcc69d);
+    clip-path: polygon(var(--ash) 0, calc(100% - var(--ash)) 0, 100% 100%, 0 100%);
+  }
+  .ash-bar-left {
+    left: 0;
+    background-image: var(--grain-y), linear-gradient(90deg, #ecdcbc, #d6be92);
+    clip-path: polygon(0 0, 100% var(--ash), 100% calc(100% - var(--ash)), 0 100%);
+  }
+  .ash-bar-right {
+    right: 0;
+    background-image: var(--grain-y), linear-gradient(270deg, #c9ae7f, #dcc69d);
+    clip-path: polygon(0 var(--ash), 100% 0, 100% 100%, 0 calc(100% - var(--ash)));
+  }
+  .ash-ledge {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    height: 12px;
+    margin: -2px 6px 0;
+    padding-inline: 18%;
+    border-radius: 0 0 4px 4px;
+    background-image: var(--grain-x), linear-gradient(180deg, #e2cfaa, #c4a676);
+    box-shadow: 0 2px 3px rgb(0 0 0 / 0.18);
+  }
+  .ash-ledge-chalk {
+    width: 30px;
+    height: 7px;
+    margin-top: -3px;
+    border-radius: 2px;
+    background: #f4f4f5;
+    box-shadow: inset -2px 0 0 #d4d4d8;
+  }
+  .ash-ledge-chalk-purple {
+    background: #d8b4fe;
+    box-shadow: inset -2px 0 0 #c084fc;
+  }
+  .ash-ledge-eraser {
+    width: 46px;
+    height: 12px;
+    margin: -6px 0 0 auto;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #57534e 0 55%, #3f3f46 55%);
+    box-shadow: 0 1px 1px rgb(0 0 0 / 0.3);
+  }
+}

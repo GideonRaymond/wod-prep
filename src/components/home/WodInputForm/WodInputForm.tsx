@@ -38,7 +38,7 @@ export function WodInputForm({ loading, parsedText, continueTo, onSubmit }: WodI
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <BoardFrame className="focus-within:border-zinc-400">
+      <BoardFrame frameClassName="rounded-[4px] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-purple-500">
         <TextArea
           aria-label="Workout"
           value={text}
