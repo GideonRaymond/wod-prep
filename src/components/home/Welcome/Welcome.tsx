@@ -1,4 +1,4 @@
-import { BrandTransition, LogoMark } from "@/components/shared/Logo";
+import { LogoMark } from "@/components/shared/Logo";
 import { APP_NAME, APP_TAGLINE } from "@/constants/brand";
 import { WOD_STEPS } from "@/constants/flow";
 
@@ -10,12 +10,10 @@ export function Welcome() {
   return (
     <div>
       <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-        <BrandTransition>
-          <span className="inline-flex items-center gap-3 sm:gap-4">
-            <LogoMark size={56} className="size-12 sm:size-14" />
-            {APP_NAME}
-          </span>
-        </BrandTransition>
+        <span className="inline-flex items-center gap-3 sm:gap-4">
+          <LogoMark size={56} className="size-12 sm:size-14" />
+          {APP_NAME}
+        </span>
       </h1>
       <p className="mt-3 text-xl font-medium text-purple-700 dark:text-purple-300">{APP_TAGLINE}</p>
       <p className="mt-2 text-zinc-600 dark:text-zinc-400">
@@ -24,7 +22,7 @@ export function Welcome() {
       </p>
       <ol aria-label="How it works" className="mt-6 space-y-4">
         {WOD_STEPS.map((step, i) => (
-          <li key={step.href} className="flex gap-3">
+          <li key={step.href} className="flex items-baseline gap-3">
             <span
               aria-hidden
               className="flex size-7 shrink-0 items-center justify-center rounded-full bg-purple-100 text-sm font-semibold text-purple-800 dark:bg-purple-950 dark:text-purple-200"

@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { BrandTransition, Logo } from "./Logo";
+import { Logo } from "./Logo";
 
 // Shows the view transition's props in the DOM, so the shared-element setup can be checked.
 vi.mock("react", async (importOriginal) => ({
@@ -40,21 +40,13 @@ describe("Logo", () => {
     expect(filter.querySelectorAll("feTurbulence")).toHaveLength(2);
   });
 
-  it("is the shared brand element, so it moves between the home heading and the header", () => {
+  it("fades and scales in when it appears, and stays put between steps", () => {
     render(<Logo />);
     const vt = screen.getByTestId("vt");
     expect(vt).toHaveAttribute("data-name", "brand");
-    expect(vt).toHaveAttribute("data-share", "brand-morph");
     expect(vt).toHaveAttribute("data-enter", "brand-in");
+    expect(vt).toHaveAttribute("data-share", "none");
+    expect(vt).toHaveAttribute("data-exit", "none");
     expect(vt).toContainElement(screen.getByRole("link", { name: "Chalkup" }));
-  });
-
-  it("wraps whatever else shows the brand in the same transition", () => {
-    render(
-      <BrandTransition>
-        <span>Big brand</span>
-      </BrandTransition>,
-    );
-    expect(screen.getByTestId("vt")).toHaveAttribute("data-name", "brand");
   });
 });

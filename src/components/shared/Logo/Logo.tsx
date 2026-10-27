@@ -31,14 +31,13 @@ export function Logo({ size = 28, className }: LogoProps) {
 }
 
 /**
- * The brand as one shared element between steps: the big name on the home page and the small logo
- * in the header of the other steps. Leaving home, it shrinks into the top-left corner (and grows
- * back going home); between the other steps it stays put. Anywhere it appears without a partner,
- * it fades in from the left. See the brand-* view transitions in globals.css.
+ * How the header logo comes and goes between steps: it fades and scales in when it appears
+ * (leaving home, which shows the brand big instead), and simply stays put between the other
+ * steps, which share it by name. Going home it just goes. See brand-in in globals.css.
  */
-export function BrandTransition({ children }: { children: ReactNode }) {
+function BrandTransition({ children }: { children: ReactNode }) {
   return (
-    <ViewTransition name="brand" share="brand-morph" enter="brand-in" default="none">
+    <ViewTransition name="brand" share="none" enter="brand-in" exit="none" default="none">
       {children}
     </ViewTransition>
   );
@@ -46,7 +45,8 @@ export function BrandTransition({ children }: { children: ReactNode }) {
 
 /**
  * The tally's strokes, drawn by hand: each a little different in lean, bow and weight, with small
- * gaps (the dashes) where the chalk skipped. Shared with app/icon.svg, which draws the same paths.
+ * gaps (the dashes) where the chalk skipped. app/icon.svg draws the same
+ * paths with the same filter, so the favicon matches.
  */
 const STROKES = [
   { d: "M9.3 8.9C9.6 13.2 8.9 18.6 9.4 23.4", width: 2.5, skips: "5.2 .9 7 .7 30" },
@@ -89,7 +89,7 @@ export function LogoMark({ size = 28, className }: LogoProps) {
           <feDisplacementMap
             in="SourceGraphic"
             in2="n"
-            scale={0.9}
+            scale={0.4}
             xChannelSelector="R"
             yChannelSelector="G"
             result="rough"
@@ -98,7 +98,7 @@ export function LogoMark({ size = 28, className }: LogoProps) {
           <feColorMatrix
             in="grain"
             type="matrix"
-            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.2 1.75"
+            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.1 1.72"
             result="specks"
           />
           <feComposite in="rough" in2="specks" operator="in" />

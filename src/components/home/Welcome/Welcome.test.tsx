@@ -22,6 +22,8 @@ describe("Welcome", () => {
     WOD_STEPS.forEach((step, i) => {
       expect(steps[i]).toHaveTextContent(step.label);
       expect(steps[i]).toHaveTextContent(step.summary);
+      // The number sits on the same baseline as the step's name beside it.
+      expect(steps[i]).toHaveClass("items-baseline");
     });
   });
 });
