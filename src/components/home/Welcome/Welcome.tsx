@@ -1,12 +1,19 @@
+import { LogoMark } from "@/components/shared/Logo";
 import { APP_NAME } from "@/constants/brand";
 import { WOD_STEPS } from "@/constants/flow";
 
-/** The home screen beside the board: what the app is, and the three steps to get prepped. */
+/**
+ * The home screen beside the board: the brand at full size (the page header leaves its small logo
+ * out here), then the three steps to get prepped.
+ */
 export function Welcome() {
   return (
     <div>
-      <h1 className="text-3xl font-bold tracking-tight">{APP_NAME}</h1>
-      <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+      <h1 className="flex items-center gap-3 text-4xl font-bold tracking-tight sm:gap-4 sm:text-5xl">
+        <LogoMark size={56} className="size-12 sm:size-14" />
+        {APP_NAME}
+      </h1>
+      <p className="mt-3 text-lg text-zinc-600 dark:text-zinc-400">
         Get ready for today&apos;s class in three steps.
       </p>
       <ol aria-label="How it works" className="mt-6 space-y-4">

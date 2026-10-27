@@ -34,6 +34,16 @@ describe("FlowPage", () => {
     );
   });
 
+  it("leaves the small logo out when the page shows the brand itself", () => {
+    render(
+      <FlowPage step={0} showLogo={false}>
+        <p>Side</p>
+      </FlowPage>,
+    );
+    expect(screen.queryByRole("link", { name: "Chalkup" })).not.toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Progress" })).toBeInTheDocument();
+  });
+
   it("is a single column without a board", () => {
     render(
       <FlowPage step={1}>
