@@ -16,7 +16,7 @@ import {
 } from "@/utils/classPlan";
 import { anthropic, MODEL } from "./anthropic";
 import { UnusableResultError } from "./apiErrors";
-import { createFileCache } from "./fileCache";
+import { createCache } from "./cache";
 import { normalizeWodText } from "./wodCache";
 
 /** Bump when the prompt or schema changes, so old plans are made again. */
@@ -26,7 +26,7 @@ export const PREP_CACHE_VERSION = 3;
 export const PREP_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 const CacheEntrySchema = z.object({ savedAt: z.number(), prep: ClassPrepSchema });
-const cache = createFileCache("class-prep", CacheEntrySchema);
+const cache = createCache("class-prep", CacheEntrySchema);
 
 /** The same parts (formats, schemes, lengths and movements) get the same plan; titles and stimulus text don't matter. */
 export function prepCacheKey(request: PrepRequest) {

@@ -10,7 +10,7 @@ import {
 } from "@/schemas/articles";
 import { anthropic, MODEL } from "./anthropic";
 import { UnusableResultError } from "./apiErrors";
-import { createFileCache } from "./fileCache";
+import { createCache } from "./cache";
 import { normalizeWodText } from "./wodCache";
 
 /** Bump when the prompt or output changes, so old reading lists are searched again. */
@@ -25,7 +25,7 @@ export const MAX_ARTICLES = 3;
 const MAX_CONTINUATIONS = 3;
 
 const CacheEntrySchema = z.object({ savedAt: z.number(), articles: ReferenceArticlesSchema });
-const cache = createFileCache("articles", CacheEntrySchema);
+const cache = createCache("articles", CacheEntrySchema);
 
 /**
  * Named workouts get the same reading whatever their notes say; other parts share reading when

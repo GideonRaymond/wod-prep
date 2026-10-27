@@ -5,12 +5,12 @@ import { PointsOfPerformanceSchema, type PointsOfPerformance } from "@/schemas/p
 import { normalizeMovementName } from "@/utils/normalizeMovementName";
 import { anthropic, MODEL } from "./anthropic";
 import { UnusableResultError } from "./apiErrors";
-import { createFileCache } from "./fileCache";
+import { createCache } from "./cache";
 
 /** Bump when the prompt or schema changes, so old AI results get generated again. */
 export const POINTS_CACHE_VERSION = 2;
 
-const cache = createFileCache("points-of-performance", PointsOfPerformanceSchema);
+const cache = createCache("points-of-performance", PointsOfPerformanceSchema);
 const cacheKey = (name: string) => `v${POINTS_CACHE_VERSION}:${normalizeMovementName(name)}`;
 
 const curated = new Map<string, PointsOfPerformance>(

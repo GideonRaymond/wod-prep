@@ -3,7 +3,7 @@ import { z } from "zod";
 import { CURATED_VIDEOS } from "@/data/movementVideos";
 import { ReferenceVideosSchema, type ReferenceVideo, type VideoKind } from "@/schemas/videos";
 import { normalizeMovementName } from "@/utils/normalizeMovementName";
-import { createFileCache } from "./fileCache";
+import { createCache } from "./cache";
 import { rankVideos, type VideoCandidate } from "./rankVideos";
 
 /** Bump when the search or ranking changes, so old results are searched again. */
@@ -44,7 +44,7 @@ export function findCuratedVideo(name: string): ReferenceVideo | null {
   return curated.get(normalizeMovementName(name)) ?? null;
 }
 
-const cache = createFileCache("movement-videos", CacheEntrySchema);
+const cache = createCache("movement-videos", CacheEntrySchema);
 const cacheKey = (name: string, kind: VideoKind) =>
   `v${VIDEOS_CACHE_VERSION}:${kind}:${normalizeMovementName(name)}`;
 

@@ -8,6 +8,10 @@ import {
 } from "@/server/movementVideos";
 import { mockLoad } from "@/server/mockLoad";
 import { VIDEO_KINDS, type VideoKind } from "@/schemas/videos";
+import { rateLimit } from "@/server/rateLimit";
+
+/** Usually a few seconds; this caps it well within any host's limit. */
+export const maxDuration = 30;
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -35,6 +39,10 @@ export async function POST(request: Request) {
     await mockLoad("videos");
     return Response.json({ videos: cached }, { headers: { "X-Cache": "HIT" } });
   }
+
+  // Past the cache, this reaches YouTube: count it against the visitor's hourly limit.
+  const limited = await rateLimit(request, "lookup");
+  if (limited) return limited;
 
   if (!process.env.YOUTUBE_API_KEY) {
     return Response.json(

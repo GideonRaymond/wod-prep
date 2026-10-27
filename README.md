@@ -37,7 +37,10 @@ After **Confirm workout**, the workout page shows a loading screen while the cla
 
 ## Parse cache
 
-In development, every parsed WOD is saved to `.cache/parsed-wods.json` and every AI-generated set of points of performance to `.cache/points-of-performance.json` (both gitignored), so testing with the same workouts costs nothing after the first time. Cached results even work without an API key.
+Every Claude and YouTube result (parsed workouts, warm-up plans, articles, videos, points of performance, redrawn boards) is cached through `createCache` (`src/server/cache.ts`), so the same workout or movement is never asked about twice:
+
+- **In production** the cache is the Upstash Redis database (`UPSTASH_REDIS_REST_URL` and `_TOKEN`), shared by every server and kept for 90 days.
+- **In development** it's JSON files in `.cache/` (gitignored), such as `.cache/parsed-wods.json`, so testing with the same workouts costs nothing after the first time. Cached results even work without an API key.
 
 - **Formatting is ignored:** `"Fran" 21-15-9 for time: Thrusters (95/65 lb), Pull-ups` and `fran 21-15-9 for time thrusters 95/65lb pullups` hit the same entry.
 - **Multi-part WODs** are also cached part by part, so pasting just one part of a day you parsed before (e.g. only its Part B) is a hit.
@@ -49,7 +52,7 @@ In development, every parsed WOD is saved to `.cache/parsed-wods.json` and every
   - Videos take 1–3.5s, the warm-up plan 4–7s, and articles 8–14s.
   - Fresh results aren't slowed down.
   - The loading screen doesn't count down to the class; open it with **Open your class**. `next.config.ts` passes `MOCK_LOAD` to the browser for this.
-- **Clear the cache:** delete `.cache/`. **Turn it on or off:** set `WOD_CACHE=on|off`. It's off in production by default.
+- **Clear the cache:** delete `.cache/` (or the `cache:*` keys in Redis). **Turn it on or off:** set `WOD_CACHE=on|off`. The file cache is off in production by default.
 - Bump `CACHE_VERSION` in `src/server/wodCache.ts` (or `POINTS_CACHE_VERSION` in `src/server/pointsOfPerformance.ts`) when that prompt or schema changes.
 
 ## Points of performance
@@ -122,6 +125,26 @@ Every class ends with **suggested stretches, if time allows**. No time is set as
 - **Which stretches** (`suggestStretches`): up to 3 (`STRETCHES_PER_CLASS`), one per area, starting with the areas the workout works most. Areas an earlier pick already covers are skipped.
 - **Variation:** the pick is random but seeded by the workout's text, so a workout keeps its stretches across refreshes, while next week's squat day gets different ones (not always the couch stretch). Stretches aimed at that area, and stretches covering more of what the workout works, are favored.
 - A test checks every area has at least 3 stretches to choose from (2 for triceps and forearms).
+
+## Production
+
+The app needs a host that runs Next.js as a Node.js server (its API routes stream and call Claude), so plain web hosting won't do. It's set up for **Netlify**; Vercel or any Node.js server work too.
+
+**What protects it** (all in this repo):
+
+- **A shared password** (`src/proxy.ts`): with `SITE_PASSWORD` set, the browser asks for it once a session (any username) and sends it with every page and API call. It fails closed: in production without `SITE_PASSWORD`, every page answers 503 "isn't set up yet" rather than opening. Set `SITE_PASSWORD=off` to open the site on purpose. Each response's `X-Site-Gate` header (`on`, `off` or `unconfigured`) shows what the gate did, so `curl -I https://<site>` confirms it runs on the host.
+- **Per-visitor rate limits** (`src/server/rateLimit.ts`): only calls that miss the cache count, per IP per hour: 5 workouts broken down, 15 planning calls (about 3 classes; each uses two to five), 50 lookups (videos, points of performance). Over the limit, the app says when to try again.
+- **The shared cache** (above), so nobody pays twice for the same workout, and YouTube's daily search quota lasts.
+- **Time limits**: every API route sets `maxDuration`, at most 60 seconds (Netlify's ceiling).
+
+**Going live on Netlify:**
+
+1. Create a free Redis database at [Upstash](https://upstash.com) (pick a region near Netlify's functions) and copy its REST URL and token.
+2. In Netlify, import the GitHub repo. It detects Next.js and builds with `npm run build`; `.nvmrc` sets Node 22.
+3. Under **Environment variables**, add `ANTHROPIC_API_KEY`, `YOUTUBE_API_KEY`, `SITE_PASSWORD`, `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (with the Functions scope, which the proxy and API need), then redeploy: new variables only reach new deploys. Leave `MOCK_LOAD` and `WOD_CACHE` unset.
+4. Under **Domain management**, add `wod-prep.<your domain>`. Then, where the domain's DNS is managed (Strato, GoDaddy…), add a **CNAME** record named `wod-prep` pointing at the Netlify site's address (`<site>.netlify.app`). Netlify sets up HTTPS once it sees the record.
+
+**Keep an eye on spend:** give production its own Anthropic API key with a monthly limit, and restrict the YouTube key to the YouTube Data API.
 
 ## Checks
 
