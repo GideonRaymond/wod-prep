@@ -11,7 +11,10 @@ describe("Welcome", () => {
 
   it("names the app and walks through the three steps", () => {
     render(<Welcome />);
-    expect(screen.getByRole("heading", { level: 1, name: "WOD Prep" })).toBeInTheDocument();
+    const heading = screen.getByRole("heading", { level: 1, name: "Chalkup" });
+    expect(heading).toHaveClass("sm:text-5xl");
+    expect(heading.querySelector("svg")).toHaveAttribute("aria-hidden");
+    expect(screen.getByText("Chalk up. Read up. Show up.")).toBeInTheDocument();
     const steps = within(screen.getByRole("list", { name: "How it works" })).getAllByRole(
       "listitem",
     );

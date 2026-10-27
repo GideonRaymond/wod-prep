@@ -1,5 +1,6 @@
 import { ViewTransition, type ReactNode } from "react";
 import { BoardLayout } from "@/components/shared/BoardLayout";
+import { Logo } from "@/components/shared/Logo";
 import { Stepper } from "@/components/shared/Stepper";
 import { WOD_STEPS } from "@/constants/flow";
 
@@ -10,13 +11,15 @@ export type FlowPageProps = {
   reachable?: number;
   /** The whiteboard, and anything under it; without one, the page is a single column. */
   board?: ReactNode;
+  /** Show the small logo in the header; off where the page shows the brand big itself (home). */
+  showLogo?: boolean;
   /** Keep the board stuck to the top on phones too (when it folds into a bar there). */
   stickyBoardOnPhones?: boolean;
   children: ReactNode;
 };
 
 /**
- * The frame every step of the flow shares: the stepper centered on top, then the whiteboard on
+ * The frame every step of the flow shares: the logo and the stepper on top, then the whiteboard on
  * the left and the step's own content beside it. The board starts in the same place on every
  * step, so it stays put while the page around it changes. Moving between steps, the page beside
  * the board fades out with a small lift and the next one fades in from the side it's headed
@@ -27,11 +30,17 @@ export function FlowPage({
   reachable,
   board,
   stickyBoardOnPhones = false,
+  showLogo = true,
   children,
 }: FlowPageProps) {
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-8">
-      <Stepper steps={WOD_STEPS} current={step} reachable={reachable} />
+      <header className="flex flex-col items-center gap-4 md:grid md:grid-cols-[1fr_auto_1fr]">
+        {showLogo && <Logo className="md:justify-self-start" />}
+        <div className="md:col-start-2">
+          <Stepper steps={WOD_STEPS} current={step} reachable={reachable} />
+        </div>
+      </header>
       {board ? (
         <BoardLayout className="mt-8" board={board} stickyOnPhones={stickyBoardOnPhones}>
           <StepContent>{children}</StepContent>

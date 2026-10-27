@@ -66,7 +66,7 @@ describe("HomePage", () => {
   it("puts the text box on the board, beside the welcome and the steps ahead", () => {
     renderPage();
     expect(screen.getByRole("textbox", { name: "Workout" })).toHaveClass("font-kalam");
-    expect(screen.getByRole("heading", { level: 1, name: "WOD Prep" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Chalkup" })).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "How it works" })).toBeInTheDocument();
   });
 
