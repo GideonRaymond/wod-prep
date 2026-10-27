@@ -119,6 +119,21 @@ body {
     opacity: 0;
   }
 }
+/* The brand between steps (see BrandTransition): the big name on home shrinks into the header's
+   logo, top left, and grows back going home. Without a partner it slides in from the left. */
+::view-transition-group(.brand-morph) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+::view-transition-new(.brand-in) {
+  animation: 260ms ease-out 60ms both brand-in;
+}
+@keyframes brand-in {
+  from {
+    opacity: 0;
+    translate: -8px 0;
+  }
+}
 /* Clicks during a transition reach the page instead of the overlay. */
 ::view-transition {
   pointer-events: none;

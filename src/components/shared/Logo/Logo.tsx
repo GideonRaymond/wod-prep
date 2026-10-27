@@ -1,3 +1,4 @@
+import { ViewTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { cn } from "@/utils/cn";
 import { APP_NAME } from "@/constants/brand";
@@ -14,16 +15,32 @@ export type LogoProps = {
  */
 export function Logo({ size = 28, className }: LogoProps) {
   return (
-    <Link
-      href="/"
-      className={cn(
-        "inline-flex items-center gap-2 rounded-md text-lg font-bold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 dark:focus-visible:outline-purple-400",
-        className,
-      )}
-    >
-      <LogoMark size={size} />
-      {APP_NAME}
-    </Link>
+    <BrandTransition>
+      <Link
+        href="/"
+        className={cn(
+          "inline-flex items-center gap-2 rounded-md text-lg font-bold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 dark:focus-visible:outline-purple-400",
+          className,
+        )}
+      >
+        <LogoMark size={size} />
+        {APP_NAME}
+      </Link>
+    </BrandTransition>
+  );
+}
+
+/**
+ * The brand as one shared element between steps: the big name on the home page and the small logo
+ * in the header of the other steps. Leaving home, it shrinks into the top-left corner (and grows
+ * back going home); between the other steps it stays put. Anywhere it appears without a partner,
+ * it fades in from the left. See the brand-* view transitions in globals.css.
+ */
+export function BrandTransition({ children }: { children: ReactNode }) {
+  return (
+    <ViewTransition name="brand" share="brand-morph" enter="brand-in" default="none">
+      {children}
+    </ViewTransition>
   );
 }
 
