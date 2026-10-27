@@ -1,4 +1,4 @@
-import { BrandTransition, LogoMark } from "@/components/shared/Logo";
+import { LogoMark } from "@/components/shared/Logo";
 import { APP_NAME, APP_TAGLINE } from "@/constants/brand";
 import { WOD_STEPS } from "@/constants/flow";
 
@@ -10,12 +10,10 @@ export function Welcome() {
   return (
     <div>
       <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-        <BrandTransition>
-          <span className="inline-flex items-center gap-3 sm:gap-4">
-            <LogoMark size={56} className="size-12 sm:size-14" />
-            {APP_NAME}
-          </span>
-        </BrandTransition>
+        <span className="inline-flex items-center gap-3 sm:gap-4">
+          <LogoMark size={56} className="size-12 sm:size-14" />
+          {APP_NAME}
+        </span>
       </h1>
       <p className="mt-3 text-xl font-medium text-purple-700 dark:text-purple-300">{APP_TAGLINE}</p>
       <p className="mt-2 text-zinc-600 dark:text-zinc-400">

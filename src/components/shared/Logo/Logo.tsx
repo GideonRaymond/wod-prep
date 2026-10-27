@@ -31,14 +31,13 @@ export function Logo({ size = 28, className }: LogoProps) {
 }
 
 /**
- * The brand as one shared element between steps: the big name on the home page and the small logo
- * in the header of the other steps. Leaving home, it shrinks into the top-left corner (and grows
- * back going home); between the other steps it stays put. Anywhere it appears without a partner,
- * it fades in from the left. See the brand-* view transitions in globals.css.
+ * How the header logo comes and goes between steps: it fades and scales in when it appears
+ * (leaving home, which shows the brand big instead), and simply stays put between the other
+ * steps, which share it by name. Going home it just goes. See brand-in in globals.css.
  */
-export function BrandTransition({ children }: { children: ReactNode }) {
+function BrandTransition({ children }: { children: ReactNode }) {
   return (
-    <ViewTransition name="brand" share="brand-morph" enter="brand-in" default="none">
+    <ViewTransition name="brand" share="none" enter="brand-in" exit="none" default="none">
       {children}
     </ViewTransition>
   );
