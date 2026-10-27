@@ -6,6 +6,10 @@ import { cacheWod, getCachedWod } from "@/server/wodCache";
 import type { PartOutline, Wod } from "@/schemas/wod";
 import type { ParseEvent } from "@/types/parse";
 import { stageKind } from "@/utils/classPlan";
+import { rateLimit } from "@/server/rateLimit";
+
+/** Netlify gives a request at most 60 seconds; this asks for 60 wherever it can be set. */
+export const maxDuration = 60;
 
 const NDJSON = { "Content-Type": "application/x-ndjson; charset=utf-8" };
 
@@ -30,6 +34,10 @@ export async function POST(request: Request) {
     const body = isMockLoad() ? mockStream(cached) : eventsFor(cached).map(line).join("");
     return new Response(body, { headers: { ...NDJSON, "X-Cache": "HIT" } });
   }
+
+  // Past the cache, this reaches Claude: count it against the visitor's hourly limit.
+  const limited = await rateLimit(request, "parse");
+  if (limited) return limited;
 
   if (!process.env.ANTHROPIC_API_KEY) return missingApiKeyResponse();
 

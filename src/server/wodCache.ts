@@ -1,12 +1,12 @@
 import "server-only";
 import { WodSchema, type Wod } from "@/schemas/wod";
 import { fillMissingLabels } from "@/utils/fillMissingLabels";
-import { createFileCache } from "./fileCache";
+import { createCache } from "./cache";
 
 /** Bump when the parser prompt or schema changes, so old results get parsed again. */
 export const CACHE_VERSION = 7;
 
-const cache = createFileCache("parsed-wods", WodSchema);
+const cache = createCache("parsed-wods", WodSchema);
 
 /**
  * Reduces WOD text to its letters and numbers so formatting doesn't matter:

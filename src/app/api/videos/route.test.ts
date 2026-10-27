@@ -16,6 +16,8 @@ const { mockLoad, isMockLoad } = vi.hoisted(() => ({
   isMockLoad: vi.fn(() => false),
 }));
 vi.mock("@/server/mockLoad", () => ({ mockLoad, isMockLoad }));
+const { rateLimit } = vi.hoisted(() => ({ rateLimit: vi.fn(async () => null as Response | null) }));
+vi.mock("@/server/rateLimit", () => ({ rateLimit }));
 
 import { POST } from "./route";
 import { YouTubeError } from "@/server/movementVideos";
@@ -35,6 +37,7 @@ describe("POST /api/videos", () => {
     mocks.findVideos.mockReset();
     mocks.getCachedVideos.mockReset().mockResolvedValue(null);
     mocks.cacheVideos.mockReset().mockResolvedValue(undefined);
+    rateLimit.mockReset().mockResolvedValue(null);
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
   afterEach(() => {
@@ -141,5 +144,19 @@ describe("POST /api/videos", () => {
     const res = await post({ name: "Ring Muscle-up" });
     expect(res.status).toBe(502);
     expect((await res.json()).error).toBe("Something went wrong finding videos.");
+  });
+
+  it("counts a YouTube search as a lookup, and stops once the visitor is over", async () => {
+    rateLimit.mockResolvedValue(Response.json({ error: "Slow down." }, { status: 429 }));
+    const res = await post({ name: "Ring Muscle-up" });
+    expect(res.status).toBe(429);
+    expect(rateLimit).toHaveBeenCalledWith(expect.any(Request), "lookup");
+    expect(mocks.findVideos).not.toHaveBeenCalled();
+  });
+
+  it("doesn't count cached or hand-picked videos", async () => {
+    mocks.getCachedVideos.mockResolvedValue([{ title: "x", url: "https://youtu.be/x" }]);
+    await post({ name: "Ring Muscle-up" });
+    expect(rateLimit).not.toHaveBeenCalled();
   });
 });

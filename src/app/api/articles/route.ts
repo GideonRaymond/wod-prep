@@ -2,6 +2,10 @@ import { ArticleRequestSchema } from "@/schemas/articles";
 import { claudeErrorResponse, missingApiKeyResponse } from "@/server/apiErrors";
 import { mockLoad } from "@/server/mockLoad";
 import { cacheArticles, findArticles, getCachedArticles } from "@/server/articles";
+import { rateLimit } from "@/server/rateLimit";
+
+/** Netlify gives a request at most 60 seconds; this asks for 60 wherever it can be set. */
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -16,6 +20,10 @@ export async function POST(request: Request) {
     await mockLoad("articles");
     return Response.json({ articles: cached }, { headers: { "X-Cache": "HIT" } });
   }
+
+  // Past the cache, this reaches Claude: count it against the visitor's hourly limit.
+  const limited = await rateLimit(request, "plan");
+  if (limited) return limited;
 
   if (!process.env.ANTHROPIC_API_KEY) return missingApiKeyResponse();
 

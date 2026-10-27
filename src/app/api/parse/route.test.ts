@@ -27,6 +27,8 @@ const { mockLoad, isMockLoad } = vi.hoisted(() => ({
   isMockLoad: vi.fn(() => false),
 }));
 vi.mock("@/server/mockLoad", () => ({ mockLoad, isMockLoad }));
+const { rateLimit } = vi.hoisted(() => ({ rateLimit: vi.fn(async () => null as Response | null) }));
+vi.mock("@/server/rateLimit", () => ({ rateLimit }));
 
 import { POST } from "./route";
 import { WodParseError } from "@/server/parseWod";
@@ -55,6 +57,7 @@ describe("POST /api/parse", () => {
     mockParseWod.mockReset();
     mockGetCachedWod.mockReset().mockResolvedValue(null);
     mockCacheWod.mockReset().mockResolvedValue(undefined);
+    rateLimit.mockReset().mockResolvedValue(null);
   });
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -177,5 +180,20 @@ describe("POST /api/parse", () => {
     mockParseWod.mockRejectedValue(err);
     const res = await post({ text: "Fran" });
     expect(await events(res)).toEqual([{ type: "error", error: message }]);
+  });
+
+  it("counts a parse against the visitor's limit, and stops once they're over it", async () => {
+    rateLimit.mockResolvedValue(Response.json({ error: "Slow down." }, { status: 429 }));
+    const res = await post({ text: "Fran" });
+    expect(res.status).toBe(429);
+    await expect(res.json()).resolves.toEqual({ error: "Slow down." });
+    expect(rateLimit).toHaveBeenCalledWith(expect.any(Request), "parse");
+    expect(mockParseWod).not.toHaveBeenCalled();
+  });
+
+  it("doesn't count a workout that's already cached", async () => {
+    mockGetCachedWod.mockResolvedValue(fran);
+    await post({ text: "Fran" });
+    expect(rateLimit).not.toHaveBeenCalled();
   });
 });
