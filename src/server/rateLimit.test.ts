@@ -34,6 +34,10 @@ describe("rateLimit", () => {
     resetRedis();
   });
 
+  it("allows 5 workouts, about 3 classes and 50 lookups an hour", () => {
+    expect(RATE_LIMITS).toEqual({ parse: 5, plan: 15, lookup: 50 });
+  });
+
   describe("without Redis", () => {
     it("lets a visitor through up to their hourly limit, then answers 429", async () => {
       for (let i = 0; i < RATE_LIMITS.parse; i++) {

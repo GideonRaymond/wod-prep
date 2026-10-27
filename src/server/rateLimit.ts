@@ -9,12 +9,15 @@ const HOUR_MS = 60 * 60 * 1000;
  * calls that miss the cache count, so looking at a workout someone already broke down is free.
  */
 export const RATE_LIMITS = {
-  /** Breaking down a workout: one call per workout. */
-  parse: 20,
-  /** Planning a class: the warm-up, reading and board redraws, about five calls per class. */
-  plan: 40,
+  /** Breaking down a workout: one call per workout, so 5 workouts. */
+  parse: 5,
+  /**
+   * Planning a class: the warm-up, an article search per part and any board redraw, two to five
+   * calls per class, so about 3 classes.
+   */
+  plan: 15,
   /** Looking things up: videos and points of performance, a call per movement. */
-  lookup: 200,
+  lookup: 50,
 } as const;
 
 export type RateLimitKind = keyof typeof RATE_LIMITS;

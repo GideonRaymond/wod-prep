@@ -133,7 +133,7 @@ The app needs a host that runs Next.js as a Node.js server (its API routes strea
 **What protects it** (all in this repo):
 
 - **A shared password** (`src/proxy.ts`): with `SITE_PASSWORD` set, the browser asks for it on every page and API call (any username). Leave it empty to open the site up.
-- **Per-visitor rate limits** (`src/server/rateLimit.ts`): only calls that miss the cache count, per IP per hour: 20 workouts broken down, 40 planning calls (about 8 classes), 200 lookups (videos, points of performance). Over the limit, the app says when to try again.
+- **Per-visitor rate limits** (`src/server/rateLimit.ts`): only calls that miss the cache count, per IP per hour: 5 workouts broken down, 15 planning calls (about 3 classes; each uses two to five), 50 lookups (videos, points of performance). Over the limit, the app says when to try again.
 - **The shared cache** (above), so nobody pays twice for the same workout, and YouTube's daily search quota lasts.
 - **Time limits**: every API route sets `maxDuration`, at most 60 seconds (Netlify's ceiling).
 
