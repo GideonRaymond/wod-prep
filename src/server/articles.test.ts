@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const { mockParse } = vi.hoisted(() => ({ mockParse: vi.fn() }));
 vi.mock("@anthropic-ai/sdk", () => ({
   default: class {
+    static APIUserAbortError = class extends Error {};
     beta = { messages: { parse: mockParse } };
   },
 }));
@@ -16,7 +17,9 @@ import {
   cacheArticles,
   findArticles,
   getCachedArticles,
+  SEARCH_TIME_LIMIT_MS,
 } from "./articles";
+import Anthropic from "@anthropic-ai/sdk";
 import { UnusableResultError } from "./apiErrors";
 import type { ArticleRequest } from "@/schemas/articles";
 
@@ -85,11 +88,12 @@ describe("findArticles", () => {
     await findArticles(fran);
 
     const params = mockParse.mock.calls[0][0];
-    expect(params.model).toBe("claude-opus-5-5");
+    expect(params.model).toBe("claude-sonnet-5-5");
     expect(params.output_config.format).toBeDefined();
+    // The versions without dynamic filtering, which are fast enough for the time limit.
     expect(params.tools.map((t: { type: string }) => t.type)).toEqual([
-      "web_search_20260209",
-      "web_fetch_20260209",
+      "web_search_20250305",
+      "web_fetch_20250910",
     ]);
     expect(params.system).toContain("library.crossfit.com/free/pdf/");
     expect(params.system).toContain("The stimulus and intensity (1 to 10) are the coach's");
@@ -148,6 +152,26 @@ describe("findArticles", () => {
     mockParse.mockResolvedValue({ stop_reason: "pause_turn", content: [], parsed_output: null });
     await expect(findArticles(fran)).rejects.toBeInstanceOf(UnusableResultError);
     expect(mockParse).toHaveBeenCalledTimes(4);
+  });
+
+  it("shares one time limit across every turn of the search", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout");
+    const paused = { stop_reason: "pause_turn", content: [searchResult(FREE_PDF)] };
+    mockParse.mockResolvedValueOnce(paused).mockResolvedValueOnce(answer([pick(FREE_PDF)], []));
+
+    await findArticles(fran);
+    expect(timeout).toHaveBeenCalledOnce();
+    expect(timeout).toHaveBeenCalledWith(SEARCH_TIME_LIMIT_MS);
+    const signal = timeout.mock.results[0].value;
+    expect(mockParse.mock.calls.map((call) => call[1])).toEqual([{ signal }, { signal }]);
+    timeout.mockRestore();
+  });
+
+  it("throws a clear error when the search runs out of time", async () => {
+    mockParse.mockRejectedValue(new Anthropic.APIUserAbortError());
+    const search = findArticles(fran);
+    await expect(search).rejects.toBeInstanceOf(UnusableResultError);
+    await expect(search).rejects.toThrow("took too long");
   });
 
   it("throws a clear error when Claude declines", async () => {

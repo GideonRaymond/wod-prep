@@ -1,4 +1,5 @@
 import "server-only";
+import Anthropic from "@anthropic-ai/sdk";
 import type { BetaContentBlock, BetaMessageParam } from "@anthropic-ai/sdk/resources/beta";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
@@ -8,7 +9,7 @@ import {
   type ArticleRequest,
   type ReferenceArticle,
 } from "@/schemas/articles";
-import { anthropic, MODEL } from "./anthropic";
+import { anthropic, SEARCH_MODEL } from "./anthropic";
 import { UnusableResultError } from "./apiErrors";
 import { createCache } from "./cache";
 import { normalizeWodText } from "./wodCache";
@@ -23,6 +24,12 @@ export const MAX_ARTICLES = 3;
 
 /** A long search can pause partway; it's resumed at most this many times. */
 const MAX_CONTINUATIONS = 3;
+
+/**
+ * The whole search, continuations included, has to answer inside the route's 60 seconds (see
+ * maxDuration); past this it's stopped with a clear error instead of the host cutting it off.
+ */
+export const SEARCH_TIME_LIMIT_MS = 45_000;
 
 const CacheEntrySchema = z.object({ savedAt: z.number(), articles: ReferenceArticlesSchema });
 const cache = createCache("articles", CacheEntrySchema);
@@ -105,27 +112,47 @@ const normalizeUrl = (url: string) =>
     .toLowerCase();
 
 /**
+ * One turn of the search. It uses the web tools without dynamic filtering: filtering runs code
+ * between searches, which made a search take 35 to 45 seconds instead of 5 to 20 and pushed it past
+ * the time limit in production.
+ */
+async function search(messages: BetaMessageParam[], signal: AbortSignal) {
+  try {
+    return await anthropic.beta.messages.parse(
+      {
+        model: SEARCH_MODEL,
+        max_tokens: 16000,
+        output_config: { effort: "low", format: betaZodOutputFormat(PicksSchema) },
+        betas: ["server-side-fallback-2026-07-01"],
+        fallbacks: "default",
+        system: SYSTEM,
+        tools: [
+          { type: "web_search_20250305", name: "web_search", max_uses: 5 },
+          { type: "web_fetch_20250910", name: "web_fetch", max_uses: 5 },
+        ],
+        messages,
+      },
+      { signal },
+    );
+  } catch (err) {
+    if (err instanceof Anthropic.APIUserAbortError) {
+      throw new UnusableResultError("Finding reading took too long. Try again later.");
+    }
+    throw err;
+  }
+}
+
+/**
  * Asks Claude to search the web and pick a few articles to read before a workout part, best first.
  * Only articles whose URL came back from its searches are kept, so a made-up link never shows.
  */
 export async function findArticles(part: ArticleRequest): Promise<ReferenceArticle[]> {
   const messages: BetaMessageParam[] = [{ role: "user", content: JSON.stringify(part) }];
   const seen: BetaContentBlock[] = [];
+  const signal = AbortSignal.timeout(SEARCH_TIME_LIMIT_MS);
 
   for (let turn = 0; ; turn++) {
-    const response = await anthropic.beta.messages.parse({
-      model: MODEL,
-      max_tokens: 16000,
-      output_config: { effort: "low", format: betaZodOutputFormat(PicksSchema) },
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      system: SYSTEM,
-      tools: [
-        { type: "web_search_20260209", name: "web_search", max_uses: 5 },
-        { type: "web_fetch_20260209", name: "web_fetch", max_uses: 5 },
-      ],
-      messages,
-    });
+    const response = await search(messages, signal);
     seen.push(...response.content);
 
     if (response.stop_reason === "pause_turn" && turn < MAX_CONTINUATIONS) {
