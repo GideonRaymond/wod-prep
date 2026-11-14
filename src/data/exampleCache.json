@@ -2,59 +2,86 @@
   "articles": {
     "v2:namedfranintensity10": {
       "articles": [],
-      "savedAt": 1794671091071
+      "savedAt": 1794672138917
     }
   },
   "class-prep": {
-    "v3:fortime21|15|9|12min21|15|9|95|65lbthruster21|15|9pullup": {
+    "v4:fortime21|15|9|12min21|15|9|95|65lbthruster21|15|9pullupintensity10": {
       "prep": {
+        "alternatives": [
+          {
+            "different": {
+              "name": "Wall ball (20/14 lb)",
+              "why": "Squat plus overhead drive keeps the leg and lung burn at sprint pace."
+            },
+            "movement": "Thruster",
+            "part": 0,
+            "pregnancy": {
+              "avoid": false,
+              "why": null
+            },
+            "similar": {
+              "name": "Dumbbell thruster (2 × 35/25 lb)",
+              "why": "Same squat-to-press pattern at a light load that stays unbroken and fast."
+            }
+          },
+          {
+            "different": {
+              "name": "Ring row",
+              "why": "Trains the same back and arms at high volume without the bar."
+            },
+            "movement": "Pull-up",
+            "part": 0,
+            "pregnancy": {
+              "avoid": true,
+              "why": "Kipping strains the core and shoulders; fall risk."
+            },
+            "similar": {
+              "name": "Jumping pull-up",
+              "why": "Keeps the pulling reps moving in big, fast sets."
+            }
+          }
+        ],
         "skills": [
           {
-            "equipment": ["Pull-up bar", "Resistance band"],
+            "equipment": ["Pull-up bar", "Resistance bands", "Boxes"],
             "movement": "Pull-up",
             "progressions": [
               {
-                "advanceWhen": "6 controlled swings without bending the arms",
-                "dose": "3 × 6 swings",
-                "focus": "Push the bar away into the hollow and keep the arms straight, swing from the shoulders.",
-                "minutes": 5,
-                "name": "Kip swing (hollow to arch)"
+                "advanceWhen": "5 controlled swings without losing the hollow",
+                "dose": "3 × 5 swings",
+                "focus": "Swing from the shoulders with straight arms, tight hollow and arch, no bent knees.",
+                "minutes": 4,
+                "name": "Hollow and arch hold to kip swing"
               },
               {
-                "advanceWhen": "5 reps with the body rising and staying controlled",
-                "dose": "3 × 5 reps",
-                "focus": "Snap the hips up from the arch so the body floats toward the bar.",
+                "advanceWhen": "3 linked hip pops with a smooth swing",
+                "dose": "3 × 3 reps",
+                "focus": "Snap the hips up from the arch and push the bar down toward the thighs.",
                 "minutes": 5,
-                "name": "Kip swing with hip drive"
-              },
-              {
-                "advanceWhen": "5 linked reps chin over bar",
-                "dose": "3 × 5 reps",
-                "focus": "Pull right as the hips snap, then push away from the bar back into the swing.",
-                "minutes": 5,
-                "name": "Banded kipping pull-up"
+                "name": "Kip swing to hip pop"
               },
               {
                 "advanceWhen": null,
-                "dose": "3 × 5-8 reps",
-                "focus": "Link reps in a steady rhythm and break before the swing falls apart.",
-                "minutes": 6,
-                "name": "Kipping pull-up"
+                "dose": "3 × 3-5 reps",
+                "focus": "Pull at the top of the hip pop and push away from the bar to link reps.",
+                "minutes": 5,
+                "name": "Kipping pull-up (banded or jumping if no chin over bar)"
               }
             ],
             "setupMinutes": 2,
-            "why": "Fran needs big sets of pull-ups, so an efficient kip decides the time and the scaling choice."
+            "why": "Kipping lets athletes hold big pull-up sets in an all-out sprint, and the steps double as scaling."
           }
         ],
         "warmup": {
           "drills": [
             {
               "dose": "2 min",
-              "name": "Easy jump rope or jog"
+              "name": "Easy cardio: half on rower or bike, half jump rope, swap at 1:00"
             },
             {
-              "dose": "10 reps each",
-              "name": "Arm circles and band pull-aparts"
+              "dose": "10 each way",
+              "name": "Arm circles"
             },
             {
               "dose": "5 reps",
@@ -65,53 +92,48 @@
               "name": "World's greatest stretch"
             },
             {
+              "dose": "5 each side",
+              "name": "Cossack squat"
+            },
+            {
+              "dose": "2 × 8 reps",
+              "name": "Scap pull-up"
+            },
+            {
+              "dose": "2 × 5 reps each",
+              "name": "Empty-bar front squat + push press"
+            },
+            {
               "dose": "10 reps",
-              "name": "Air squat with 3 s pause at bottom"
-            },
-            {
-              "dose": "2 × 8 reps",
-              "name": "Active hang with scap pulls"
-            },
-            {
-              "dose": "8 reps",
-              "name": "Empty-bar front squat"
-            },
-            {
-              "dose": "8 reps",
-              "name": "Empty-bar push press"
-            },
-            {
-              "dose": "2 × 8 reps",
               "name": "Empty-bar thruster"
             },
             {
-              "dose": "3 sets of 5 reps, adding weight each set",
-              "name": "Build thruster load to 95/65 lb"
+              "dose": "3 sets of 3, add load each set",
+              "name": "Thruster building toward 95/65 lb"
             },
             {
-              "dose": "1 round of 5 + 5 at race pace",
-              "name": "Primer: thrusters at working load + pull-ups (scaled as needed)"
+              "dose": "1 round of 7 + 5, fast",
+              "name": "Primer: thrusters at workout load + pull-ups or scaled version"
             }
           ],
           "equipment": [
-            "Barbell",
-            "Plates",
-            "Collars",
-            "Jump rope",
-            "Resistance band",
+            "Rowers or bikes",
+            "Jump ropes",
+            "Barbells",
+            "Bumper plates",
             "Pull-up bar"
           ],
-          "focus": "Opens up hips, shoulders and lats for the thruster and pull-up, then builds the thruster to 95/65 lb. Ends with a short fast primer so the heart rate is high before an all-out sprint.",
-          "minutes": 15,
+          "focus": "Opens hips, shoulders and lats, then builds the thruster to working load and primes the pull-up so athletes can redline from the first rep of a 3-6 minute sprint.",
+          "minutes": 14,
           "rounds": null
         }
       },
-      "savedAt": 1794671087600
+      "savedAt": 1794672138913
     }
   },
   "movement-videos": {
     "v3:workout:fran": {
-      "savedAt": 1794671094901,
+      "savedAt": 1794672138918,
       "videos": [
         {
           "duration": "7:01",

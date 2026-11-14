@@ -2,7 +2,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { ExerciseList } from "./ExerciseList";
-import { franPart } from "@/test/fixtures";
+import { classPrep, franPart } from "@/test/fixtures";
+import { alternativesFor } from "@/utils/movementAlternatives";
 import { toWodState } from "@/utils/toWodState";
 
 const [thruster, pullUp] = toWodState({ parts: [franPart] }).parts[0].movements;
@@ -45,5 +46,29 @@ describe("ExerciseList", () => {
     render(<ExerciseList movements={[withVideo]} detailed />);
     expect(screen.getByText("weightlifting")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Points of performance" })).toBeInTheDocument();
+  });
+
+  it("shows each movement's alternatives, and marks the ones to avoid when pregnant", () => {
+    render(
+      <ExerciseList
+        movements={[thruster, pullUp]}
+        detailed
+        alternativesOf={(name) => alternativesFor(classPrep.alternatives, 0, name)}
+      />,
+    );
+    expect(screen.getAllByRole("heading", { name: "Alternatives" })).toHaveLength(2);
+    expect(screen.getByText("Jumping pull-up")).toBeInTheDocument();
+    expect(screen.getByText("Wall ball")).toBeInTheDocument();
+    const [thrusterRow, pullUpRow] = screen
+      .getAllByRole("listitem")
+      .filter((li) => li.querySelector("h3"));
+    expect(thrusterRow).not.toHaveTextContent("Not when pregnant");
+    expect(pullUpRow).toHaveTextContent("Not when pregnant");
+  });
+
+  it("shows no alternatives without a plan for them", () => {
+    render(<ExerciseList movements={[pullUp]} detailed alternativesOf={() => null} />);
+    expect(screen.queryByRole("heading", { name: "Alternatives" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Not when pregnant")).not.toBeInTheDocument();
   });
 });

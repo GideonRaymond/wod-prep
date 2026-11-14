@@ -10,19 +10,16 @@ import { WodBoard } from "@/components/shared/WodBoard";
 import { STEP, WOD_STEPS, stepTransition } from "@/constants/flow";
 import { useWod } from "@/providers/WodProvider";
 import { partsBoard } from "@/utils/boardItems";
-import { boardOutdated } from "@/utils/partKey";
 import { reachableStep } from "@/utils/reachableStep";
 
 /**
  * The second step: check the parsed workout beside the chalkboard and fix anything that's off,
- * then confirm it. The board shows the workout as it was read; edited parts are redrawn once the
- * workout is confirmed.
+ * then confirm it. The board shows the workout as it was read.
  */
 export function ReviewPage() {
   const router = useRouter();
   const { wod, setWod, restored } = useWod();
   const missingStimulus = wod?.parts.some((part) => !part.stimulus.description.trim());
-  const outdated = wod?.parts.some(boardOutdated);
 
   return (
     <FlowPage
@@ -30,18 +27,7 @@ export function ReviewPage() {
       // The class step does what Confirm does, so it's open whenever Confirm is: back to the class
       // as it was when nothing changed, or built afresh when something did.
       reachable={reachableStep(wod)}
-      board={
-        wod && (
-          <>
-            <WodBoard {...partsBoard(wod.parts)} />
-            {outdated && (
-              <p className="text-subtle mt-2 text-sm">
-                Your changes go on the board when you confirm.
-              </p>
-            )}
-          </>
-        )
-      }
+      board={wod && <WodBoard {...partsBoard(wod.parts)} />}
     >
       <h1 className="text-3xl font-bold tracking-tight">Check your workout</h1>
       <p className="mt-2 text-zinc-600 dark:text-zinc-400">

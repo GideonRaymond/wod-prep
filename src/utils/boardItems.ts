@@ -38,7 +38,9 @@ export function partsBoard(parts: BoardSource[]) {
 /**
  * The board for the class, in class order: the planned warm-up, each skill practice right before
  * the part that uses it, the parts, and a cool-down for the suggested stretches when none is
- * programmed. The app's own blocks are one line each, their name and length; the cool-down gets
+ * programmed. Every block is one line: a part only its heading (its label and name, like "Fran" or
+ * "A. Back Squat"), since the class below spells it out; the app's own blocks their name and
+ * length; the cool-down gets
  * the minutes left at the end of class. Keys are the class page's stage keys. With `sections`
  * (when the board is the class's table of contents), Before class and the briefing head it.
  */
@@ -67,9 +69,9 @@ export function classBoard(
   return { items, title: boardTitle(parts) };
 }
 
-/** A stage's block: a part as written, or the planned warm-up or a skill as its name and length. */
+/** A stage's block: a part's heading, or the planned warm-up or a skill as its name and length. */
 function stageItem(stage: PlannedStage): BoardItem {
-  if (isPlannedPart(stage)) return partItem(stage.part, stage.part.id);
+  if (isPlannedPart(stage)) return { ...partItem(stage.part, stage.part.id), lines: [] };
   if (stage.kind === "planned-warmup") {
     return added("planned-warmup", `Warm-up – ${stage.warmup.minutes} min`);
   }

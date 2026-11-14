@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { boardOutdated, partKey, wodEdited } from "./partKey";
+import { partKey, wodEdited } from "./partKey";
 import { strengthAndMetcon } from "@/test/fixtures";
 import { toWodState } from "./toWodState";
 
@@ -24,18 +24,6 @@ describe("partKey", () => {
   });
 });
 
-describe("boardOutdated", () => {
-  it("is false until the part is edited", () => {
-    expect(boardOutdated(fran)).toBe(false);
-    expect(boardOutdated({ ...fran, rounds: "15-12-9" })).toBe(true);
-  });
-
-  it("is false for a part saved without a board, which shows its own text instead", () => {
-    const old = { ...fran, rounds: "15-12-9", board: undefined, boardKey: undefined };
-    expect(boardOutdated(old)).toBe(false);
-  });
-});
-
 describe("wodEdited", () => {
   it("spots an edit to any part, or to a stimulus", () => {
     expect(wodEdited([squats, fran])).toBe(false);
@@ -44,10 +32,5 @@ describe("wodEdited", () => {
     expect(wodEdited([squats, { ...fran, stimulus }])).toBe(true);
     const intensity = { ...fran.stimulus, intensity: 4 };
     expect(wodEdited([squats, { ...fran, stimulus: intensity }])).toBe(true);
-  });
-
-  it("still counts an edit once the board is redrawn with it", () => {
-    const edited = { ...fran, rounds: "15-12-9" };
-    expect(wodEdited([{ ...edited, boardKey: partKey(edited) }])).toBe(true);
   });
 });

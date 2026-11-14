@@ -20,7 +20,7 @@ import { createCache } from "./cache";
 import { normalizeWodText } from "./wodCache";
 
 /** Bump when the prompt or schema changes, so old plans are made again. */
-export const PREP_CACHE_VERSION = 3;
+export const PREP_CACHE_VERSION = 4;
 
 /** A plan for the same workout is reused for a month, like videos and articles. */
 export const PREP_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -28,7 +28,10 @@ export const PREP_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const CacheEntrySchema = z.object({ savedAt: z.number(), prep: ClassPrepSchema });
 const cache = createCache("class-prep", CacheEntrySchema);
 
-/** The same parts (formats, schemes, lengths and movements) get the same plan; titles and stimulus text don't matter. */
+/**
+ * The same parts (formats, schemes, lengths, movements and intensity) get the same plan; titles and
+ * stimulus text don't matter. Intensity counts since it steers the warm-up and the alternatives.
+ */
 export function prepCacheKey(request: PrepRequest) {
   const about = request.parts.map((part) =>
     [
@@ -38,6 +41,7 @@ export function prepCacheKey(request: PrepRequest) {
       part.duration,
       part.minutes && `${part.minutes} min`,
       ...part.movements.map((m) => [m.reps, m.load, m.name].filter(Boolean).join(" ")),
+      `intensity ${part.intensity}`,
     ]
       .filter(Boolean)
       .join(" "),
@@ -55,7 +59,7 @@ export function cachePrep(request: PrepRequest, prep: ClassPrep) {
   return cache.set(prepCacheKey(request), { savedAt: Date.now(), prep });
 }
 
-const SYSTEM = `You're an experienced CrossFit coach planning the start of a ${CLASS_MINUTES}-minute group class for about 12 athletes of mixed ability, with one coach. You get the day's parts, which of them are a programmed warm-up or cool-down, and how many minutes are left for your warm-up and skill practice. Plan:
+const SYSTEM = `You're an experienced CrossFit coach planning the start of a ${CLASS_MINUTES}-minute group class for about 12 athletes of mixed ability, with one coach. You get the day's parts, which of them are a programmed warm-up or cool-down, and how many minutes are left for your warm-up and skill practice. Plan the start of class, and the options for athletes who can't do a movement as written:
 
 1. warmup (null only when a warm-up is already programmed; otherwise always plan one, however full the class is): general to specific, for today's movements and stimulus, in this order:
    a. If time allows, about 2 minutes of easy cardio to warm the body up and get it ready to move (rower, bike, ski erg, an easy jog or jump rope).
@@ -64,6 +68,12 @@ const SYSTEM = `You're an experienced CrossFit coach planning the start of a ${C
    Use simple drills a class can follow together without much explaining. Give its focus (what it prepares and why), a round scheme if it has one, each drill with its dose, and the equipment.
 
 2. skills: practice for skill movements only. These are gymnastics skills like rope climbs, toes-to-bar, muscle-ups, handstand push-ups and walks, double-unders, pistols and kipping or butterfly pull-ups, and technical lifts like the snatch or the clean and jerk. Simple movements (air squats, push-ups, running, rowing, burpees, box jumps, wall balls, kettlebell swings, deadlifts) never get skill practice. Return an empty list when there are none. At most two skills, the one that matters most for today first. For each, give progressions from the simplest step to the full movement: everyone starts at the first and moves on when they meet its advanceWhen, so the steps double as scaling options for the workout.
+
+3. alternatives: one entry for every movement of every workout part (stage "part"; leave out programmed warm-ups and cool-downs), with the part's index in the request and the movement's name as written there. Each gives two alternatives, both chosen for that part's stimulus and intensity, not just the movement: keep what the part is for (its time domain, pace, heart rate, load or skill).
+   - similar: the closest version of the same movement pattern, for athletes who can do something like it. E.g. shoulder press for push press, jumping pull-ups for pull-ups in a fast, high-volume or cardio piece (they keep the reps moving), but negatives or banded pull-ups in a strength piece with few reps.
+   - different: a completely different movement for athletes who can't do this one at all (injury, equipment, ability), that trains the same muscles or energy system. E.g. Z-press for handstand push-ups, bike or row for running, ring rows for pull-ups.
+   Never suggest the movement itself, and don't give the same movement for both. For each, give why it keeps today's stimulus in one short sentence.
+   - pregnancy: avoid is true when pregnant athletes should generally not do the movement as written: high impact or jumping, inverted (handstands), lying on the back for long, heavy bracing or straining (maximal lifts), deep core flexion (sit-ups, toes-to-bar, GHD), kipping, or a risk of falling or of being hit (box jumps, rope climbs, ring muscle-ups). Give why in a few words. Otherwise avoid is false and why is null. This is general guidance for a coach, not medical advice, so lean on the side of caution.
 
 Each part's stimulus and intensity (1 to 10) are the coach's, so take them as right, even where you'd read the workout differently, and plan for them: how heavy the build-up goes, how much the heart rate is raised, which skills matter. If a part's stimulus and intensity contradict each other (say "all-out sprint" at intensity 2), plan the warm-up for the harder of the two, since an athlete who's under-prepared is the one who gets hurt.
 

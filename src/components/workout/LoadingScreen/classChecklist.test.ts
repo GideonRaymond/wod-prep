@@ -4,7 +4,6 @@ import type { ChecklistItem } from "@/components/shared/Checklist";
 import { videoSearchKey } from "@/hooks/useMovementVideos";
 import { classPrep, fran, strengthAndMetcon } from "@/test/fixtures";
 import { planClass, WHITEBOARD_MINUTES } from "@/utils/classPlan";
-import { partKey } from "@/utils/partKey";
 import { toWodState } from "@/utils/toWodState";
 
 const wod = toWodState(strengthAndMetcon);
@@ -41,33 +40,6 @@ describe("classChecklist", () => {
     ]);
     expect(row(items, "reading").meta).toBe("3 blocks found");
     expect(ready).toBe(false);
-  });
-
-  it("adds a Chalkboard step while edited parts are redrawn, and keeps it once they are", () => {
-    const lighter = { ...wod.parts[1], rounds: "15-12-9" };
-    const edited = { parts: [wod.parts[0], lighter, wod.parts[2]] };
-    const working = classChecklist(progress({ wod: edited, boardLoading: true }));
-    expect(working.items.map((item) => item.id).slice(0, 3)).toEqual(["reading", "board", "pre"]);
-    expect(row(working.items, "board")).toMatchObject({
-      name: "Chalkboard",
-      state: "working",
-      meta: "Redrawing it with your changes",
-    });
-    expect(working.ready).toBe(false);
-
-    const redrawn = {
-      parts: [wod.parts[0], { ...lighter, boardKey: partKey(lighter) }, wod.parts[2]],
-    };
-    const done = classChecklist(progress({ wod: redrawn }));
-    expect(row(done.items, "board")).toMatchObject({
-      state: "done",
-      meta: "Redrawn with your changes",
-    });
-    expect(done.ready).toBe(true);
-  });
-
-  it("has no Chalkboard step when nothing was redrawn", () => {
-    expect(row(classChecklist(progress()).items, "board")).toBeUndefined();
   });
 
   it("grows the Workout row into the parts, with skills where they're practised", () => {

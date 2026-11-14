@@ -17,6 +17,7 @@ describe("Badge", () => {
     ["deep", "bg-purple-800"],
     ["mid", "bg-purple-300"],
     ["pale", "bg-purple-100"],
+    ["caution", "bg-amber-100"],
   ] as const)("supports the %s tone", (tone, color) => {
     render(<Badge tone={tone}>weightlifting</Badge>);
     expect(screen.getByText("weightlifting")).toHaveClass(color);

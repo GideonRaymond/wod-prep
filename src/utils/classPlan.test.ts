@@ -89,7 +89,10 @@ describe("planClass", () => {
       movements: [{ ...squats.movements[0], id: "o", name: "Overhead Squat" }],
     };
     const skill = { ...classPrep.skills[0], movement: "Overhead Squats" };
-    const plan = planClass({ parts: [squats, ohs] }, { warmup: null, skills: [skill] });
+    const plan = planClass(
+      { parts: [squats, ohs] },
+      { warmup: null, skills: [skill], alternatives: [] },
+    );
     expect(outline(plan).map(([name, kind]) => `${kind}: ${name}`)).toEqual([
       "part: Heavy Back Squats",
       "skill: Overhead Squats",
@@ -99,7 +102,7 @@ describe("planClass", () => {
 
   it("puts a skill no part names before the first workout part", () => {
     const skill = { ...classPrep.skills[0], movement: "Handstand Walk" };
-    const plan = planClass(wod, { warmup: null, skills: [skill] });
+    const plan = planClass(wod, { warmup: null, skills: [skill], alternatives: [] });
     expect(outline(plan).map(([name]) => name)).toEqual([
       "Handstand Walk",
       "Heavy Back Squats",
@@ -112,7 +115,7 @@ describe("planClass", () => {
     const warmup = { ...wod.parts[0], id: "w", label: "Warm-up", title: "Prep", minutes: 10 };
     const plan = planClass(
       { parts: [warmup, wod.parts[1]] },
-      { warmup: null, skills: classPrep.skills },
+      { warmup: null, skills: classPrep.skills, alternatives: [] },
     );
     expect(outline(plan).map(([name]) => name)).toEqual(["Prep", "Pull-up", "Fran"]);
   });
@@ -180,7 +183,11 @@ describe("fitPrep", () => {
     progressions: minutes.map((m, i) => step(`${movement} ${i + 1}`, m)),
     equipment: [],
   });
-  const prep = (...skills: SkillBlock[]): ClassPrep => ({ warmup: classPrep.warmup, skills });
+  const prep = (...skills: SkillBlock[]): ClassPrep => ({
+    warmup: classPrep.warmup,
+    skills,
+    alternatives: [],
+  });
   const steps = (fitted: ClassPrep) => fitted.skills.map((s) => s.progressions.map((p) => p.name));
 
   it("keeps a plan that fits", () => {
@@ -267,14 +274,16 @@ describe("classOvertime", () => {
 
   it("is 0 when the class fits, wrap-up included", () => {
     // 5 whiteboard + 10 warm-up + 40 + 5 wrap-up = 60
-    expect(classOvertime(lasting(40), { warmup: classPrep.warmup, skills: [] })).toBe(0);
+    expect(
+      classOvertime(lasting(40), { warmup: classPrep.warmup, skills: [], alternatives: [] }),
+    ).toBe(0);
   });
 
   it("counts the minutes past the class, wrap-up included", () => {
     // 5 + 10 + 70 + 5 = 90
-    expect(classOvertime(lasting(70), { warmup: classPrep.warmup, skills: [] })).toBe(
-      90 - CLASS_MINUTES,
-    );
+    expect(
+      classOvertime(lasting(70), { warmup: classPrep.warmup, skills: [], alternatives: [] }),
+    ).toBe(90 - CLASS_MINUTES);
   });
 
   it("is unknown when a length is", () => {
