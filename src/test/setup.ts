@@ -9,6 +9,8 @@ vi.mock("next/font/google", () => ({
 
 // Keep tests away from the real on-disk WOD cache; cache tests opt back in.
 process.env.WOD_CACHE = "off";
+// Cached results answer at once in tests; the pacing has its own tests.
+process.env.CACHE_PACING = "off";
 
 // Don't let a saved workout leak from one test into the next.
 afterEach(() => {

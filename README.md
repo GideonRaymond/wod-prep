@@ -47,7 +47,9 @@ Every Claude and YouTube result (parsed workouts, warm-up plans, articles, video
 - **Named workouts** (and named parts) are also stored under their name, so after parsing Fran once, even as Part B of a longer class, typing just `Fran` is a cache hit. Made-up titles like "Intense Couplet" aren't.
 - **Different wording** (e.g. `21-15-9 pullups and thrusters`) is parsed once more, then cached too.
 - Responses carry an `X-Cache: HIT` or `MISS` header (visible in the browser's network tab).
-- **Test the loading screens with cached results:** set `MOCK_LOAD=true` in `.env.local` and restart the dev server. Cached and hand-picked results then arrive about as slowly as real ones (`MOCK_DELAYS_MS` in `src/server/mockLoad.ts`):
+- **Cached results are paced:** they arrive in the order real ones do, only quicker (`PACED_DELAYS_MS` in `src/server/mockLoad.ts`: the outline after about 0.7s, each part after 1–2s, the warm-up plan after 2s, articles last at 2–3.5s), so the board is still written up and the checklists still tick off step by step. `CACHE_PACING=off` returns them at once (the tests do).
+- **The example workout is always cached:** its parse and everything its class needs are kept in the repository (`src/data/exampleCache.json`) and read before Redis or `.cache/`, so it never needs a login or expires. A test checks the seed covers it; after bumping a cache version (or changing the example), run `npm run seed:example`: it reuses `.cache/`, makes the rest with Claude and YouTube (keys from `.env`), never writes to Redis, and rewrites the seed to commit.
+- **Test the loading screens with cached results at full length:** set `MOCK_LOAD=true` in `.env.local` and restart the dev server. Cached and hand-picked results then arrive about as slowly as real ones (`MOCK_DELAYS_MS` in `src/server/mockLoad.ts`):
   - A cached parse streams its outline after about 2s, then each part after 3–6s.
   - Videos take 1–3.5s, the warm-up plan 4–7s, and articles 8–14s.
   - Fresh results aren't slowed down.
@@ -132,7 +134,7 @@ The app needs a host that runs Next.js as a Node.js server (its API routes strea
 
 **What protects it** (all in this repo):
 
-- **A shared password** (`src/proxy.ts`): with `SITE_PASSWORD` set, the browser asks for it once a session (any username) and sends it with every page and API call. It fails closed: in production without `SITE_PASSWORD`, every page answers 503 "isn't set up yet" rather than opening. Set `SITE_PASSWORD=off` to open the site on purpose. Each response's `X-Site-Gate` header (`on`, `off` or `unconfigured`) shows what the gate did, so `curl -I https://<site>` confirms it runs on the host.
+- **A login for new workouts** (`src/server/login.ts`): the site is open to everyone, and cached results (the example workout, and any workout someone already broke down) are free to all. A workout that would reach Claude or YouTube needs the shared `SITE_PASSWORD`: the API answers 401, and a popup (`LoginDialog`) asks for the password, or offers the example workout instead. Logging in (`POST /api/login`, 10 tries an hour) sets an HttpOnly cookie holding a keyed hash of the password (never the password), good for 30 days; changing the password logs everyone out. It fails closed: in production without `SITE_PASSWORD`, nobody can log in, so only cached workouts work. Set `SITE_PASSWORD=off` to let everyone break down new workouts. In development without one, everything is open; set one in `.env.local` to try the popup.
 - **Per-visitor rate limits** (`src/server/rateLimit.ts`): only calls that miss the cache count, per IP per hour: 5 workouts broken down, 15 planning calls (about 3 classes; each uses two to five), 50 lookups (videos, points of performance). Over the limit, the app says when to try again.
 - **The shared cache** (above), so nobody pays twice for the same workout, and YouTube's daily search quota lasts.
 - **Time limits**: every API route sets `maxDuration`, at most 60 seconds (Netlify's ceiling).
@@ -141,7 +143,7 @@ The app needs a host that runs Next.js as a Node.js server (its API routes strea
 
 1. Create a free Redis database at [Upstash](https://upstash.com) (pick a region near Netlify's functions) and copy its REST URL and token.
 2. In Netlify, import the GitHub repo. It detects Next.js and builds with `npm run build`; `.nvmrc` sets Node 22.
-3. Under **Environment variables**, add `ANTHROPIC_API_KEY`, `YOUTUBE_API_KEY`, `SITE_PASSWORD`, `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (with the Functions scope, which the proxy and API need), then redeploy: new variables only reach new deploys. Leave `MOCK_LOAD` and `WOD_CACHE` unset.
+3. Under **Environment variables**, add `ANTHROPIC_API_KEY`, `YOUTUBE_API_KEY`, `SITE_PASSWORD`, `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (with the Functions scope, which the API needs), then redeploy: new variables only reach new deploys. Leave `MOCK_LOAD` and `WOD_CACHE` unset.
 4. Under **Domain management**, add `wod-prep.<your domain>`. Then, where the domain's DNS is managed (Strato, GoDaddy…), add a **CNAME** record named `wod-prep` pointing at the Netlify site's address (`<site>.netlify.app`). Netlify sets up HTTPS once it sees the record.
 
 **Keep an eye on spend:** give production its own Anthropic API key with a monthly limit, and restrict the YouTube key to the YouTube Data API.
@@ -191,7 +193,7 @@ components/shared/Button/
 └── index.ts              # import { Button } from "@/components/shared/Button"
 ```
 
-Middleware is called **proxy** in Next.js 16 and must live in a single `src/proxy.ts`. There isn't one yet.
+Middleware is called **proxy** in Next.js 16 and must live in a single `src/proxy.ts`. There isn't one: the login is checked in the API routes, only once a request misses the cache.
 
 ## Roadmap
 

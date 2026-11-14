@@ -12,7 +12,7 @@ vi.mock("@upstash/redis", () => ({
   },
 }));
 
-import { CACHE_TTL_SECONDS, createCache } from "./cache";
+import { CACHE_TTL_SECONDS, createCache, recordCache, type CacheEntries } from "./cache";
 import { resetRedis } from "./redis";
 
 const Schema = z.object({ n: z.number() });
@@ -104,5 +104,46 @@ describe("createCache", () => {
       await expect(cache.get("a")).resolves.toEqual({ n: 1 });
       expect(redis.set).not.toHaveBeenCalled();
     });
+  });
+
+  describe("seeded with the example", () => {
+    const Entry = z.object({ savedAt: z.number(), n: z.number() });
+    const seeded = createCache("things", Entry, { a: { savedAt: 1, n: 1 }, bad: { n: "x" } });
+
+    beforeEach(() => {
+      vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.upstash.io");
+      vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "token");
+    });
+
+    it("answers from the seed before Redis, always fresh", async () => {
+      vi.spyOn(Date, "now").mockReturnValue(5000);
+      await expect(seeded.get("a")).resolves.toEqual({ savedAt: 5000, n: 1 });
+      expect(redis.get).not.toHaveBeenCalled();
+    });
+
+    it("still answers with WOD_CACHE=off", async () => {
+      vi.stubEnv("WOD_CACHE", "off");
+      await expect(seeded.get("a")).resolves.toMatchObject({ n: 1 });
+    });
+
+    it("goes on to Redis for keys it doesn't have, or that no longer match the schema", async () => {
+      redis.get.mockResolvedValue({ savedAt: 2, n: 2 });
+      await expect(seeded.get("bad")).resolves.toEqual({ savedAt: 2, n: 2 });
+      await expect(seeded.get("toString")).resolves.toEqual({ savedAt: 2, n: 2 });
+      expect(redis.get).toHaveBeenCalledWith("cache:things:bad");
+    });
+  });
+
+  it("records what's read and written while recording, by cache name", async () => {
+    vi.stubEnv("WOD_CACHE", "off");
+    const seeded = createCache("things", Schema, { a: { n: 1 } });
+    const into: Record<string, CacheEntries> = {};
+    recordCache(into);
+    await seeded.get("a");
+    await seeded.get("missing");
+    await seeded.set("b", { n: 2 });
+    recordCache(null);
+    await seeded.set("c", { n: 3 });
+    expect(into).toEqual({ things: { a: { n: 1 }, b: { n: 2 } } });
   });
 });

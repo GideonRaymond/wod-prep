@@ -102,4 +102,18 @@ describe("POST /api/class-prep", () => {
     await expect(res.json()).resolves.toEqual({ error: "Couldn't read the plan." });
     expect(mocks.cachePrep).not.toHaveBeenCalled();
   });
+
+  it("asks for a login before reaching out when there's a password, but serves the cache to all", async () => {
+    vi.stubEnv("SITE_PASSWORD", "chalk");
+    const res = await post({ parts: [part] });
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toEqual({
+      error: "Log in to plan the class for a new workout.",
+      login: true,
+    });
+    expect(mocks.planPrep).not.toHaveBeenCalled();
+
+    mocks.getCachedPrep.mockResolvedValue(classPrep);
+    expect((await post({ parts: [part] })).status).toBe(200);
+  });
 });

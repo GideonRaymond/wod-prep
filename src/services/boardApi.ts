@@ -1,5 +1,6 @@
 import type { BoardPart } from "@/schemas/board";
 import type { WorkoutPartState } from "@/types/wod";
+import { fetchWithLogin } from "./fetchWithLogin";
 
 /** What the board redraw needs from an edited part: its old board and the part as it is now. */
 export function toBoardPart(part: WorkoutPartState): BoardPart {
@@ -20,7 +21,7 @@ export function toBoardPart(part: WorkoutPartState): BoardPart {
  * Throws an Error with a user-facing message.
  */
 export async function requestBoards(parts: WorkoutPartState[]): Promise<string[][]> {
-  const res = await fetch("/api/board", {
+  const res = await fetchWithLogin("/api/board", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ parts: parts.map(toBoardPart) }),

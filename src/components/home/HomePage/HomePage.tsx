@@ -11,7 +11,9 @@ import { Dialog } from "@/components/shared/Dialog";
 import { FlowPage } from "@/components/shared/FlowPage";
 import { WodBoard } from "@/components/shared/WodBoard";
 import { STEP, WOD_STEPS, stepTransition } from "@/constants/flow";
+import { EXAMPLE_WOD } from "@/constants/wod";
 import { useParseWod } from "@/hooks/useParseWod";
+import { loginStore } from "@/stores/loginStore";
 import { partsBoard } from "@/utils/boardItems";
 import { wodEdited } from "@/utils/partKey";
 import { reachableStep } from "@/utils/reachableStep";
@@ -20,7 +22,8 @@ import { reachableStep } from "@/utils/reachableStep";
  * The first step: write the workout on the chalkboard, beside a short welcome and the steps ahead.
  * While it's read, the board is written up part by part and the welcome makes way for a checklist;
  * once it's read, the review page opens. Breaking down a new workout replaces the current one, so
- * it asks first if that one has been edited.
+ * it asks first if that one has been edited. Choosing the example in the login popup (here or on
+ * another step) writes it on the board, ready to break down.
  */
 export function HomePage() {
   const router = useRouter();
@@ -35,6 +38,17 @@ export function HomePage() {
     if (opening) return () => setOpening(false);
   }, [opening]);
   const reading = loading || opening;
+
+  // The example chosen in the login popup: write it on the board, once.
+  // Chosen here, it's taken when the store says so; chosen on another step, as this page opens.
+  const [examples, setExamples] = useState(0);
+  useEffect(() => {
+    const take = () => {
+      if (loginStore.takeExample()) setExamples((n) => n + 1);
+    };
+    queueMicrotask(take);
+    return loginStore.subscribe(take);
+  }, []);
 
   async function breakDown(text: string) {
     setPending(null);
@@ -64,11 +78,13 @@ export function HomePage() {
           )}
           {/* Hidden, not unmounted, while parsing, so the text is still there if it fails. */}
           <Activity mode={reading ? "hidden" : "visible"}>
-            {/* Remount once the saved workout is read, so the text box starts with its text. */}
+            {/* Remount once the saved workout is read, so the text box starts with its text, and
+                when the example is chosen, so it starts with that. */}
             <WodInputForm
-              key={restored ? "restored" : "server"}
+              key={`${restored ? "restored" : "server"}-${examples}`}
               loading={loading}
               parsedText={parsedText}
+              initialText={examples > 0 ? EXAMPLE_WOD : undefined}
               continueTo={wod ? WOD_STEPS[STEP.review].href : undefined}
               onSubmit={submit}
             />

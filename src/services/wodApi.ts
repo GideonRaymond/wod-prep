@@ -1,5 +1,6 @@
 import type { PartOutline, Wod, WorkoutPart } from "@/schemas/wod";
 import type { ParseEvent } from "@/types/parse";
+import { fetchWithLogin } from "./fetchWithLogin";
 
 export type ParseHandlers = {
   /** The workout's structure, as soon as it's read. */
@@ -14,7 +15,7 @@ export type ParseHandlers = {
  * user-facing message on failure.
  */
 export async function requestParseWod(text: string, handlers: ParseHandlers = {}): Promise<Wod> {
-  const res = await fetch("/api/parse", {
+  const res = await fetchWithLogin("/api/parse", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),

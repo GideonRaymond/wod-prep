@@ -159,4 +159,18 @@ describe("POST /api/videos", () => {
     await post({ name: "Ring Muscle-up" });
     expect(rateLimit).not.toHaveBeenCalled();
   });
+
+  it("asks for a login before reaching out when there's a password, but serves the cache to all", async () => {
+    vi.stubEnv("SITE_PASSWORD", "chalk");
+    const res = await post({ name: "Zercher carry" });
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toEqual({
+      error: "Log in to find videos for a new movement.",
+      login: true,
+    });
+    expect(mocks.findVideos).not.toHaveBeenCalled();
+
+    mocks.getCachedVideos.mockResolvedValue([]);
+    expect((await post({ name: "Zercher carry" })).status).toBe(200);
+  });
 });

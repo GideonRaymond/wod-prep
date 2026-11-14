@@ -120,4 +120,18 @@ describe("POST /api/points-of-performance", () => {
     expect(res.status).toBe(500);
     expect((await res.json()).error).toBe("Something went wrong looking up this movement.");
   });
+
+  it("asks for a login before reaching out when there's a password, but serves the cache to all", async () => {
+    vi.stubEnv("SITE_PASSWORD", "chalk");
+    const res = await post({ name: "Zercher carry" });
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toEqual({
+      error: "Log in to look up a new movement.",
+      login: true,
+    });
+    expect(mocks.generatePoints).not.toHaveBeenCalled();
+
+    mocks.getCachedPoints.mockResolvedValue(points);
+    expect((await post({ name: "Zercher carry" })).status).toBe(200);
+  });
 });

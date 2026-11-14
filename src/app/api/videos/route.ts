@@ -8,6 +8,7 @@ import {
 } from "@/server/movementVideos";
 import { mockLoad } from "@/server/mockLoad";
 import { VIDEO_KINDS, type VideoKind } from "@/schemas/videos";
+import { requireLogin } from "@/server/login";
 import { rateLimit } from "@/server/rateLimit";
 
 /** Usually a few seconds; this caps it well within any host's limit. */
@@ -40,7 +41,9 @@ export async function POST(request: Request) {
     return Response.json({ videos: cached }, { headers: { "X-Cache": "HIT" } });
   }
 
-  // Past the cache, this reaches YouTube: count it against the visitor's hourly limit.
+  // Past the cache, this reaches YouTube: only for a logged-in visitor, within their hourly limit.
+  const needsLogin = await requireLogin(request, "Log in to find videos for a new movement.");
+  if (needsLogin) return needsLogin;
   const limited = await rateLimit(request, "lookup");
   if (limited) return limited;
 

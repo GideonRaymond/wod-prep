@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { useWod } from "@/providers/WodProvider";
 import type { PartOutline } from "@/schemas/wod";
+import { LoginNeededError } from "@/services/fetchWithLogin";
 import { requestParseWod } from "@/services/wodApi";
 import { toWodState } from "@/utils/toWodState";
 
@@ -36,7 +37,9 @@ export function useParseWod() {
         loadWod(text, toWodState(parsed));
         return true;
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong.");
+        // Choosing the example instead of logging in fills it in: nothing went wrong.
+        const choseExample = err instanceof LoginNeededError && err.outcome === "example";
+        if (!choseExample) setError(err instanceof Error ? err.message : "Something went wrong.");
         return false;
       } finally {
         setLoading(false);

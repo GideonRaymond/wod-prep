@@ -11,7 +11,8 @@
     "format:check": "prettier --check .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "seed:example": "SEED_EXAMPLE=on vitest run src/server/seedExample.script.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

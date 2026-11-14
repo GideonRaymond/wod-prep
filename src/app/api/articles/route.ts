@@ -2,6 +2,7 @@ import { ArticleRequestSchema } from "@/schemas/articles";
 import { claudeErrorResponse, missingApiKeyResponse } from "@/server/apiErrors";
 import { mockLoad } from "@/server/mockLoad";
 import { cacheArticles, findArticles, getCachedArticles } from "@/server/articles";
+import { requireLogin } from "@/server/login";
 import { rateLimit } from "@/server/rateLimit";
 
 /** Netlify gives a request at most 60 seconds; this asks for 60 wherever it can be set. */
@@ -21,7 +22,9 @@ export async function POST(request: Request) {
     return Response.json({ articles: cached }, { headers: { "X-Cache": "HIT" } });
   }
 
-  // Past the cache, this reaches Claude: count it against the visitor's hourly limit.
+  // Past the cache, this reaches Claude: only for a logged-in visitor, within their hourly limit.
+  const needsLogin = await requireLogin(request, "Log in to find reading for a new workout.");
+  if (needsLogin) return needsLogin;
   const limited = await rateLimit(request, "plan");
   if (limited) return limited;
 

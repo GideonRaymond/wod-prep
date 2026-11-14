@@ -71,6 +71,14 @@ describe("WodInputForm", () => {
     expect(submitButton()).toBeDisabled();
   });
 
+  it("starts with the text it's given over the parsed text, like the chosen example", () => {
+    render(
+      <WodInputForm loading={false} parsedText="Murph" initialText="Fran" onSubmit={vi.fn()} />,
+    );
+    expect(textbox()).toHaveValue("Fran");
+    expect(submitButton()).toBeEnabled();
+  });
+
   describe("after a parse", () => {
     it("starts with the parsed text", () => {
       setup(false, "Fran");

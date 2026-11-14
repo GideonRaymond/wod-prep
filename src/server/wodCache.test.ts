@@ -5,6 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CACHE_VERSION, cacheWod, getCachedWod, normalizeWodText } from "./wodCache";
 import { fran, franPart, strengthAndMetcon } from "@/test/fixtures";
 
+// These test the shared cache itself, without the example workout kept in the repository.
+vi.mock("@/data/exampleCache.json", () => ({ default: {} }));
+
 const EXAMPLE = `"Fran"
 21-15-9 for time:
 Thrusters (95/65 lb)
