@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { APP_NAME } from "@/constants/brand";
+import { LoginDialog } from "@/components/shared/LoginDialog";
 import { WodProvider } from "@/providers/WodProvider";
 import "./globals.css";
 
@@ -54,7 +55,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <ChalkFilter />
-        <WodProvider>{children}</WodProvider>
+        <WodProvider>
+          {children}
+          {/* Opens when a workout that isn't cached yet needs the password. */}
+          <LoginDialog />
+        </WodProvider>
       </body>
     </html>
   );

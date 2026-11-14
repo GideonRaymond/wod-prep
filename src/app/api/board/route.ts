@@ -2,6 +2,7 @@ import { BoardRequestSchema } from "@/schemas/board";
 import { claudeErrorResponse, missingApiKeyResponse } from "@/server/apiErrors";
 import { mockLoad } from "@/server/mockLoad";
 import { cacheBoards, getCachedBoards, redrawBoards } from "@/server/redrawBoard";
+import { requireLogin } from "@/server/login";
 import { rateLimit } from "@/server/rateLimit";
 
 /** Usually a few seconds; this caps it well within any host's limit. */
@@ -21,7 +22,9 @@ export async function POST(request: Request) {
     return Response.json({ boards: cached }, { headers: { "X-Cache": "HIT" } });
   }
 
-  // Past the cache, this reaches Claude: count it against the visitor's hourly limit.
+  // Past the cache, this reaches Claude: only for a logged-in visitor, within their hourly limit.
+  const needsLogin = await requireLogin(request, "Log in to redraw the chalkboard.");
+  if (needsLogin) return needsLogin;
   const limited = await rateLimit(request, "plan");
   if (limited) return limited;
 

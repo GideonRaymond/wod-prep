@@ -18,6 +18,8 @@ export const RATE_LIMITS = {
   plan: 15,
   /** Looking things up: videos and points of performance, a call per movement. */
   lookup: 50,
+  /** Tries at the password, so it can't be guessed. */
+  login: 10,
 } as const;
 
 export type RateLimitKind = keyof typeof RATE_LIMITS;
@@ -36,9 +38,13 @@ export async function rateLimit(request: Request, kind: RateLimitKind): Promise<
   const { success, reset } = await check(kind, visitor);
   if (success) return null;
   const minutes = Math.max(1, Math.ceil((reset - Date.now()) / 60000));
+  const wait = `Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`;
   return Response.json(
     {
-      error: `That's a lot of workouts in a short time. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`,
+      error:
+        kind === "login"
+          ? `That's a lot of tries at the password. ${wait}`
+          : `That's a lot of workouts in a short time. ${wait}`,
     },
     { status: 429, headers: { "Retry-After": String(minutes * 60) } },
   );

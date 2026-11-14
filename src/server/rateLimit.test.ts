@@ -34,8 +34,8 @@ describe("rateLimit", () => {
     resetRedis();
   });
 
-  it("allows 5 workouts, about 3 classes and 50 lookups an hour", () => {
-    expect(RATE_LIMITS).toEqual({ parse: 5, plan: 15, lookup: 50 });
+  it("allows 5 workouts, about 3 classes, 50 lookups and 10 tries at the password an hour", () => {
+    expect(RATE_LIMITS).toEqual({ parse: 5, plan: 15, lookup: 50, login: 10 });
   });
 
   describe("without Redis", () => {
@@ -48,6 +48,15 @@ describe("rateLimit", () => {
       expect(res!.headers.get("Retry-After")).toBe("3600");
       await expect(res!.json()).resolves.toEqual({
         error: "That's a lot of workouts in a short time. Try again in 60 minutes.",
+      });
+    });
+
+    it("says it's the password tries that are limited, for logins", async () => {
+      for (let i = 0; i < RATE_LIMITS.login; i++) await rateLimit(from("1.1.1.1"), "login");
+      const res = await rateLimit(from("1.1.1.1"), "login");
+      expect(res?.status).toBe(429);
+      await expect(res?.json()).resolves.toEqual({
+        error: "That's a lot of tries at the password. Try again in 60 minutes.",
       });
     });
 

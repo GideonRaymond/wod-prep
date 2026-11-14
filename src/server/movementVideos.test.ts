@@ -20,6 +20,9 @@ import {
 import { CURATED_POINTS_OF_PERFORMANCE } from "@/data/pointsOfPerformance";
 import { CURATED_VIDEOS } from "@/data/movementVideos";
 
+// These test the shared cache itself, without the example workout kept in the repository.
+vi.mock("@/data/exampleCache.json", () => ({ default: {} }));
+
 const fetchMock = vi.fn();
 
 type Result = {

@@ -1,11 +1,12 @@
 import { MAX_WOD_LENGTH } from "@/constants/wod";
 import { claudeErrorResponse, missingApiKeyResponse } from "@/server/apiErrors";
-import { isMockLoad, mockLoad } from "@/server/mockLoad";
+import { mockLoad } from "@/server/mockLoad";
 import { parseWod } from "@/server/parseWod";
 import { cacheWod, getCachedWod } from "@/server/wodCache";
 import type { PartOutline, Wod } from "@/schemas/wod";
 import type { ParseEvent } from "@/types/parse";
 import { stageKind } from "@/utils/classPlan";
+import { requireLogin } from "@/server/login";
 import { rateLimit } from "@/server/rateLimit";
 
 /** Netlify gives a request at most 60 seconds; this asks for 60 wherever it can be set. */
@@ -31,11 +32,12 @@ export async function POST(request: Request) {
 
   const cached = await getCachedWod(text);
   if (cached) {
-    const body = isMockLoad() ? mockStream(cached) : eventsFor(cached).map(line).join("");
-    return new Response(body, { headers: { ...NDJSON, "X-Cache": "HIT" } });
+    return new Response(pacedStream(cached), { headers: { ...NDJSON, "X-Cache": "HIT" } });
   }
 
-  // Past the cache, this reaches Claude: count it against the visitor's hourly limit.
+  // Past the cache, this reaches Claude: only for a logged-in visitor, within their hourly limit.
+  const needsLogin = await requireLogin(request, "Log in to break down a new workout.");
+  if (needsLogin) return needsLogin;
   const limited = await rateLimit(request, "parse");
   if (limited) return limited;
 
@@ -66,10 +68,11 @@ export async function POST(request: Request) {
 const line = (event: ParseEvent) => `${JSON.stringify(event)}\n`;
 
 /**
- * With MOCK_LOAD=true, a cached workout streams like a fresh parse: the outline after a moment,
- * then each part after its own delay (all at once, as they're read in parallel), then done.
+ * A cached workout streams like a fresh parse, only quicker (see mockLoad): the outline after a
+ * moment, then each part after its own delay (all at once, as they're read in parallel), then
+ * done. So the board is still written up and the checklist still ticks off part by part.
  */
-function mockStream(wod: Wod) {
+function pacedStream(wod: Wod) {
   const [outline, ...rest] = eventsFor(wod);
   const parts = rest.filter((event) => event.type === "part");
   const encoder = new TextEncoder();

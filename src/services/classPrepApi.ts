@@ -1,5 +1,6 @@
 import type { ClassPrep, PrepRequest } from "@/schemas/classPrep";
 import type { WodState } from "@/types/wod";
+import { fetchWithLogin } from "./fetchWithLogin";
 
 /** What the warm-up planner needs from each part of the workout. */
 export function toPrepRequest(wod: WodState): PrepRequest {
@@ -28,7 +29,7 @@ export const prepKey = (wod: WodState) => JSON.stringify(toPrepRequest(wod));
 
 /** Plans the warm-up and skill practice for a workout. Throws an Error with a user-facing message. */
 export async function requestClassPrep(wod: WodState): Promise<ClassPrep> {
-  const res = await fetch("/api/class-prep", {
+  const res = await fetchWithLogin("/api/class-prep", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(toPrepRequest(wod)),

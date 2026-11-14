@@ -86,4 +86,18 @@ describe("POST /api/board", () => {
     await expect(res.json()).resolves.toEqual({ error: "Couldn't read the board." });
     expect(mocks.cacheBoards).not.toHaveBeenCalled();
   });
+
+  it("asks for a login before reaching out when there's a password, but serves the cache to all", async () => {
+    vi.stubEnv("SITE_PASSWORD", "chalk");
+    const res = await post({ parts: [part] });
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toEqual({
+      error: "Log in to redraw the chalkboard.",
+      login: true,
+    });
+    expect(mocks.redrawBoards).not.toHaveBeenCalled();
+
+    mocks.getCachedBoards.mockResolvedValue([["21-15-9"]]);
+    expect((await post({ parts: [part] })).status).toBe(200);
+  });
 });

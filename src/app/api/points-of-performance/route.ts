@@ -7,6 +7,7 @@ import {
   generatePoints,
   getCachedPoints,
 } from "@/server/pointsOfPerformance";
+import { requireLogin } from "@/server/login";
 import { rateLimit } from "@/server/rateLimit";
 
 /** Usually a few seconds; this caps it well within any host's limit. */
@@ -35,7 +36,9 @@ export async function POST(request: Request) {
     return Response.json({ points: cached, source: "ai" }, { headers: { "X-Cache": "HIT" } });
   }
 
-  // Past the cache, this reaches Claude: count it against the visitor's hourly limit.
+  // Past the cache, this reaches Claude: only for a logged-in visitor, within their hourly limit.
+  const needsLogin = await requireLogin(request, "Log in to look up a new movement.");
+  if (needsLogin) return needsLogin;
   const limited = await rateLimit(request, "lookup");
   if (limited) return limited;
 

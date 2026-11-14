@@ -112,4 +112,18 @@ describe("POST /api/articles", () => {
       error: "Something went wrong finding reading for this workout.",
     });
   });
+
+  it("asks for a login before reaching out when there's a password, but serves the cache to all", async () => {
+    vi.stubEnv("SITE_PASSWORD", "chalk");
+    const res = await post({ part });
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toEqual({
+      error: "Log in to find reading for a new workout.",
+      login: true,
+    });
+    expect(mocks.findArticles).not.toHaveBeenCalled();
+
+    mocks.getCachedArticles.mockResolvedValue([]);
+    expect((await post({ part })).status).toBe(200);
+  });
 });

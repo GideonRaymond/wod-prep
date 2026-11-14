@@ -1,0 +1,176 @@
+{
+  "articles": {
+    "v2:namedfranintensity10": {
+      "articles": [],
+      "savedAt": 1794671091071
+    }
+  },
+  "class-prep": {
+    "v3:fortime21|15|9|12min21|15|9|95|65lbthruster21|15|9pullup": {
+      "prep": {
+        "skills": [
+          {
+            "equipment": ["Pull-up bar", "Resistance band"],
+            "movement": "Pull-up",
+            "progressions": [
+              {
+                "advanceWhen": "6 controlled swings without bending the arms",
+                "dose": "3 × 6 swings",
+                "focus": "Push the bar away into the hollow and keep the arms straight, swing from the shoulders.",
+                "minutes": 5,
+                "name": "Kip swing (hollow to arch)"
+              },
+              {
+                "advanceWhen": "5 reps with the body rising and staying controlled",
+                "dose": "3 × 5 reps",
+                "focus": "Snap the hips up from the arch so the body floats toward the bar.",
+                "minutes": 5,
+                "name": "Kip swing with hip drive"
+              },
+              {
+                "advanceWhen": "5 linked reps chin over bar",
+                "dose": "3 × 5 reps",
+                "focus": "Pull right as the hips snap, then push away from the bar back into the swing.",
+                "minutes": 5,
+                "name": "Banded kipping pull-up"
+              },
+              {
+                "advanceWhen": null,
+                "dose": "3 × 5-8 reps",
+                "focus": "Link reps in a steady rhythm and break before the swing falls apart.",
+                "minutes": 6,
+                "name": "Kipping pull-up"
+              }
+            ],
+            "setupMinutes": 2,
+            "why": "Fran needs big sets of pull-ups, so an efficient kip decides the time and the scaling choice."
+          }
+        ],
+        "warmup": {
+          "drills": [
+            {
+              "dose": "2 min",
+              "name": "Easy jump rope or jog"
+            },
+            {
+              "dose": "10 reps each",
+              "name": "Arm circles and band pull-aparts"
+            },
+            {
+              "dose": "5 reps",
+              "name": "Inchworm with push-up"
+            },
+            {
+              "dose": "3 each side",
+              "name": "World's greatest stretch"
+            },
+            {
+              "dose": "10 reps",
+              "name": "Air squat with 3 s pause at bottom"
+            },
+            {
+              "dose": "2 × 8 reps",
+              "name": "Active hang with scap pulls"
+            },
+            {
+              "dose": "8 reps",
+              "name": "Empty-bar front squat"
+            },
+            {
+              "dose": "8 reps",
+              "name": "Empty-bar push press"
+            },
+            {
+              "dose": "2 × 8 reps",
+              "name": "Empty-bar thruster"
+            },
+            {
+              "dose": "3 sets of 5 reps, adding weight each set",
+              "name": "Build thruster load to 95/65 lb"
+            },
+            {
+              "dose": "1 round of 5 + 5 at race pace",
+              "name": "Primer: thrusters at working load + pull-ups (scaled as needed)"
+            }
+          ],
+          "equipment": [
+            "Barbell",
+            "Plates",
+            "Collars",
+            "Jump rope",
+            "Resistance band",
+            "Pull-up bar"
+          ],
+          "focus": "Opens up hips, shoulders and lats for the thruster and pull-up, then builds the thruster to 95/65 lb. Ends with a short fast primer so the heart rate is high before an all-out sprint.",
+          "minutes": 15,
+          "rounds": null
+        }
+      },
+      "savedAt": 1794671087600
+    }
+  },
+  "movement-videos": {
+    "v3:workout:fran": {
+      "savedAt": 1794671094901,
+      "videos": [
+        {
+          "duration": "7:01",
+          "reason": "Official coaching of Fran: standards, strategy, and coaching cues",
+          "title": "CrossFit - \"Coaching Fran\" with Miranda Oldroyd",
+          "url": "https://www.youtube.com/watch?v=2WMZdkA9aq8"
+        },
+        {
+          "duration": "3:43",
+          "reason": "How to scale Fran for different athlete levels",
+          "title": "CrossFit - CrossFit Ready Scales Fran",
+          "url": "https://www.youtube.com/watch?v=abB6G5yxf_Y"
+        },
+        {
+          "duration": "6:00",
+          "reason": "Pacing and efficiency tips to improve Fran time",
+          "title": "Fran CrossFit WOD Tips (Benchmark Workout)",
+          "url": "https://www.youtube.com/watch?v=2KpSXGKzWdw"
+        }
+      ]
+    }
+  },
+  "parsed-wods": {
+    "v7:fran21|15|9fortimethrusters95|65lbpullups": {
+      "parts": [
+        {
+          "board": ["Fran", "21-15-9 for time", "Thrusters (95/65 lb)", "Pull-ups"],
+          "duration": null,
+          "equipment": ["Barbell", "Plates", "Pull-up bar"],
+          "format": "for_time",
+          "label": null,
+          "minutes": 12,
+          "movements": [
+            {
+              "category": "weightlifting",
+              "load": "95/65 lb",
+              "name": "Thruster",
+              "originalText": "Thrusters (95/65 lb)",
+              "reps": "21-15-9"
+            },
+            {
+              "category": "gymnastics",
+              "load": null,
+              "name": "Pull-up",
+              "originalText": "Pull-ups",
+              "reps": "21-15-9"
+            }
+          ],
+          "named": true,
+          "notes": null,
+          "rounds": "21-15-9",
+          "sourceText": "\"Fran\"\n21-15-9 for time:\nThrusters (95/65 lb)\nPull-ups",
+          "stimulus": {
+            "description": "A short, all-out glycolytic sprint. Thrusters should feel light enough to go unbroken or in one quick break per round; pull-ups in big sets. Target 3-6 minutes for most, under 10 max — expect intense lung and leg burn.",
+            "intensity": 10
+          },
+          "title": "Fran"
+        }
+      ]
+    }
+  }
+}

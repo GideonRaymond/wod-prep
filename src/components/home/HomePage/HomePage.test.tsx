@@ -6,6 +6,8 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HomePage } from "./HomePage";
 import { WodProvider } from "@/providers/WodProvider";
+import { EXAMPLE_WOD } from "@/constants/wod";
+import { loginStore } from "@/stores/loginStore";
 import { WOD_STORAGE_KEY } from "@/stores/wodStore";
 import type { Wod } from "@/schemas/wod";
 import { fran, strengthAndMetcon } from "@/test/fixtures";
@@ -133,6 +135,59 @@ describe("HomePage", () => {
     expect(screen.getByRole("textbox", { name: "Workout" })).toHaveValue("hello");
     expect(screen.getByRole("button", { name: "Break it down" })).toBeEnabled();
     expect(push).not.toHaveBeenCalled();
+  });
+
+  describe("when the workout isn't cached and needs a login", () => {
+    const needsLogin = () =>
+      fetchMock.mockResolvedValueOnce(
+        Response.json(
+          { error: "Log in to break down a new workout.", login: true },
+          { status: 401 },
+        ),
+      );
+
+    it("asks for it, then breaks the workout down once logged in", async () => {
+      needsLogin();
+      respond(200, { wod: fran });
+      await submit("Fran");
+      await vi.waitFor(() => expect(loginStore.get().open).toBe(true));
+      act(() => loginStore.finish("in"));
+      await vi.waitFor(() => expect(push).toHaveBeenCalledWith("/review", FORWARD));
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("writes the example on the board instead when that's chosen, without an error", async () => {
+      needsLogin();
+      await submit("Murph");
+      await vi.waitFor(() => expect(loginStore.get().open).toBe(true));
+      act(() => loginStore.finish("example"));
+      await vi.waitFor(() =>
+        expect(screen.getByRole("textbox", { name: "Workout" })).toHaveValue(EXAMPLE_WOD),
+      );
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(loginStore.get().exampleWanted).toBe(false);
+      expect(push).not.toHaveBeenCalled();
+    });
+
+    it("keeps the text and says it needs a login when the popup is closed", async () => {
+      needsLogin();
+      await submit("Murph");
+      await vi.waitFor(() => expect(loginStore.get().open).toBe(true));
+      act(() => loginStore.finish("cancel"));
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Log in to break down a new workout.",
+      );
+      expect(screen.getByRole("textbox", { name: "Workout" })).toHaveValue("Murph");
+    });
+  });
+
+  it("writes the example on the board when it was chosen on another step", async () => {
+    loginStore.finish("example");
+    renderPage();
+    await vi.waitFor(() =>
+      expect(screen.getByRole("textbox", { name: "Workout" })).toHaveValue(EXAMPLE_WOD),
+    );
+    expect(loginStore.get().exampleWanted).toBe(false);
   });
 
   it("shows an error when the request fails", async () => {

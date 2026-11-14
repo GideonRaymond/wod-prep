@@ -1,5 +1,6 @@
 import type { ArticleRequest, ReferenceArticle } from "@/schemas/articles";
 import type { WorkoutPartState } from "@/types/wod";
+import { fetchWithLogin } from "./fetchWithLogin";
 
 /** The parts of a workout part the articles search uses. */
 export function toArticleRequest(part: WorkoutPartState): ArticleRequest {
@@ -20,7 +21,7 @@ export const articlesKey = (part: WorkoutPartState) => JSON.stringify(toArticleR
 
 /** Finds articles to read before a workout part. Throws an Error with a user-facing message. */
 export async function requestArticles(part: WorkoutPartState): Promise<ReferenceArticle[]> {
-  const res = await fetch("/api/articles", {
+  const res = await fetchWithLogin("/api/articles", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ part: toArticleRequest(part) }),

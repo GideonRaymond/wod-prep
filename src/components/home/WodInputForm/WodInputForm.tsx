@@ -19,6 +19,8 @@ export type WodInputFormProps = {
   parsedText?: string | null;
   /** Where to carry on with the current workout, offered while the text is unchanged. */
   continueTo?: string;
+  /** Text to start with instead of `parsedText`, like the example once it's chosen. */
+  initialText?: string;
   onSubmit: (text: string) => void;
 };
 
@@ -26,8 +28,14 @@ export type WodInputFormProps = {
  * Where the workout is written: a text box on the chalkboard, in handwriting, with the example
  * workout as its placeholder. Under the board: the length, Break it down and Use example.
  */
-export function WodInputForm({ loading, parsedText, continueTo, onSubmit }: WodInputFormProps) {
-  const [text, setText] = useState(parsedText ?? "");
+export function WodInputForm({
+  loading,
+  parsedText,
+  continueTo,
+  initialText,
+  onSubmit,
+}: WodInputFormProps) {
+  const [text, setText] = useState(initialText ?? parsedText ?? "");
   const tooLong = text.trim().length > MAX_WOD_LENGTH;
   const unchanged = parsedText != null && text.trim() === parsedText.trim();
 

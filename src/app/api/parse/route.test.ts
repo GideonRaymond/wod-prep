@@ -22,11 +22,8 @@ vi.mock("@/server/wodCache", () => ({
   cacheWod: mockCacheWod,
 }));
 
-const { mockLoad, isMockLoad } = vi.hoisted(() => ({
-  mockLoad: vi.fn(async () => {}),
-  isMockLoad: vi.fn(() => false),
-}));
-vi.mock("@/server/mockLoad", () => ({ mockLoad, isMockLoad }));
+const { mockLoad } = vi.hoisted(() => ({ mockLoad: vi.fn(async () => {}) }));
+vi.mock("@/server/mockLoad", () => ({ mockLoad }));
 const { rateLimit } = vi.hoisted(() => ({ rateLimit: vi.fn(async () => null as Response | null) }));
 vi.mock("@/server/rateLimit", () => ({ rateLimit }));
 
@@ -87,26 +84,18 @@ describe("POST /api/parse", () => {
     expect(mockCacheWod).toHaveBeenCalledWith("Fran", fran);
   });
 
-  it("streams a cached workout all at once without calling Claude", async () => {
-    mockGetCachedWod.mockResolvedValue(strengthAndMetcon);
-    const res = await post({ text: "Fran" });
-
-    expect(res.status).toBe(200);
-    expect(res.headers.get("X-Cache")).toBe("HIT");
-    expect(await events(res)).toEqual(parseEvents(strengthAndMetcon));
-    expect(mockParseWod).not.toHaveBeenCalled();
-    expect(mockCacheWod).not.toHaveBeenCalled();
-  });
-
-  it("streams a cached workout like a fresh parse when MOCK_LOAD is on", async () => {
-    isMockLoad.mockReturnValue(true);
+  it("streams a cached workout like a fresh parse, paced, without calling Claude", async () => {
     mockLoad.mockClear();
     mockGetCachedWod.mockResolvedValue(strengthAndMetcon);
     const res = await post({ text: "A) squats B) Fran" });
 
+    expect(res.status).toBe(200);
+    expect(res.headers.get("X-Cache")).toBe("HIT");
     expect(await events(res)).toEqual(parseEvents(strengthAndMetcon));
+    // A pause before the outline and before each part, so the board and checklist still flow.
     expect(mockLoad.mock.calls).toEqual([["outline"], ["part"], ["part"], ["part"]]);
-    isMockLoad.mockReturnValue(false);
+    expect(mockParseWod).not.toHaveBeenCalled();
+    expect(mockCacheWod).not.toHaveBeenCalled();
   });
 
   it("serves cached workouts even without an API key", async () => {
@@ -195,5 +184,19 @@ describe("POST /api/parse", () => {
     mockGetCachedWod.mockResolvedValue(fran);
     await post({ text: "Fran" });
     expect(rateLimit).not.toHaveBeenCalled();
+  });
+
+  it("asks for a login before reaching out when there's a password, but serves the cache to all", async () => {
+    vi.stubEnv("SITE_PASSWORD", "chalk");
+    const res = await post({ text: "Fran" });
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toEqual({
+      error: "Log in to break down a new workout.",
+      login: true,
+    });
+    expect(mockParseWod).not.toHaveBeenCalled();
+
+    mockGetCachedWod.mockResolvedValue(fran);
+    expect((await post({ text: "Fran" })).status).toBe(200);
   });
 });
