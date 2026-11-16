@@ -102,6 +102,18 @@ describe("planPrep", () => {
     expect(JSON.stringify(programmed.properties.warmup)).toContain("null");
   });
 
+  it("asks for stimulus-based alternatives and a pregnancy flag for each movement, and keeps them", async () => {
+    mockParse.mockResolvedValue(answer(classPrep));
+    const prep = await planPrep({ parts: [{ ...ropeAmrap, minutes: 60 }] });
+    expect(prep.alternatives).toEqual(classPrep.alternatives);
+    const { system } = mockParse.mock.calls[0][0];
+    expect(system).toContain(
+      "jumping pull-ups for pull-ups in a fast, high-volume or cardio piece",
+    );
+    expect(system).toContain("Z-press for handstand push-ups");
+    expect(system).toContain("pregnancy: avoid is true");
+  });
+
   it("throws a clear error when Claude declines or the plan can't be read", async () => {
     mockParse.mockResolvedValue({ stop_reason: "refusal", parsed_output: null });
     await expect(planPrep(request)).rejects.toThrow("declined");
@@ -114,6 +126,12 @@ describe("prepCacheKey", () => {
   it("ignores titles and the stimulus text", () => {
     const renamed = { ...ropeAmrap, title: "Climb Time", stimulus: "Other words." };
     expect(prepCacheKey({ parts: [renamed] })).toBe(prepCacheKey(request));
+  });
+
+  it("changes with the intensity, which steers the warm-up and the alternatives", () => {
+    expect(prepCacheKey({ parts: [{ ...ropeAmrap, intensity: 3 }] })).not.toBe(
+      prepCacheKey(request),
+    );
   });
 
   it("changes with the movements or the part's length", () => {

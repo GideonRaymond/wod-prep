@@ -15,7 +15,6 @@ export const WodStateSchema: z.ZodType<WodState> = z.object({
         equipment: WorkoutPartSchema.shape.equipment.optional(),
         board: WorkoutPartSchema.shape.board.optional(),
         parsedKey: z.string().optional(),
-        boardKey: z.string().optional(),
         id: z.string(),
         originalStimulus: z.string(),
         originalIntensity: WorkoutPartSchema.shape.stimulus.shape.intensity.optional(),
@@ -28,7 +27,8 @@ export const WodStateSchema: z.ZodType<WodState> = z.object({
       }),
     )
     .min(1),
-  prep: z.object({ key: z.string(), plan: ClassPrepSchema }).optional(),
+  // A plan saved before it had everything it has now is dropped (and planned again), not the workout.
+  prep: z.object({ key: z.string(), plan: ClassPrepSchema }).optional().catch(undefined),
 });
 
 /** A saved WOD together with the text it was parsed from. */

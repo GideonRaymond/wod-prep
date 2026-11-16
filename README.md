@@ -37,7 +37,7 @@ After **Confirm workout**, the workout page shows a loading screen while the cla
 
 ## Parse cache
 
-Every Claude and YouTube result (parsed workouts, warm-up plans, articles, videos, points of performance, redrawn boards) is cached through `createCache` (`src/server/cache.ts`), so the same workout or movement is never asked about twice:
+Every Claude and YouTube result (parsed workouts, warm-up plans, articles, videos, points of performance) is cached through `createCache` (`src/server/cache.ts`), so the same workout or movement is never asked about twice:
 
 - **In production** the cache is the Upstash Redis database (`UPSTASH_REDIS_REST_URL` and `_TOKEN`), shared by every server and kept for 90 days.
 - **In development** it's JSON files in `.cache/` (gitignored), such as `.cache/parsed-wods.json`, so testing with the same workouts costs nothing after the first time. Cached results even work without an API key.
@@ -114,6 +114,11 @@ The workout page plans the start of class with one Claude call per workout, size
 - **Realistic timing:**
   - The prompt counts explaining and demoing each step, practicing with feedback for 12 people, rotating on shared equipment (3–4 ropes, 4–6 rowers) and 2–3 minutes of setup.
   - Then `fitPrep` (`src/utils/classPlan.ts`) checks the plan against the budget: it drops the hardest progressions or whole skills that don't fit, never the warm-up.
+- **Alternatives** (the same call): every movement of a workout part gets two, chosen for that part's **stimulus**, not just the movement (jumping pull-ups for pull-ups in a fast, high-volume piece, but negatives or banded pull-ups in a strength piece):
+  - **Similar:** the closest version of the same pattern (shoulder press for push press).
+  - **Can't do it:** a completely different movement for athletes who can't do it at all (Z-press for handstand push-ups).
+  - Each says how it keeps the stimulus. A movement pregnant athletes should generally avoid as written (high impact, inverted, kipping, heavy bracing, a fall risk) gets a **Not when pregnant** badge and a short reason. This is general guidance, cautious by design.
+  - The plan is cached by format, scheme, movements and **intensity**, since intensity steers the alternatives too.
 - The plan's start times show on each stage. Its equipment is added to **Equipment today**.
 - **Saving:** the plan is stored with the workout and remembers what it was planned for, so editing the workout plans again.
 - **Caching:** plans are cached in `.cache/class-prep.json` for 30 days. Bump `PREP_CACHE_VERSION` in `src/server/classPrep.ts` when the prompt changes.

@@ -19,10 +19,6 @@ export function partKey(part: Keyed) {
   });
 }
 
-/** True when the part has been edited since its whiteboard was drawn, so it needs redrawing. */
-export const boardOutdated = (part: WorkoutPartState) =>
-  Boolean(part.board && part.boardKey && part.boardKey !== partKey(part));
-
 /** True when any part has been edited since it was parsed (its board, or its stimulus). */
 export const wodEdited = (parts: WorkoutPartState[]) =>
   parts.some(

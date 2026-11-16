@@ -21,11 +21,10 @@ describe("toWodState", () => {
     );
   });
 
-  it("remembers what each part was when parsed, which is also what its board shows", () => {
+  it("remembers what each part was when parsed", () => {
     const { parts } = toWodState(strengthAndMetcon);
     for (const part of parts) {
       expect(part.parsedKey).toBe(partKey(part));
-      expect(part.boardKey).toBe(part.parsedKey);
     }
   });
 });

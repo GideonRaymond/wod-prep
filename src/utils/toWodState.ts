@@ -5,18 +5,16 @@ import { withId } from "./withId";
 
 /**
  * Prepares a parsed WOD for the UI: ids on every part and movement, the original stimulus, and
- * what each part was when parsed (so edits can be spotted, and its whiteboard redrawn).
+ * what each part was when parsed (so edits can be spotted).
  */
 export function toWodState(wod: Wod): WodState {
   return {
     parts: wod.parts.map((part) => {
-      const key = partKey(part);
       return withId({
         ...part,
         originalStimulus: part.stimulus.description,
         originalIntensity: part.stimulus.intensity,
-        parsedKey: key,
-        boardKey: key,
+        parsedKey: partKey(part),
         movements: part.movements.map(withId),
       });
     }),

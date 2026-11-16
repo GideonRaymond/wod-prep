@@ -133,4 +133,23 @@ export const classPrep: ClassPrep = {
       equipment: ["Pull-up bar", "Resistance band"],
     },
   ],
+  alternatives: [
+    {
+      part: 0,
+      movement: "Thruster",
+      similar: { name: "Dumbbell thruster", why: "Same squat-to-press, lighter and unbroken." },
+      different: { name: "Wall ball", why: "Keeps the legs and lungs burning without a bar." },
+      pregnancy: { avoid: false, why: null },
+    },
+    {
+      part: 0,
+      movement: "Pull-up",
+      similar: {
+        name: "Jumping pull-up",
+        why: "Keeps the reps fast so the sprint stays a sprint.",
+      },
+      different: { name: "Ring row", why: "Pulls the same muscles with the feet down." },
+      pregnancy: { avoid: true, why: "Kipping strains the core" },
+    },
+  ],
 };

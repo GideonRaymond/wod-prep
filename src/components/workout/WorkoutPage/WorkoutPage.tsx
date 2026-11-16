@@ -37,7 +37,6 @@ import { MOCK_LOAD } from "@/constants/dev";
 import { STEP, WOD_STEPS, stepTransition } from "@/constants/flow";
 import { FORMAT_LABELS } from "@/constants/wod";
 import { useArticles } from "@/hooks/useArticles";
-import { useBoardRedraw } from "@/hooks/useBoardRedraw";
 import { useClassPrep } from "@/hooks/useClassPrep";
 import { useCurrentStage } from "@/hooks/useCurrentStage";
 import { useHandOver } from "@/hooks/useHandOver";
@@ -45,7 +44,7 @@ import { useMovementVideos } from "@/hooks/useMovementVideos";
 import { useWod } from "@/providers/WodProvider";
 import { prepKey } from "@/services/classPrepApi";
 import type { Stretch } from "@/data/stretches";
-import type { ClassPrep } from "@/schemas/classPrep";
+import type { ClassPrep, MovementAlternatives } from "@/schemas/classPrep";
 import type { WodState, WorkoutPartState } from "@/types/wod";
 import {
   allEquipment,
@@ -58,6 +57,7 @@ import {
   type PlannedPrep,
 } from "@/utils/classPlan";
 import { classBoard } from "@/utils/boardItems";
+import { alternativesFor } from "@/utils/movementAlternatives";
 import { cn } from "@/utils/cn";
 import { describeIntensity } from "@/utils/describeIntensity";
 import { classStretches } from "@/utils/suggestStretches";
@@ -85,8 +85,8 @@ const minute = (at: number | null) => (at === null ? null : `${at}′`);
 const INITIALLY_OPEN = { pre: true, briefing: true };
 
 /**
- * The last step: the chalkboard as confirmed (edited parts redrawn, with the planned warm-up and
- * stretches), then the class on one rail: Before class, Briefing, the warm-up (programmed or
+ * The last step: the chalkboard as the class's outline (each part by its name, with the planned
+ * warm-up, skills and stretches), then the class on one rail: Before class, Briefing, the warm-up (programmed or
  * planned), skill practice when the workout needs it, each part and the cool-down, with suggested
  * stretches if time allows. While the class is still being built when the page opens, the loading
  * screen shows instead, then hands over and the stages settle in one by one.
@@ -96,12 +96,10 @@ export function WorkoutPage() {
   const videos = useMovementVideos();
   const articles = useArticles();
   const prep = useClassPrep();
-  const board = useBoardRedraw();
   const finding = [videos.loading && "videos", articles.loading && "reading"].filter(Boolean);
   const busy = [
     finding.length > 0 && `Finding ${finding.join(" and ")}`,
     prep.loading && "Planning the warm-up",
-    board.loading && "Redrawing the chalkboard",
   ]
     .filter(Boolean)
     .join(" · ");
@@ -110,7 +108,7 @@ export function WorkoutPage() {
   const workoutKey = wod ? `${wod.parts.map((p) => p.id).join(",")}|${prepKey(wod)}` : null;
   const { phase, open: openClass } = useHandOver({
     workout: workoutKey,
-    building: videos.loading || articles.loading || prep.loading || board.loading,
+    building: videos.loading || articles.loading || prep.loading,
   });
   // Someone is reading the links under the board: hold the countdown to the class.
   const [reading, setReading] = useState(false);
@@ -182,7 +180,6 @@ export function WorkoutPage() {
             wod,
             prep: prep.plan,
             prepLoading: prep.loading,
-            boardLoading: board.loading,
             articlesLoading: articles.loading,
             videosPending: videos.pending,
           })}
@@ -222,7 +219,6 @@ export function WorkoutPage() {
           {videos.error && <p className="text-subtle mt-1 text-sm">{videos.error}</p>}
           {prep.error && <p className="text-subtle mt-1 text-sm">{prep.error}</p>}
           {articles.error && <p className="text-subtle mt-1 text-sm">{articles.error}</p>}
-          {board.error && <p className="text-subtle mt-1 text-sm">{board.error}</p>}
           <div className="mt-3 md:hidden">{overtime}</div>
 
           {wod ? (
@@ -323,7 +319,13 @@ function classStages(wod: WodState, prep: ClassPrep | null): Stage[] {
     },
     ...plan.map((planned) =>
       isPlannedPart(planned)
-        ? partStage(planned, markerFor, planned.part.id === cooldownId ? stretches : [])
+        ? partStage(planned, markerFor, planned.part.id === cooldownId ? stretches : [], (name) =>
+            alternativesFor(
+              prep?.alternatives,
+              wod.parts.findIndex((part) => part.id === planned.part.id),
+              name,
+            ),
+          )
         : prepStage(planned),
     ),
     ...(!cooldownId && stretches.length > 0 ? [stretchStage(stretches, classEnd(plan))] : []),
@@ -428,6 +430,7 @@ function partStage(
   { part, kind, startsAt }: PlannedPart,
   markerFor: (part: WorkoutPartState) => string | null,
   stretches: Stretch[] = [],
+  alternativesOf?: (name: string) => MovementAlternatives | null,
 ): Stage {
   const meta = [
     !part.duration && part.minutes ? `${part.minutes} min` : null,
@@ -495,7 +498,7 @@ function partStage(
       <>
         <EquipmentList items={equipment} />
         <Card>
-          <ExerciseList movements={part.movements} detailed />
+          <ExerciseList movements={part.movements} detailed alternativesOf={alternativesOf} />
         </Card>
       </>
     ),

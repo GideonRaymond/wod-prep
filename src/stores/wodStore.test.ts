@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createWodStore, WOD_STORAGE_KEY } from "./wodStore";
 import { classPrep, fran, strengthAndMetcon } from "@/test/fixtures";
+import type { ClassPrep } from "@/schemas/classPrep";
 import type { SavedWod, WodState } from "@/types/wod";
 import { toWodState } from "@/utils/toWodState";
 
@@ -51,6 +52,15 @@ describe("createWodStore", () => {
     sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(withText(toWodState(fran))));
     const store = createWodStore();
     expect(store.get()).toBe(store.get());
+  });
+
+  it("keeps a saved workout but drops a plan saved before it had alternatives", () => {
+    const oldPlan = { warmup: classPrep.warmup, skills: classPrep.skills };
+    const value = withText({ ...toWodState(fran), prep: { key: "k", plan: oldPlan as ClassPrep } });
+    sessionStorage.setItem(WOD_STORAGE_KEY, JSON.stringify(value));
+    const restored = createWodStore().get();
+    expect(restored?.wod.parts).toEqual(value.wod.parts);
+    expect(restored?.wod.prep).toBeUndefined();
   });
 
   it("drops a saved WOD that doesn't match the schema", () => {

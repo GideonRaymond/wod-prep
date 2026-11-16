@@ -54,6 +54,13 @@ describe("classBoard", () => {
     expect(items.map((item) => item.added ?? false)).toEqual([true, true, false, true]);
   });
 
+  it("writes each part as its heading only, not the whole workout", () => {
+    const { items } = classBoard(classParts, null);
+    const parts = items.filter((item) => !item.added);
+    expect(parts.map((item) => item.heading)).toEqual(classParts.map((part) => part.board![0]));
+    expect(parts.every((item) => item.lines.length === 0)).toBe(true);
+  });
+
   it("heads it with Before class and the briefing when it's the table of contents", () => {
     const { items } = classBoard(franParts, null, { sections: true });
     expect(items.slice(0, 2)).toEqual([

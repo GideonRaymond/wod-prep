@@ -82,7 +82,8 @@ export function fitPrep(
   { programmedWarmup }: { programmedWarmup: boolean },
 ): ClassPrep {
   const warmup = programmedWarmup ? null : prep.warmup;
-  if (budget === null) return { warmup, skills: prep.skills };
+  const { alternatives } = prep;
+  if (budget === null) return { warmup, skills: prep.skills, alternatives };
 
   let left = budget - (warmup?.minutes ?? 0);
   const skills: SkillBlock[] = [];
@@ -96,7 +97,7 @@ export function fitPrep(
     skills.push(fitted);
     left -= minutes;
   }
-  return { warmup, skills };
+  return { warmup, skills, alternatives };
 }
 
 /**

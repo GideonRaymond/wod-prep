@@ -23,9 +23,8 @@ export type WorkoutPartState = Omit<
   equipment?: string[];
   /** The whiteboard lines; missing on workouts saved before they were written (see WodBoard). */
   board?: string[];
-  /** What the part was when parsed and when its board was drawn (see partKey). */
+  /** What the part was when parsed (see partKey), so edits can be spotted. */
   parsedKey?: string;
-  boardKey?: string;
   id: string;
   /** The stimulus description as parsed, to revert edits to. */
   originalStimulus: string;

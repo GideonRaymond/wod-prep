@@ -12,8 +12,8 @@ export const RATE_LIMITS = {
   /** Breaking down a workout: one call per workout, so 5 workouts. */
   parse: 5,
   /**
-   * Planning a class: the warm-up, an article search per part and any board redraw, two to five
-   * calls per class, so about 3 classes.
+   * Planning a class: the warm-up and an article search per part, two to five calls per class, so
+   * about 3 classes.
    */
   plan: 15,
   /** Looking things up: videos and points of performance, a call per movement. */

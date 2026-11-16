@@ -3,11 +3,10 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import userEvent from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const { mockVideos, mockArticles, mockPrep, mockBoards } = vi.hoisted(() => ({
+const { mockVideos, mockArticles, mockPrep } = vi.hoisted(() => ({
   mockVideos: vi.fn(),
   mockArticles: vi.fn(),
   mockPrep: vi.fn(),
-  mockBoards: vi.fn(),
 }));
 vi.mock("@/services/videosApi", () => ({ requestMovementVideos: mockVideos }));
 vi.mock("@/services/articlesApi", async (importOriginal) => ({
@@ -17,10 +16,6 @@ vi.mock("@/services/articlesApi", async (importOriginal) => ({
 vi.mock("@/services/classPrepApi", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/services/classPrepApi")>()),
   requestClassPrep: mockPrep,
-}));
-vi.mock("@/services/boardApi", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/boardApi")>()),
-  requestBoards: mockBoards,
 }));
 
 import { WorkoutPage } from "./WorkoutPage";
@@ -41,7 +36,10 @@ function renderPage(wod: WodState | null) {
 }
 
 /** A workout with everything already found and planned, so the class shows straight away. */
-function built(wod: WodState, plan: ClassPrep = { warmup: null, skills: [] }): WodState {
+function built(
+  wod: WodState,
+  plan: ClassPrep = { warmup: null, skills: [], alternatives: [] },
+): WodState {
   const done: WodState = {
     parts: wod.parts.map((part) => ({
       ...part,
@@ -70,8 +68,7 @@ describe("WorkoutPage", () => {
   beforeEach(() => {
     mockVideos.mockReset().mockResolvedValue([]);
     mockArticles.mockReset().mockResolvedValue([]);
-    mockPrep.mockReset().mockResolvedValue({ warmup: null, skills: [] });
-    mockBoards.mockReset();
+    mockPrep.mockReset().mockResolvedValue({ warmup: null, skills: [], alternatives: [] });
     // Hand over to the class at once instead of fading out.
     vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") }));
   });
@@ -277,6 +274,16 @@ describe("WorkoutPage", () => {
     expect(within(part).getByRole("list", { name: "You'll need" })).toBeVisible();
     expect(within(part).getByRole("heading", { name: "Thruster" })).toBeVisible();
     expect(within(part).getAllByRole("button", { name: "Points of performance" })).toHaveLength(2);
+  });
+
+  it("shows each movement's alternatives, marking the ones to avoid when pregnant", async () => {
+    const user = userEvent.setup();
+    renderPage(built(toWodState(fran), classPrep));
+    await user.click(stageToggle("Fran"));
+    const part = screen.getByRole("region", { name: "Fran" });
+    expect(within(part).getAllByRole("heading", { name: "Alternatives" })).toHaveLength(2);
+    expect(within(part).getByText("Jumping pull-up")).toBeVisible();
+    expect(within(part).getByText("Not when pregnant")).toBeVisible();
   });
 
   it("restores the workout after a page refresh", () => {
@@ -489,8 +496,11 @@ describe("WorkoutPage", () => {
 
   it("keeps the same board in place from the loading screen into the class", async () => {
     renderPage(toWodState(fran));
-    const frame = () => screen.getByText("21-15-9 for time").closest(".min-h-80");
+    const frame = () => document.querySelector(".min-h-80");
     const board = frame();
+    expect(board).not.toBeNull();
+    // Only the workout's name: the class below spells it out.
+    expect(board).not.toHaveTextContent("21-15-9 for time");
     await userEvent.click(await screen.findByRole("button", { name: "Open your class" }));
     await screen.findByRole("heading", { level: 1, name: "Your workout" });
     // The same board, now with every block a link to its section.
@@ -510,18 +520,11 @@ describe("WorkoutPage", () => {
     expect(screen.getByText(/Opening in/)).toBeInTheDocument();
   });
 
-  it("redraws edited parts on the loading screen before the class opens", async () => {
-    let resolve: (boards: string[][]) => void = () => {};
-    mockBoards.mockReturnValue(new Promise((r) => (resolve = r)));
+  it("keeps the board as parsed after edits, without redrawing it", async () => {
     const [part] = built(toWodState(fran)).parts;
-    const edited = built({ parts: [{ ...part, rounds: "15-12-9" }] });
-    renderPage(edited);
-
-    expect(await screen.findByText("Redrawing it with your changes")).toBeInTheDocument();
-    expect(mockBoards.mock.calls[0][0].map((p: { id: string }) => p.id)).toEqual([part.id]);
-    await act(async () => resolve([["Fran", "15-12-9 for time"]]));
-    expect(await screen.findByText("Redrawn with your changes")).toBeInTheDocument();
-    expect(screen.getByText("15-12-9 for time")).toBeInTheDocument();
+    renderPage(built({ parts: [{ ...part, rounds: "15-12-9" }] }));
+    expect(screen.queryByText(/Redraw/)).not.toBeInTheDocument();
+    expect(boardLink(/^Fran/)).toBeInTheDocument();
   });
 
   it("explains when there's no workout yet", () => {

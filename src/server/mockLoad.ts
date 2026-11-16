@@ -7,7 +7,6 @@ export const MOCK_DELAYS_MS = {
   videos: [1000, 3500],
   points: [500, 1500],
   prep: [4000, 7000],
-  board: [1500, 3000],
   articles: [8000, 14000],
 } satisfies Record<string, [number, number]>;
 
@@ -24,7 +23,6 @@ export const PACED_DELAYS_MS = {
   videos: [400, 1200],
   points: [150, 400],
   prep: [1500, 2500],
-  board: [700, 1300],
   articles: [2200, 3500],
 } satisfies Record<MockLoadKind, [number, number]>;
 

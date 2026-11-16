@@ -61,15 +61,14 @@ describe("ReviewPage", () => {
     expect(screen.getByRole("region", { name: "Easy Flush" })).toBeInTheDocument();
   });
 
-  it("keeps the board as read while editing, and says when it's redrawn", async () => {
+  it("keeps the board as read while editing", async () => {
     const user = renderPage();
-    expect(screen.queryByText(/go on the board/)).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Remove Thruster" }));
 
     expect(movementCards()).toHaveLength(1);
     expect(screen.queryByRole("heading", { name: "Thruster" })).not.toBeInTheDocument();
     expect(screen.getByText("Thrusters 95/65 lb")).toBeInTheDocument();
-    expect(screen.getByText("Your changes go on the board when you confirm.")).toBeInTheDocument();
+    expect(screen.queryByText(/go on the board/)).not.toBeInTheDocument();
   });
 
   it("doesn't warn about the class's length before it's confirmed and planned", () => {

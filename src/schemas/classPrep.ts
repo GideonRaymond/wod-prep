@@ -48,14 +48,47 @@ export const SkillBlockSchema = z.object({
   equipment: z.array(z.string()).describe("Equipment the practice needs, by common name"),
 });
 
+/** Another movement to do instead, and how it keeps the part's stimulus. */
+export const AlternativeSchema = z.object({
+  name: z
+    .string()
+    .describe('The movement to do instead, with its dose if it changes, e.g. "Jumping pull-up"'),
+  why: z.string().describe("How it keeps today's stimulus, in one short sentence"),
+});
+
+/** What to do instead of one movement of a workout part, and whether it suits pregnancy. */
+export const MovementAlternativesSchema = z.object({
+  part: z.number().int().min(0).describe("The index of the part in the request's parts"),
+  movement: z.string().describe("The movement, by its name in that part"),
+  similar: AlternativeSchema.describe(
+    "The closest version of the same movement pattern, for athletes who can do something like it (shoulder press for push press, ring row for pull-up)",
+  ),
+  different: AlternativeSchema.describe(
+    "A completely different movement for athletes who can't do this one at all, training the same muscles or energy system (Z-press for handstand push-up, bike for running)",
+  ),
+  pregnancy: z.object({
+    avoid: z
+      .boolean()
+      .describe(
+        "True when pregnant athletes should generally not do this movement as written (high impact, inverted, lying on the back, heavy bracing or a fall risk)",
+      ),
+    why: z.string().nullable().describe("Why, in a few words, when avoid is true; null otherwise"),
+  }),
+});
+
 /** The start of class: a warm-up (null when one is programmed) and skill practice, if needed. */
 export const ClassPrepSchema = z.object({
   warmup: WarmupPlanSchema.nullable(),
   skills: z.array(SkillBlockSchema),
+  alternatives: z
+    .array(MovementAlternativesSchema)
+    .describe("One entry per movement of every workout part (not a warm-up or cool-down)"),
 });
 
 export type WarmupPlan = z.infer<typeof WarmupPlanSchema>;
 export type SkillBlock = z.infer<typeof SkillBlockSchema>;
+export type Alternative = z.infer<typeof AlternativeSchema>;
+export type MovementAlternatives = z.infer<typeof MovementAlternativesSchema>;
 export type ClassPrep = z.infer<typeof ClassPrepSchema>;
 
 const text = (max: number) => z.string().trim().max(max);
